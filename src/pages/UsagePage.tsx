@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
-import { BarChart3, TrendingUp, Zap, Globe, Loader2 } from "lucide-react";
+import { BarChart3, TrendingUp, Zap, Globe, Loader2, ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -16,6 +16,16 @@ interface CreditTrend {
   remaining: number;
 }
 
+interface LedgerRow {
+  id: string;
+  action: string;
+  credits: number;
+  balance_after: number | null;
+  source_type: string | null;
+  created_at: string;
+  metadata_json: Record<string, unknown> | null;
+}
+
 export default function UsagePage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -23,6 +33,7 @@ export default function UsagePage() {
   const [dailyUsage, setDailyUsage] = useState<DailyUsage[]>([]);
   const [creditTrend, setCreditTrend] = useState<CreditTrend[]>([]);
   const [totalCredits, setTotalCredits] = useState(0);
+  const [ledgerEntries, setLedgerEntries] = useState<LedgerRow[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -35,12 +46,12 @@ export default function UsagePage() {
       const [profileRes, jobsRes, ledgerRes] = await Promise.all([
         supabase.from("profiles").select("credits_used, monthly_credits, extra_credits").eq("user_id", user!.id).single(),
         supabase.from("scrape_jobs").select("id, mode, status, credits_used, created_at").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1000),
-        supabase.from("usage_ledger").select("credits, balance_after, created_at, action").eq("user_id", user!.id).order("created_at", { ascending: true }).limit(1000),
+        supabase.from("usage_ledger").select("id, credits, balance_after, created_at, action, source_type, metadata_json").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(100),
       ]);
 
       const profile = profileRes.data;
       const jobs = jobsRes.data || [];
-      const ledger = ledgerRes.data || [];
+      const ledger = (ledgerRes.data || []) as unknown as LedgerRow[];
 
       const total = (profile?.monthly_credits ?? 500) + (profile?.extra_credits ?? 0);
       setTotalCredits(total);
@@ -83,17 +94,17 @@ export default function UsagePage() {
       }
       setDailyUsage(days);
 
-      // Credit trend from ledger
-      if (ledger.length > 0) {
+      // Credit trend from ledger (ascending for chart)
+      const ascLedger = [...ledger].reverse();
+      if (ascLedger.length > 0) {
         const trendMap = new Map<string, number>();
-        for (const entry of ledger) {
+        for (const entry of ascLedger) {
           const dateStr = new Date(entry.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
           if (entry.balance_after != null) {
             trendMap.set(dateStr, entry.balance_after);
           }
         }
         const trend: CreditTrend[] = Array.from(trendMap.entries()).map(([date, remaining]) => ({ date, remaining }));
-        // Always show current balance at end
         if (trend.length === 0) {
           trend.push({ date: "Today", remaining: total - (profile?.credits_used ?? 0) });
         }
@@ -101,6 +112,9 @@ export default function UsagePage() {
       } else {
         setCreditTrend([{ date: "Today", remaining: total - (profile?.credits_used ?? 0) }]);
       }
+
+      // Ledger entries (already desc)
+      setLedgerEntries(ledger.slice(0, 20));
     } catch (err) {
       console.error("Failed to fetch usage data", err);
     } finally {
@@ -202,6 +216,48 @@ export default function UsagePage() {
             </AreaChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* Ledger Activity */}
+      <div className="rounded-lg border border-border bg-card">
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-medium">Recent Credit Activity</h3>
+        </div>
+        {ledgerEntries.length === 0 ? (
+          <div className="p-8 text-center text-sm text-muted-foreground">No usage activity yet. Run a scrape to see entries here.</div>
+        ) : (
+          <div className="divide-y divide-border">
+            {ledgerEntries.map((entry) => {
+              const isCharge = entry.credits < 0;
+              const label = entry.action.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              const url = (entry.metadata_json as Record<string, unknown>)?.url as string | undefined;
+              return (
+                <div key={entry.id} className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 ${isCharge ? "bg-destructive/10" : "bg-primary/10"}`}>
+                      {isCharge
+                        ? <ArrowDownRight className="h-3.5 w-3.5 text-destructive" />
+                        : <ArrowUpRight className="h-3.5 w-3.5 text-primary" />
+                      }
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{label}</div>
+                      {url && <div className="text-xs text-muted-foreground truncate max-w-[300px]">{url}</div>}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 ml-4">
+                    <div className={`text-sm font-mono font-medium ${isCharge ? "text-destructive" : "text-primary"}`}>
+                      {isCharge ? "" : "+"}{entry.credits}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(entry.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
