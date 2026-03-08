@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.crawl-worker]
 verify_jwt = false
+
+[functions.map]
+verify_jwt = false
