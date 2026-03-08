@@ -14,7 +14,188 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          credits_used: number
+          current_period_end: string | null
+          current_period_start: string | null
+          extra_credits: number
+          full_name: string | null
+          id: string
+          monthly_credits: number
+          plan: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          credits_used?: number
+          current_period_end?: string | null
+          current_period_start?: string | null
+          extra_credits?: number
+          full_name?: string | null
+          id?: string
+          monthly_credits?: number
+          plan?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          credits_used?: number
+          current_period_end?: string | null
+          current_period_start?: string | null
+          extra_credits?: number
+          full_name?: string | null
+          id?: string
+          monthly_credits?: number
+          plan?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scrape_jobs: {
+        Row: {
+          created_at: string
+          credits_used: number
+          duration_ms: number | null
+          error_code: string | null
+          error_message: string | null
+          final_url: string | null
+          html: string | null
+          http_status_code: number | null
+          id: string
+          links_json: Json | null
+          markdown: string | null
+          metadata_json: Json | null
+          mode: string
+          status: string
+          title: string | null
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_used?: number
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          final_url?: string | null
+          html?: string | null
+          http_status_code?: number | null
+          id?: string
+          links_json?: Json | null
+          markdown?: string | null
+          metadata_json?: Json | null
+          mode?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_used?: number
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          final_url?: string | null
+          html?: string | null
+          http_status_code?: number | null
+          id?: string
+          links_json?: Json | null
+          markdown?: string | null
+          metadata_json?: Json | null
+          mode?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usage_ledger: {
+        Row: {
+          action: string
+          balance_after: number | null
+          created_at: string
+          credits: number
+          id: string
+          job_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          balance_after?: number | null
+          created_at?: string
+          credits: number
+          id?: string
+          job_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          balance_after?: number | null
+          created_at?: string
+          credits?: number
+          id?: string
+          job_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_ledger_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "scrape_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
