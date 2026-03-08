@@ -173,29 +173,38 @@ export type Database = {
       usage_ledger: {
         Row: {
           action: string
+          api_key_id: string | null
           balance_after: number | null
           created_at: string
           credits: number
           id: string
           job_id: string | null
+          metadata_json: Json | null
+          source_type: string | null
           user_id: string
         }
         Insert: {
           action: string
+          api_key_id?: string | null
           balance_after?: number | null
           created_at?: string
           credits: number
           id?: string
           job_id?: string | null
+          metadata_json?: Json | null
+          source_type?: string | null
           user_id: string
         }
         Update: {
           action?: string
+          api_key_id?: string | null
           balance_after?: number | null
           created_at?: string
           credits?: number
           id?: string
           job_id?: string | null
+          metadata_json?: Json | null
+          source_type?: string | null
           user_id?: string
         }
         Relationships: [
