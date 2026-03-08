@@ -290,7 +290,21 @@ Deno.serve(async (req) => {
     })
     .eq("id", job.id);
 
-  console.log(`Scrape completed job=${job.id} url=${result.final_url} time=${result.timings.total_ms}ms`);
+  // --- Record ledger entry (charge 1 credit) ---
+  const userCredits = await getUserCredits(ctx.userId);
+  const newBalance = Math.max(0, userCredits.remaining - 1);
+  await recordLedgerEntry({
+    user_id: ctx.userId,
+    api_key_id: ctx.apiKeyId,
+    action: "scrape_charge",
+    credits: -1,
+    job_id: job.id,
+    source_type: "scrape",
+    balance_after: newBalance,
+    metadata_json: { url: scrapeReq.url, final_url: result.final_url, duration_ms: result.timings.total_ms },
+  });
+
+  console.log(`Scrape completed job=${job.id} url=${result.final_url} time=${result.timings.total_ms}ms credits_remaining=${newBalance}`);
 
   // --- Return response ---
   return json({
