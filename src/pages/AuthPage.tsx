@@ -11,18 +11,18 @@ import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 
 export default function AuthPage() {
-  const { session, loading } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-
-  // Already logged in — redirect to dashboard
-  if (!loading && session) {
-    return <Navigate to="/" replace />;
-  }
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Already logged in — redirect to dashboard
+  if (!authLoading && session) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
