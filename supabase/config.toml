@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.map]
 verify_jwt = false
+
+[functions.extract]
+verify_jwt = false
