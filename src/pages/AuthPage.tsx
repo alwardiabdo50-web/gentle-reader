@@ -1,22 +1,32 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Globe, Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Navigate } from "react-router-dom";
 
 export default function AuthPage() {
+  const { session, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Already logged in — redirect to dashboard
+  if (!authLoading && session) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     try {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -37,12 +47,12 @@ export default function AuthPage() {
     } catch (err: any) {
       toast.error(err.message);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
+    setSubmitting(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
@@ -50,7 +60,7 @@ export default function AuthPage() {
       if (result.error) throw result.error;
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -78,7 +88,7 @@ export default function AuthPage() {
           variant="secondary"
           className="w-full gap-2"
           onClick={handleGoogleSignIn}
-          disabled={loading}
+          disabled={submitting}
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24">
             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -137,8 +147,8 @@ export default function AuthPage() {
               minLength={6}
             />
           </div>
-          <Button type="submit" className="w-full glow-primary gap-2" disabled={loading}>
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button type="submit" className="w-full glow-primary gap-2" disabled={submitting}>
+            {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             <Mail className="h-4 w-4" />
             {isLogin ? "Sign in" : "Create account"}
           </Button>
