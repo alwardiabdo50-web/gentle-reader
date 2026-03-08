@@ -132,10 +132,15 @@ export default function JobsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 max-w-[300px]">
+                      <a
+                        href={j.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 max-w-[300px] hover:text-primary transition-colors"
+                      >
                         <span className="truncate font-mono text-xs">{j.url}</span>
-                        <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
-                      </div>
+                        <ExternalLink className="h-3 w-3 shrink-0" />
+                      </a>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border capitalize ${statusStyles[j.status] ?? statusStyles.queued}`}>
