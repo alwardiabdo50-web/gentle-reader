@@ -1,1 +1,7 @@
 project_id = "moeegphrlhtuovqtgrci"
+
+[functions.api-auth-me]
+verify_jwt = false
+
+[functions.api-keys-manage]
+verify_jwt = false
