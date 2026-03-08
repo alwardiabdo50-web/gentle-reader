@@ -97,6 +97,7 @@ export type Database = {
       }
       scrape_jobs: {
         Row: {
+          api_key_id: string | null
           created_at: string
           credits_used: number
           duration_ms: number | null
@@ -110,13 +111,17 @@ export type Database = {
           markdown: string | null
           metadata_json: Json | null
           mode: string
+          request_json: Json | null
+          screenshot_url: string | null
           status: string
           title: string | null
           updated_at: string
           url: string
           user_id: string
+          warnings_json: Json | null
         }
         Insert: {
+          api_key_id?: string | null
           created_at?: string
           credits_used?: number
           duration_ms?: number | null
@@ -130,13 +135,17 @@ export type Database = {
           markdown?: string | null
           metadata_json?: Json | null
           mode?: string
+          request_json?: Json | null
+          screenshot_url?: string | null
           status?: string
           title?: string | null
           updated_at?: string
           url: string
           user_id: string
+          warnings_json?: Json | null
         }
         Update: {
+          api_key_id?: string | null
           created_at?: string
           credits_used?: number
           duration_ms?: number | null
@@ -150,11 +159,14 @@ export type Database = {
           markdown?: string | null
           metadata_json?: Json | null
           mode?: string
+          request_json?: Json | null
+          screenshot_url?: string | null
           status?: string
           title?: string | null
           updated_at?: string
           url?: string
           user_id?: string
+          warnings_json?: Json | null
         }
         Relationships: []
       }
