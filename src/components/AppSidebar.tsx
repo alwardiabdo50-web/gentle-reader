@@ -35,6 +35,7 @@ const mainItems = [
   { title: "API Keys", url: "/api-keys", icon: Key },
   { title: "Usage", url: "/usage", icon: BarChart3 },
   { title: "Job History", url: "/jobs", icon: History },
+  { title: "Docs", url: "/docs", icon: BookOpen },
 ];
 
 const settingsItems = [
