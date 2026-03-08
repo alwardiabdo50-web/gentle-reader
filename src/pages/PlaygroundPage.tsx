@@ -237,7 +237,7 @@ export default function PlaygroundPage() {
             <div className="px-4 py-2 border-b border-border bg-muted/30">
               {d.warnings.map((w, i) => (
                 <p key={i} className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <AlertTriangle className="h-3 w-3 text-yellow-500 shrink-0" />
+                  <AlertTriangle className="h-3 w-3 text-destructive/70 shrink-0" />
                   {w}
                 </p>
               ))}
