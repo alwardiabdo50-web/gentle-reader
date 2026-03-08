@@ -8,6 +8,7 @@ import {
   Globe,
   Settings,
   LogOut,
+  BookOpen,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -34,6 +35,7 @@ const mainItems = [
   { title: "API Keys", url: "/api-keys", icon: Key },
   { title: "Usage", url: "/usage", icon: BarChart3 },
   { title: "Job History", url: "/jobs", icon: History },
+  { title: "Docs", url: "/docs", icon: BookOpen },
 ];
 
 const settingsItems = [
