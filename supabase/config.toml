@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.api-keys-manage]
 verify_jwt = false
+
+[functions.scrape]
+verify_jwt = false

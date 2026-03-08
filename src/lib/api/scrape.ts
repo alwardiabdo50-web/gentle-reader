@@ -1,0 +1,52 @@
+import { supabase } from "@/integrations/supabase/client";
+
+export interface ScrapeOptions {
+  formats?: string[];
+  render_javascript?: boolean;
+  only_main_content?: boolean;
+  timeout_ms?: number;
+  wait_until?: string;
+  screenshot?: boolean;
+  mobile?: boolean;
+  headers?: Record<string, string>;
+  remove_selectors?: string[];
+}
+
+export interface ScrapeResponse {
+  success: boolean;
+  data?: {
+    url: string;
+    final_url: string;
+    title: string;
+    status_code: number;
+    markdown?: string;
+    html?: string;
+    metadata?: Record<string, unknown>;
+    links?: Array<{ href: string; text: string }>;
+    screenshot_url?: string;
+    timings: { navigation_ms: number; extraction_ms: number; total_ms: number };
+    warnings: string[];
+  };
+  error?: { code: string; message: string };
+  meta?: { job_id: string; credits_used: number };
+}
+
+/**
+ * Call the /v1/scrape endpoint using an API key.
+ */
+export async function scrapeUrl(
+  url: string,
+  apiKey: string,
+  options?: ScrapeOptions
+): Promise<ScrapeResponse> {
+  const { data, error } = await supabase.functions.invoke<ScrapeResponse>("scrape", {
+    body: { url, ...options },
+    headers: { "X-API-Key": apiKey },
+  });
+
+  if (error) {
+    return { success: false, error: { code: "NETWORK_ERROR", message: error.message } };
+  }
+
+  return data as ScrapeResponse;
+}

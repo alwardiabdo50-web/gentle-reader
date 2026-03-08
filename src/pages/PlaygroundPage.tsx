@@ -1,51 +1,101 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2 } from "lucide-react";
+import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import type { ScrapeResponse } from "@/lib/api/scrape";
 
 type Mode = "scrape" | "crawl" | "map" | "extract";
-
-const MOCK_SCRAPE_RESULT = {
-  success: true,
-  data: {
-    url: "https://example.com",
-    final_url: "https://example.com",
-    title: "Example Domain",
-    status_code: 200,
-    markdown: "# Example Domain\n\nThis domain is for use in illustrative examples in documents. You may use this domain in literature without prior coordination or asking for permission.\n\n[More information...](https://www.iana.org/domains/example)",
-    metadata: {
-      description: "Example description",
-      language: "en",
-      canonical_url: "https://example.com",
-    },
-    links: [{ href: "https://iana.org", text: "More information" }],
-    timings: { navigation_ms: 812, extraction_ms: 149, total_ms: 1078 },
-  },
-  meta: { credits_used: 1 },
-};
 
 export default function PlaygroundPage() {
   const [mode, setMode] = useState<Mode>("scrape");
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<object | null>(null);
+  const [result, setResult] = useState<ScrapeResponse | null>(null);
   const [resultTab, setResultTab] = useState("markdown");
   const [renderJs, setRenderJs] = useState(true);
   const [mainContent, setMainContent] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [apiKey, setApiKey] = useState<string | null>(null);
 
-  const handleRun = () => {
-    if (!url) return;
+  // Fetch (or create) a playground API key on mount
+  useEffect(() => {
+    const stored = sessionStorage.getItem("playground_api_key");
+    if (stored) {
+      setApiKey(stored);
+      return;
+    }
+
+    (async () => {
+      // Check for existing playground key
+      const { data: keys } = await supabase
+        .from("api_keys")
+        .select("id, key_prefix")
+        .eq("name", "Playground (auto)")
+        .eq("is_active", true)
+        .limit(1);
+
+      if (keys && keys.length > 0) {
+        // We can't recover the raw token — create a fresh one
+      }
+
+      // Create a new playground key
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const rawToken = `nc_live_${crypto.randomUUID().replace(/-/g, "").slice(0, 24)}`;
+      const prefix = rawToken.slice(0, 13);
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(rawToken));
+      const hashHex = Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      const { error } = await supabase.from("api_keys").insert({
+        user_id: user.id,
+        name: "Playground (auto)",
+        key_prefix: prefix,
+        key_hash: hashHex,
+      });
+
+      if (!error) {
+        sessionStorage.setItem("playground_api_key", rawToken);
+        setApiKey(rawToken);
+      }
+    })();
+  }, []);
+
+  const handleRun = async () => {
+    if (!url || !apiKey) return;
     setLoading(true);
     setResult(null);
-    setTimeout(() => {
+
+    try {
+      const { data, error } = await supabase.functions.invoke("scrape", {
+        body: {
+          url,
+          formats: ["markdown", "html", "metadata", "links"],
+          render_javascript: renderJs,
+          only_main_content: mainContent,
+        },
+        headers: { "X-API-Key": apiKey },
+      });
+
+      if (error) {
+        setResult({ success: false, error: { code: "NETWORK_ERROR", message: error.message } });
+      } else {
+        setResult(data as ScrapeResponse);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setResult({ success: false, error: { code: "CLIENT_ERROR", message: msg } });
+    } finally {
       setLoading(false);
-      setResult(MOCK_SCRAPE_RESULT);
-    }, 1500);
+    }
   };
 
   const handleCopy = () => {
@@ -61,7 +111,7 @@ export default function PlaygroundPage() {
     extract: <Brain className="h-4 w-4" />,
   };
 
-  const r = result as typeof MOCK_SCRAPE_RESULT | null;
+  const d = result?.data;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -81,15 +131,17 @@ export default function PlaygroundPage() {
             size="sm"
             onClick={() => setMode(m)}
             className="gap-1.5 capitalize"
+            disabled={m !== "scrape"}
           >
             {modeIcons[m]}
             {m}
+            {m !== "scrape" && <span className="text-[10px] opacity-60">(soon)</span>}
           </Button>
         ))}
       </div>
 
       {/* Input section */}
-      <div className="rounded-lg border border-border p-5 surface-1 space-y-4">
+      <div className="rounded-lg border border-border p-5 bg-card space-y-4">
         <div className="flex gap-3">
           <div className="flex-1">
             <Label htmlFor="url" className="text-xs text-muted-foreground mb-1.5 block">
@@ -105,7 +157,7 @@ export default function PlaygroundPage() {
             />
           </div>
           <div className="flex items-end">
-            <Button onClick={handleRun} disabled={loading || !url} className="glow-primary gap-2">
+            <Button onClick={handleRun} disabled={loading || !url || !apiKey} className="gap-2">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
               {loading ? "Running..." : "Run"}
             </Button>
@@ -149,18 +201,29 @@ export default function PlaygroundPage() {
         </div>
       </div>
 
+      {/* Error state */}
+      {result && !result.success && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
+          <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-destructive">{result.error?.code}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{result.error?.message}</p>
+          </div>
+        </div>
+      )}
+
       {/* Results */}
-      {r && (
-        <div className="rounded-lg border border-border surface-1 overflow-hidden">
+      {d && (
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">{r.data.title}</span>
+              <span className="text-sm font-medium">{d.title}</span>
               <span className="text-xs font-mono text-muted-foreground">
-                {r.data.timings.total_ms}ms
+                {d.timings.total_ms}ms
               </span>
               <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded border border-border">
-                {r.data.status_code}
+                {d.status_code}
               </span>
             </div>
             <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
@@ -169,43 +232,68 @@ export default function PlaygroundPage() {
             </Button>
           </div>
 
+          {/* Warnings */}
+          {d.warnings && d.warnings.length > 0 && (
+            <div className="px-4 py-2 border-b border-border bg-muted/30">
+              {d.warnings.map((w, i) => (
+                <p key={i} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <AlertTriangle className="h-3 w-3 text-destructive/70 shrink-0" />
+                  {w}
+                </p>
+              ))}
+            </div>
+          )}
+
           <Tabs value={resultTab} onValueChange={setResultTab}>
             <div className="px-4 border-b border-border">
               <TabsList className="bg-transparent h-9 p-0 gap-4">
-                <TabsTrigger value="markdown" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Markdown</TabsTrigger>
-                <TabsTrigger value="html" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">HTML</TabsTrigger>
-                <TabsTrigger value="metadata" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Metadata</TabsTrigger>
+                {d.markdown !== undefined && (
+                  <TabsTrigger value="markdown" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Markdown</TabsTrigger>
+                )}
+                {d.html !== undefined && (
+                  <TabsTrigger value="html" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">HTML</TabsTrigger>
+                )}
+                {d.metadata !== undefined && (
+                  <TabsTrigger value="metadata" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Metadata</TabsTrigger>
+                )}
                 <TabsTrigger value="json" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Raw JSON</TabsTrigger>
               </TabsList>
             </div>
-            <TabsContent value="markdown" className="p-4 m-0">
-              <pre className="font-mono text-sm text-secondary-foreground whitespace-pre-wrap leading-relaxed">
-                {r.data.markdown}
-              </pre>
-            </TabsContent>
-            <TabsContent value="html" className="p-4 m-0">
-              <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">
-                {"<html>\n  <head><title>Example Domain</title></head>\n  <body>\n    <h1>Example Domain</h1>\n    <p>This domain is for use in illustrative examples...</p>\n  </body>\n</html>"}
-              </pre>
-            </TabsContent>
-            <TabsContent value="metadata" className="p-4 m-0">
-              <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">
-                {JSON.stringify(r.data.metadata, null, 2)}
-              </pre>
-            </TabsContent>
+            {d.markdown !== undefined && (
+              <TabsContent value="markdown" className="p-4 m-0">
+                <pre className="font-mono text-sm text-secondary-foreground whitespace-pre-wrap leading-relaxed">
+                  {d.markdown}
+                </pre>
+              </TabsContent>
+            )}
+            {d.html !== undefined && (
+              <TabsContent value="html" className="p-4 m-0">
+                <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">
+                  {d.html}
+                </pre>
+              </TabsContent>
+            )}
+            {d.metadata !== undefined && (
+              <TabsContent value="metadata" className="p-4 m-0">
+                <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">
+                  {JSON.stringify(d.metadata, null, 2)}
+                </pre>
+              </TabsContent>
+            )}
             <TabsContent value="json" className="p-4 m-0">
               <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">
-                {JSON.stringify(r, null, 2)}
+                {JSON.stringify(result, null, 2)}
               </pre>
             </TabsContent>
           </Tabs>
 
-          {/* Links & Timings footer */}
+          {/* Footer */}
           <div className="px-4 py-3 border-t border-border flex gap-6 text-xs text-muted-foreground">
-            <span>Links: {r.data.links.length}</span>
-            <span>Nav: {r.data.timings.navigation_ms}ms</span>
-            <span>Extract: {r.data.timings.extraction_ms}ms</span>
-            <span>Credits: {r.meta.credits_used}</span>
+            {d.links && <span>Links: {d.links.length}</span>}
+            <span>Nav: {d.timings.navigation_ms}ms</span>
+            <span>Extract: {d.timings.extraction_ms}ms</span>
+            {result?.meta && <span>Credits: {result.meta.credits_used}</span>}
+            {result?.meta && <span className="font-mono">{result.meta.job_id.slice(0, 8)}…</span>}
           </div>
         </div>
       )}
