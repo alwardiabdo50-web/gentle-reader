@@ -147,8 +147,8 @@ export default function AuthPage() {
               minLength={6}
             />
           </div>
-          <Button type="submit" className="w-full glow-primary gap-2" disabled={loading}>
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button type="submit" className="w-full glow-primary gap-2" disabled={submitting}>
+            {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             <Mail className="h-4 w-4" />
             {isLogin ? "Sign in" : "Create account"}
           </Button>
