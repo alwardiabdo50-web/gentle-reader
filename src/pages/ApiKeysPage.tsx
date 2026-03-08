@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Key, Plus, Copy, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Key, Plus, Copy, Trash2, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,68 +11,82 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface ApiKey {
   id: string;
   name: string;
-  prefix: string;
-  lastUsed: string | null;
-  isActive: boolean;
-  createdAt: string;
+  key_prefix: string;
+  last_used_at: string | null;
+  is_active: boolean;
+  created_at: string;
 }
 
-const MOCK_KEYS: ApiKey[] = [
-  {
-    id: "key_01",
-    name: "Production Key",
-    prefix: "nc_live_8f3k",
-    lastUsed: "2026-03-08T10:30:00Z",
-    isActive: true,
-    createdAt: "2026-02-15T08:00:00Z",
-  },
-  {
-    id: "key_02",
-    name: "Development Key",
-    prefix: "nc_live_2m9x",
-    lastUsed: "2026-03-07T14:00:00Z",
-    isActive: true,
-    createdAt: "2026-03-01T12:00:00Z",
-  },
-  {
-    id: "key_03",
-    name: "Old Testing Key",
-    prefix: "nc_live_0a1b",
-    lastUsed: null,
-    isActive: false,
-    createdAt: "2026-01-10T09:00:00Z",
-  },
-];
-
 export default function ApiKeysPage() {
-  const [keys, setKeys] = useState<ApiKey[]>(MOCK_KEYS);
+  const { user } = useAuth();
+  const [keys, setKeys] = useState<ApiKey[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newKeyName, setNewKeyName] = useState("");
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [creating, setCreating] = useState(false);
 
-  const handleCreate = () => {
-    if (!newKeyName.trim()) return;
-    const token = `nc_live_${Math.random().toString(36).slice(2, 14)}`;
-    const newKey: ApiKey = {
-      id: `key_${Date.now()}`,
-      name: newKeyName,
-      prefix: token.slice(0, 13),
-      lastUsed: null,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-    };
-    setKeys([newKey, ...keys]);
-    setCreatedToken(token);
-    setNewKeyName("");
+  const fetchKeys = async () => {
+    const { data, error } = await supabase
+      .from("api_keys")
+      .select("id, name, key_prefix, last_used_at, is_active, created_at")
+      .order("created_at", { ascending: false });
+    if (data) setKeys(data);
+    if (error) toast.error(error.message);
+    setLoading(false);
   };
 
-  const handleRevoke = (id: string) => {
-    setKeys(keys.map((k) => (k.id === id ? { ...k, isActive: false } : k)));
+  useEffect(() => {
+    fetchKeys();
+  }, []);
+
+  const handleCreate = async () => {
+    if (!newKeyName.trim() || !user) return;
+    setCreating(true);
+    try {
+      // Generate a random token
+      const rawToken = `nc_live_${crypto.randomUUID().replace(/-/g, "").slice(0, 24)}`;
+      const prefix = rawToken.slice(0, 13);
+      // Simple hash for demo - in production use server-side hashing
+      const encoder = new TextEncoder();
+      const data = encoder.encode(rawToken);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
+      const { error } = await supabase.from("api_keys").insert({
+        user_id: user.id,
+        name: newKeyName,
+        key_prefix: prefix,
+        key_hash: hashHex,
+      });
+
+      if (error) throw error;
+      setCreatedToken(rawToken);
+      setNewKeyName("");
+      fetchKeys();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleRevoke = async (id: string) => {
+    const { error } = await supabase
+      .from("api_keys")
+      .update({ is_active: false })
+      .eq("id", id);
+    if (error) toast.error(error.message);
+    else fetchKeys();
   };
 
   const handleCopyToken = () => {
@@ -84,11 +98,15 @@ export default function ApiKeysPage() {
   };
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -116,17 +134,12 @@ export default function ApiKeysPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>
-                {createdToken ? "Key Created" : "Create API Key"}
-              </DialogTitle>
+              <DialogTitle>{createdToken ? "Key Created" : "Create API Key"}</DialogTitle>
             </DialogHeader>
-
             {!createdToken ? (
               <div className="space-y-4 py-2">
                 <div>
-                  <Label htmlFor="key-name" className="text-xs text-muted-foreground">
-                    Key name
-                  </Label>
+                  <Label htmlFor="key-name" className="text-xs text-muted-foreground">Key name</Label>
                   <Input
                     id="key-name"
                     placeholder="e.g. Production Key"
@@ -136,7 +149,8 @@ export default function ApiKeysPage() {
                   />
                 </div>
                 <DialogFooter>
-                  <Button onClick={handleCreate} disabled={!newKeyName.trim()}>
+                  <Button onClick={handleCreate} disabled={!newKeyName.trim() || creating}>
+                    {creating && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                     Create Key
                   </Button>
                 </DialogFooter>
@@ -145,9 +159,7 @@ export default function ApiKeysPage() {
               <div className="space-y-4 py-2">
                 <div className="flex items-start gap-2 p-3 rounded-lg border border-nebula-warning/30 bg-nebula-warning/5">
                   <AlertCircle className="h-4 w-4 text-nebula-warning shrink-0 mt-0.5" />
-                  <p className="text-xs text-nebula-warning">
-                    Copy this token now. It won't be shown again.
-                  </p>
+                  <p className="text-xs text-nebula-warning">Copy this token now. It won't be shown again.</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 text-xs font-mono bg-muted p-2.5 rounded border border-border break-all">
@@ -163,9 +175,7 @@ export default function ApiKeysPage() {
                   </p>
                 )}
                 <DialogFooter>
-                  <Button variant="secondary" onClick={() => setDialogOpen(false)}>
-                    Done
-                  </Button>
+                  <Button variant="secondary" onClick={() => setDialogOpen(false)}>Done</Button>
                 </DialogFooter>
               </div>
             )}
@@ -173,7 +183,6 @@ export default function ApiKeysPage() {
         </Dialog>
       </div>
 
-      {/* Keys table */}
       <div className="rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -187,44 +196,49 @@ export default function ApiKeysPage() {
             </tr>
           </thead>
           <tbody>
-            {keys.map((k) => (
-              <tr key={k.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                <td className="px-4 py-3 font-medium flex items-center gap-2">
-                  <Key className="h-3.5 w-3.5 text-muted-foreground" />
-                  {k.name}
-                </td>
-                <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{k.prefix}...</td>
-                <td className="px-4 py-3 text-xs text-muted-foreground">
-                  {k.lastUsed ? formatDate(k.lastUsed) : "Never"}
-                </td>
-                <td className="px-4 py-3 text-xs text-muted-foreground">{formatDate(k.createdAt)}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${
-                      k.isActive
-                        ? "border-primary/30 text-primary bg-primary/10"
-                        : "border-destructive/30 text-destructive bg-destructive/10"
-                    }`}
-                  >
-                    <span className={`h-1.5 w-1.5 rounded-full ${k.isActive ? "bg-primary" : "bg-destructive"}`} />
-                    {k.isActive ? "Active" : "Revoked"}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  {k.isActive && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 text-xs"
-                      onClick={() => handleRevoke(k.id)}
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      Revoke
-                    </Button>
-                  )}
+            {keys.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                  No API keys yet. Create one to get started.
                 </td>
               </tr>
-            ))}
+            ) : (
+              keys.map((k) => (
+                <tr key={k.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3 font-medium flex items-center gap-2">
+                    <Key className="h-3.5 w-3.5 text-muted-foreground" />
+                    {k.name}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{k.key_prefix}...</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {k.last_used_at ? formatDate(k.last_used_at) : "Never"}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{formatDate(k.created_at)}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${
+                      k.is_active
+                        ? "border-primary/30 text-primary bg-primary/10"
+                        : "border-destructive/30 text-destructive bg-destructive/10"
+                    }`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${k.is_active ? "bg-primary" : "bg-destructive"}`} />
+                      {k.is_active ? "Active" : "Revoked"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {k.is_active && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 text-xs"
+                        onClick={() => handleRevoke(k.id)}
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" /> Revoke
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
