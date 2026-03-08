@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Zap,
   Key,
@@ -6,9 +7,13 @@ import {
   CreditCard,
   Globe,
   Settings,
+  LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 import {
   Sidebar,
@@ -36,11 +41,36 @@ const settingsItems = [
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
+interface Profile {
+  plan: string;
+  monthly_credits: number;
+  extra_credits: number;
+  credits_used: number;
+}
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { signOut } = useAuth();
   const isActive = (path: string) => location.pathname === path;
+
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("plan, monthly_credits, extra_credits, credits_used")
+        .single();
+      if (data) setProfile(data);
+    };
+    fetchProfile();
+  }, []);
+
+  const totalCredits = profile ? profile.monthly_credits + profile.extra_credits : 0;
+  const remaining = profile ? totalCredits - profile.credits_used : 0;
+  const usedPct = totalCredits > 0 ? ((profile?.credits_used ?? 0) / totalCredits) * 100 : 0;
 
   return (
     <Sidebar collapsible="icon">
@@ -54,9 +84,7 @@ export function AppSidebar() {
               <span className="text-sm font-bold text-foreground tracking-tight">
                 Nebula Crawl
               </span>
-              <span className="text-[10px] text-muted-foreground font-mono">
-                v1.0.0
-              </span>
+              <span className="text-[10px] text-muted-foreground font-mono">v1.0.0</span>
             </div>
           )}
         </div>
@@ -70,11 +98,7 @@ export function AppSidebar() {
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink
-                      to={item.url}
-                      end
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                    >
+                    <NavLink to={item.url} end activeClassName="bg-sidebar-accent text-sidebar-accent-foreground">
                       <item.icon className="h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
@@ -92,11 +116,7 @@ export function AppSidebar() {
               {settingsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink
-                      to={item.url}
-                      end
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                    >
+                    <NavLink to={item.url} end activeClassName="bg-sidebar-accent text-sidebar-accent-foreground">
                       <item.icon className="h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
@@ -108,22 +128,31 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
-        {!collapsed && (
+      <SidebarFooter className="p-4 space-y-3">
+        {!collapsed && profile && (
           <div className="rounded-lg border border-border p-3 surface-2">
             <div className="text-xs text-muted-foreground mb-1">Credits remaining</div>
-            <div className="text-lg font-bold text-foreground">9,225</div>
+            <div className="text-lg font-bold text-foreground">{remaining.toLocaleString()}</div>
             <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
               <div
-                className="h-full rounded-full bg-primary"
-                style={{ width: "87%" }}
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${Math.max(0, 100 - usedPct)}%` }}
               />
             </div>
             <div className="text-[10px] text-muted-foreground mt-1">
-              775 / 10,000 used this cycle
+              {profile.credits_used.toLocaleString()} / {totalCredits.toLocaleString()} used
             </div>
           </div>
         )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+          onClick={signOut}
+        >
+          <LogOut className="h-4 w-4" />
+          {!collapsed && "Sign out"}
+        </Button>
       </SidebarFooter>
     </Sidebar>
   );

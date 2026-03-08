@@ -1,30 +1,20 @@
-import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, ExternalLink, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Job {
   id: string;
-  type: "scrape" | "crawl" | "extract" | "map";
+  mode: string;
   url: string;
-  status: "completed" | "failed" | "running" | "queued";
-  credits: number;
-  duration: string;
-  createdAt: string;
+  status: string;
+  credits_used: number;
+  duration_ms: number | null;
+  created_at: string;
+  title: string | null;
 }
-
-const MOCK_JOBS: Job[] = [
-  { id: "scr_01abc", type: "scrape", url: "https://example.com", status: "completed", credits: 1, duration: "1.1s", createdAt: "2026-03-08T15:30:00Z" },
-  { id: "crw_02def", type: "crawl", url: "https://docs.example.com", status: "running", credits: 12, duration: "45s", createdAt: "2026-03-08T15:25:00Z" },
-  { id: "ext_03ghi", type: "extract", url: "https://shop.example.com/product/1", status: "completed", credits: 2, duration: "3.2s", createdAt: "2026-03-08T15:20:00Z" },
-  { id: "scr_04jkl", type: "scrape", url: "https://blog.example.com/post/hello", status: "failed", credits: 0, duration: "30s", createdAt: "2026-03-08T15:10:00Z" },
-  { id: "map_05mno", type: "map", url: "https://example.com", status: "completed", credits: 1, duration: "2.5s", createdAt: "2026-03-08T14:50:00Z" },
-  { id: "scr_06pqr", type: "scrape", url: "https://news.ycombinator.com", status: "completed", credits: 1, duration: "1.8s", createdAt: "2026-03-08T14:40:00Z" },
-  { id: "crw_07stu", type: "crawl", url: "https://tailwindcss.com/docs", status: "completed", credits: 45, duration: "2m 12s", createdAt: "2026-03-08T13:00:00Z" },
-  { id: "ext_08vwx", type: "extract", url: "https://amazon.com/dp/B0123", status: "failed", credits: 0, duration: "30s", createdAt: "2026-03-08T12:30:00Z" },
-];
 
 const statusStyles: Record<string, string> = {
   completed: "border-primary/30 text-primary bg-primary/10",
@@ -41,17 +31,38 @@ const typeColors: Record<string, string> = {
 };
 
 export default function JobsPage() {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
 
-  const filtered = MOCK_JOBS.filter((j) => {
-    if (filter !== "all" && j.type !== filter) return false;
-    if (search && !j.url.toLowerCase().includes(search.toLowerCase()) && !j.id.includes(search)) return false;
-    return true;
-  });
+  useEffect(() => {
+    const fetchJobs = async () => {
+      let query = supabase
+        .from("scrape_jobs")
+        .select("id, mode, url, status, credits_used, duration_ms, created_at, title")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (filter !== "all") query = query.eq("mode", filter);
+      if (search) query = query.ilike("url", `%${search}%`);
+
+      const { data } = await query;
+      setJobs(data ?? []);
+      setLoading(false);
+    };
+    fetchJobs();
+  }, [filter, search]);
 
   const formatTime = (iso: string) =>
     new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+  const formatDuration = (ms: number | null) => {
+    if (!ms) return "—";
+    if (ms < 1000) return `${ms}ms`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    return `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`;
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -62,13 +73,12 @@ export default function JobsPage() {
         </p>
       </div>
 
-      {/* Filters */}
       <div className="flex gap-3 items-center">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9 text-sm"
-            placeholder="Search by URL or job ID..."
+            placeholder="Search by URL..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -87,68 +97,67 @@ export default function JobsPage() {
         </Select>
       </div>
 
-      {/* Jobs table */}
-      <div className="rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border surface-2">
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Job ID</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Type</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">URL</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Status</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Credits</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Duration</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((j) => (
-              <tr key={j.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer">
-                <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{j.id}</td>
-                <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-0.5 rounded border capitalize ${typeColors[j.type]}`}>
-                    {j.type}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-1.5 max-w-[300px]">
-                    <span className="truncate font-mono text-xs">{j.url}</span>
-                    <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border capitalize ${statusStyles[j.status]}`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${
-                      j.status === "completed" ? "bg-primary" :
-                      j.status === "failed" ? "bg-destructive" :
-                      j.status === "running" ? "bg-nebula-cyan animate-pulse" :
-                      "bg-muted-foreground"
-                    }`} />
-                    {j.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-xs text-muted-foreground">{j.credits}</td>
-                <td className="px-4 py-3 text-xs text-muted-foreground">{j.duration}</td>
-                <td className="px-4 py-3 text-xs text-muted-foreground">{formatTime(j.createdAt)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>Showing {filtered.length} of {MOCK_JOBS.length} jobs</span>
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" disabled>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-primary">1</Button>
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" disabled>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
-      </div>
+      ) : (
+        <div className="rounded-lg border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border surface-2">
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Job ID</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Type</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">URL</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Credits</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Duration</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                    No jobs yet. Run a scrape from the Playground to get started.
+                  </td>
+                </tr>
+              ) : (
+                jobs.map((j) => (
+                  <tr key={j.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{j.id.slice(0, 8)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-0.5 rounded border capitalize ${typeColors[j.mode] ?? typeColors.scrape}`}>
+                        {j.mode}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5 max-w-[300px]">
+                        <span className="truncate font-mono text-xs">{j.url}</span>
+                        <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border capitalize ${statusStyles[j.status] ?? statusStyles.queued}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${
+                          j.status === "completed" ? "bg-primary" :
+                          j.status === "failed" ? "bg-destructive" :
+                          j.status === "running" ? "bg-nebula-cyan animate-pulse" :
+                          "bg-muted-foreground"
+                        }`} />
+                        {j.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">{j.credits_used}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">{formatDuration(j.duration_ms)}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">{formatTime(j.created_at)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
