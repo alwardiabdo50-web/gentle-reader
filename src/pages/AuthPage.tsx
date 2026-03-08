@@ -60,7 +60,7 @@ export default function AuthPage() {
       if (result.error) throw result.error;
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
