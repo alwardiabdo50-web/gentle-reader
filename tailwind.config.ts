@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -56,6 +60,14 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        nebula: {
+          glow: "hsl(var(--nebula-glow))",
+          cyan: "hsl(var(--nebula-cyan))",
+          warning: "hsl(var(--nebula-warning))",
+          "surface-1": "hsl(var(--nebula-surface-1))",
+          "surface-2": "hsl(var(--nebula-surface-2))",
+          "surface-3": "hsl(var(--nebula-surface-3))",
         },
       },
       borderRadius: {
