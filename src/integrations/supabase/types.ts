@@ -50,6 +50,191 @@ export type Database = {
         }
         Relationships: []
       }
+      crawl_jobs: {
+        Row: {
+          api_key_id: string | null
+          cancelled_at: string | null
+          created_at: string
+          credits_used: number
+          discovered_count: number
+          error_code: string | null
+          error_message: string | null
+          exclude_patterns_json: Json | null
+          failed_count: number
+          finished_at: string | null
+          id: string
+          include_patterns_json: Json | null
+          include_subdomains: boolean
+          max_depth: number
+          max_pages: number
+          normalized_root_url: string
+          only_main_content: boolean
+          processed_count: number
+          queued_count: number
+          render_javascript: boolean
+          root_url: string
+          same_domain_only: boolean
+          started_at: string | null
+          status: string
+          timeout_ms: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key_id?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          credits_used?: number
+          discovered_count?: number
+          error_code?: string | null
+          error_message?: string | null
+          exclude_patterns_json?: Json | null
+          failed_count?: number
+          finished_at?: string | null
+          id?: string
+          include_patterns_json?: Json | null
+          include_subdomains?: boolean
+          max_depth?: number
+          max_pages?: number
+          normalized_root_url: string
+          only_main_content?: boolean
+          processed_count?: number
+          queued_count?: number
+          render_javascript?: boolean
+          root_url: string
+          same_domain_only?: boolean
+          started_at?: string | null
+          status?: string
+          timeout_ms?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_key_id?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          credits_used?: number
+          discovered_count?: number
+          error_code?: string | null
+          error_message?: string | null
+          exclude_patterns_json?: Json | null
+          failed_count?: number
+          finished_at?: string | null
+          id?: string
+          include_patterns_json?: Json | null
+          include_subdomains?: boolean
+          max_depth?: number
+          max_pages?: number
+          normalized_root_url?: string
+          only_main_content?: boolean
+          processed_count?: number
+          queued_count?: number
+          render_javascript?: boolean
+          root_url?: string
+          same_domain_only?: boolean
+          started_at?: string | null
+          status?: string
+          timeout_ms?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crawl_jobs_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crawl_pages: {
+        Row: {
+          crawl_job_id: string
+          depth: number
+          discovered_at: string
+          error_code: string | null
+          error_message: string | null
+          final_url: string | null
+          html: string | null
+          http_status_code: number | null
+          id: string
+          links_json: Json | null
+          markdown: string | null
+          metadata_json: Json | null
+          normalized_url: string
+          parent_page_id: string | null
+          queued_at: string | null
+          scraped_at: string | null
+          screenshot_url: string | null
+          status: string
+          title: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          crawl_job_id: string
+          depth?: number
+          discovered_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          final_url?: string | null
+          html?: string | null
+          http_status_code?: number | null
+          id?: string
+          links_json?: Json | null
+          markdown?: string | null
+          metadata_json?: Json | null
+          normalized_url: string
+          parent_page_id?: string | null
+          queued_at?: string | null
+          scraped_at?: string | null
+          screenshot_url?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          crawl_job_id?: string
+          depth?: number
+          discovered_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          final_url?: string | null
+          html?: string | null
+          http_status_code?: number | null
+          id?: string
+          links_json?: Json | null
+          markdown?: string | null
+          metadata_json?: Json | null
+          normalized_url?: string
+          parent_page_id?: string | null
+          queued_at?: string | null
+          scraped_at?: string | null
+          screenshot_url?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crawl_pages_crawl_job_id_fkey"
+            columns: ["crawl_job_id"]
+            isOneToOne: false
+            referencedRelation: "crawl_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crawl_pages_parent_page_id_fkey"
+            columns: ["parent_page_id"]
+            isOneToOne: false
+            referencedRelation: "crawl_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
