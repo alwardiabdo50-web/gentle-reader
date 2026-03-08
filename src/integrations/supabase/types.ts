@@ -235,6 +235,90 @@ export type Database = {
           },
         ]
       }
+      extraction_jobs: {
+        Row: {
+          api_key_id: string | null
+          created_at: string
+          credits_used: number
+          error_code: string | null
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          input_markdown: string | null
+          model: string
+          output_json: Json | null
+          prompt: string | null
+          provider: string
+          schema_json: Json | null
+          scrape_job_id: string | null
+          source_url: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          validation_json: Json | null
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string
+          credits_used?: number
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          input_markdown?: string | null
+          model: string
+          output_json?: Json | null
+          prompt?: string | null
+          provider?: string
+          schema_json?: Json | null
+          scrape_job_id?: string | null
+          source_url: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          validation_json?: Json | null
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string
+          credits_used?: number
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          input_markdown?: string | null
+          model?: string
+          output_json?: Json | null
+          prompt?: string | null
+          provider?: string
+          schema_json?: Json | null
+          scrape_job_id?: string | null
+          source_url?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          validation_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extraction_jobs_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extraction_jobs_scrape_job_id_fkey"
+            columns: ["scrape_job_id"]
+            isOneToOne: false
+            referencedRelation: "scrape_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
