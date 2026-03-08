@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.api-usage]
 verify_jwt = false
+
+[functions.crawl]
+verify_jwt = false
+
+[functions.crawl-worker]
+verify_jwt = false
