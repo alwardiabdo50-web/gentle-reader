@@ -214,6 +214,16 @@ Deno.serve(async (req) => {
     remove_selectors: body.remove_selectors ?? [],
   };
 
+  // --- Quota check ---
+  const quotaError = await checkQuota(ctx.userId, 1);
+  if (quotaError) {
+    console.warn(`Quota rejected: user=${ctx.userId} — ${quotaError.message}`);
+    return json({
+      success: false,
+      error: { code: quotaError.code, message: quotaError.message },
+    }, 402);
+  }
+
   const admin = getAdmin();
 
   // --- Create job record ---
