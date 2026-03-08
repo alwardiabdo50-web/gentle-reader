@@ -1,13 +1,23 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Globe, Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Navigate } from "react-router-dom";
 
 export default function AuthPage() {
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Already logged in — redirect to dashboard
+  if (!loading && session) {
+    return <Navigate to="/" replace />;
+  }
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
