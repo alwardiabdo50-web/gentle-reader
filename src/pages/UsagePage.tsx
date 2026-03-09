@@ -9,6 +9,7 @@ interface DailyUsage {
   scrape: number;
   crawl: number;
   extract: number;
+  map: number;
 }
 
 interface CreditTrend {
@@ -90,6 +91,7 @@ export default function UsagePage() {
           scrape: dayJobs.filter(j => j.mode === "scrape").length,
           crawl: dayJobs.filter(j => j.mode === "crawl").length,
           extract: dayJobs.filter(j => j.mode === "extract").length,
+          map: dayJobs.filter(j => j.mode === "map").length,
         });
       }
       setDailyUsage(days);
@@ -182,12 +184,14 @@ export default function UsagePage() {
               <Bar dataKey="scrape" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
               <Bar dataKey="crawl" fill="hsl(185 80% 55%)" radius={[3, 3, 0, 0]} />
               <Bar dataKey="extract" fill="hsl(38 92% 55%)" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="map" fill="hsl(280 70% 60%)" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
           <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" />Scrape</span>
             <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: "hsl(185 80% 55%)" }} />Crawl</span>
             <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: "hsl(38 92% 55%)" }} />Extract</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: "hsl(280 70% 60%)" }} />Map</span>
           </div>
         </div>
 
