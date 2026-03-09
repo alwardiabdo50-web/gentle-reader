@@ -274,8 +274,35 @@ Deno.serve(async (req) => {
 
   console.log(`Map request from user=${ctx.userId} key=${ctx.apiKeyId} url=${normalizedRoot}`);
 
+  // Create job record
+  const jobId = crypto.randomUUID();
+  const startTime = Date.now();
+
   try {
     const result = await performMap(body);
+    const duration = Date.now() - startTime;
+
+    // Insert job record
+    const { error: insertError } = await ctx.supabase.from("scrape_jobs").insert({
+      id: jobId,
+      user_id: ctx.userId,
+      api_key_id: ctx.apiKeyId,
+      mode: "map",
+      url: result.rootUrl,
+      final_url: result.normalizedRootUrl,
+      status: "completed",
+      credits_used: 1,
+      duration_ms: duration,
+      metadata_json: {
+        count: result.urls.length,
+        used_fallback: result.usedFallback,
+      },
+      warnings_json: result.warnings,
+    });
+
+    if (insertError) {
+      console.error(`Failed to insert job record: ${insertError.message}`);
+    }
 
     // Charge 1 credit
     const credits = await getUserCredits(ctx.userId);
@@ -287,6 +314,7 @@ Deno.serve(async (req) => {
       credits: -1,
       source_type: "map",
       balance_after: newBalance,
+      job_id: jobId,
       metadata_json: {
         root_url: result.normalizedRootUrl,
         urls_returned: result.urls.length,
@@ -305,6 +333,7 @@ Deno.serve(async (req) => {
       meta: {
         count: result.urls.length,
         credits_used: 1,
+        job_id: jobId,
       },
       warnings: result.warnings.length > 0 ? result.warnings : undefined,
       error: null,

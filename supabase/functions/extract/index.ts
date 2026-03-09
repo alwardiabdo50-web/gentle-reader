@@ -327,10 +327,10 @@ Deno.serve(async (req) => {
       api_key_id: ctx.apiKeyId,
       action: "extract_charge",
       credits: -EXTRACTION_CREDIT_COST,
-      job_id: extractJob.id,
+      job_id: scrapeResult.scrapeJobId || null,
       source_type: "extract",
       balance_after: newBalance,
-      metadata_json: { url: normalizedUrl, model, mode: body.schema ? "schema" : "prompt" },
+      metadata_json: { url: normalizedUrl, model, mode: body.schema ? "schema" : "prompt", extraction_job_id: extractJob.id },
     });
 
     console.log(`Extract completed job=${extractJob.id} model=${model} valid=${validation.valid}`);
