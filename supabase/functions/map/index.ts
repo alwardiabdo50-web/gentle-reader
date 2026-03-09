@@ -283,8 +283,14 @@ Deno.serve(async (req) => {
     const result = await performMap(body);
     const duration = Date.now() - startTime;
 
+    // Create admin client for DB operations
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
     // Insert job record
-    const { error: insertError } = await ctx.supabase.from("scrape_jobs").insert({
+    const { error: insertError } = await supabase.from("scrape_jobs").insert({
       id: jobId,
       user_id: ctx.userId,
       api_key_id: ctx.apiKeyId,
