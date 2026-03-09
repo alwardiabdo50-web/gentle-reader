@@ -1,3 +1,4 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { extractApiKey, validateApiKey } from "../_shared/api-key-auth.ts";
 import { checkQuota, getUserCredits, recordLedgerEntry } from "../_shared/billing.ts";
 import { normalizeUrl, isSameDomain, isBlockedUrl, extractLinks } from "../_shared/crawl-utils.ts";
@@ -282,8 +283,14 @@ Deno.serve(async (req) => {
     const result = await performMap(body);
     const duration = Date.now() - startTime;
 
+    // Create admin client for DB operations
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
     // Insert job record
-    const { error: insertError } = await ctx.supabase.from("scrape_jobs").insert({
+    const { error: insertError } = await supabase.from("scrape_jobs").insert({
       id: jobId,
       user_id: ctx.userId,
       api_key_id: ctx.apiKeyId,
