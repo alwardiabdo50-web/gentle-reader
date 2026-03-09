@@ -313,7 +313,24 @@ Deno.serve(async (req) => {
       validation.warnings.push("JSON was extracted from wrapped model output");
     }
 
-    // Step 4: Persist result
+    // Step 4: Charge credits FIRST (before marking as completed)
+    const credits = await getUserCredits(ctx.userId);
+    const newBalance = Math.max(0, credits.remaining - EXTRACTION_CREDIT_COST);
+
+    console.log(`Extract billing: user=${ctx.userId} job=${extractJob.id} cost=${EXTRACTION_CREDIT_COST} remaining=${credits.remaining} newBalance=${newBalance} scrapeJobId=${scrapeResult.scrapeJobId ?? "null"}`);
+
+    await recordLedgerEntry({
+      user_id: ctx.userId,
+      api_key_id: ctx.apiKeyId,
+      action: "extract_charge",
+      credits: -EXTRACTION_CREDIT_COST,
+      job_id: scrapeResult.scrapeJobId,
+      source_type: "extract",
+      balance_after: newBalance,
+      metadata_json: { url: normalizedUrl, model, mode: body.schema ? "schema" : "prompt", extraction_job_id: extractJob.id },
+    });
+
+    // Step 5: Persist result (only after billing succeeds)
     await admin.from("extraction_jobs").update({
       status: "completed",
       output_json: parsed as Record<string, unknown>,
@@ -322,21 +339,7 @@ Deno.serve(async (req) => {
       finished_at: new Date().toISOString(),
     }).eq("id", extractJob.id);
 
-    // Step 5: Charge credits
-    const credits = await getUserCredits(ctx.userId);
-    const newBalance = Math.max(0, credits.remaining - EXTRACTION_CREDIT_COST);
-    await recordLedgerEntry({
-      user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId,
-      action: "extract_charge",
-      credits: -EXTRACTION_CREDIT_COST,
-      job_id: scrapeResult.scrapeJobId || null,
-      source_type: "extract",
-      balance_after: newBalance,
-      metadata_json: { url: normalizedUrl, model, mode: body.schema ? "schema" : "prompt", extraction_job_id: extractJob.id },
-    });
-
-    console.log(`Extract completed job=${extractJob.id} model=${model} valid=${validation.valid}`);
+    console.log(`Extract completed job=${extractJob.id} model=${model} valid=${validation.valid} credits_charged=${EXTRACTION_CREDIT_COST}`);
 
     return json({
       success: true,
