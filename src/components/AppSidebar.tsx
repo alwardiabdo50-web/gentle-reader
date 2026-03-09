@@ -172,7 +172,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 space-y-3">
+      <SidebarFooter className={`space-y-3 ${collapsed ? "p-2" : "p-4"}`}>
         {!collapsed && profile && (
           <div className="rounded-lg border border-border p-3 surface-2">
             <div className="text-xs text-muted-foreground mb-1">Credits remaining</div>
