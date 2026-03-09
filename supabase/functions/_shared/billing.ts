@@ -85,8 +85,10 @@ export interface LedgerEntry {
 /**
  * Record a ledger entry and update the user's credits_used counter.
  */
-export async function recordLedgerEntry(entry: LedgerEntry): Promise<{ id: string } | null> {
+export async function recordLedgerEntry(entry: LedgerEntry): Promise<{ id: string }> {
   const admin = getAdmin();
+
+  console.log(`Ledger: attempting insert user=${entry.user_id} action=${entry.action} credits=${entry.credits} job_id=${entry.job_id ?? "null"} source_type=${entry.source_type}`);
 
   const { data, error } = await admin
     .from("usage_ledger")
@@ -103,15 +105,14 @@ export async function recordLedgerEntry(entry: LedgerEntry): Promise<{ id: strin
     .select("id")
     .single();
 
-  if (error) {
-    console.error("Failed to record ledger entry:", error);
-    return null;
+  if (error || !data) {
+    console.error("BILLING ERROR: Failed to record ledger entry:", JSON.stringify(error));
+    throw new Error(`Billing failed: ${error?.message ?? "no data returned"}`);
   }
 
   // Update credits_used on profile (increment by absolute consumed amount)
   if (entry.credits < 0) {
     const absAmount = Math.abs(entry.credits);
-    // Use raw SQL-like increment via rpc or just read-update
     const { data: profile } = await admin
       .from("profiles")
       .select("credits_used")
@@ -119,13 +120,17 @@ export async function recordLedgerEntry(entry: LedgerEntry): Promise<{ id: strin
       .single();
 
     if (profile) {
-      await admin
+      const { error: updateError } = await admin
         .from("profiles")
         .update({ credits_used: profile.credits_used + absAmount })
         .eq("user_id", entry.user_id);
+
+      if (updateError) {
+        console.error("BILLING ERROR: Failed to update profile credits_used:", JSON.stringify(updateError));
+      }
     }
   }
 
-  console.log(`Ledger: user=${entry.user_id} action=${entry.action} amount=${entry.credits} balance=${entry.balance_after}`);
+  console.log(`Ledger: SUCCESS user=${entry.user_id} action=${entry.action} amount=${entry.credits} balance=${entry.balance_after} ledger_id=${data.id}`);
   return data;
 }

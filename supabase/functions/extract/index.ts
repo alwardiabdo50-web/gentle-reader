@@ -40,7 +40,7 @@ const ALLOWED_MODELS = [
 
 // ─── Scrape pipeline reuse (mock) ────────────────────────────
 async function scrapeForExtraction(url: string, admin: ReturnType<typeof getAdmin>, userId: string, apiKeyId: string): Promise<{
-  scrapeJobId: string;
+  scrapeJobId: string | null;
   title: string;
   markdown: string;
 }> {
@@ -48,8 +48,7 @@ async function scrapeForExtraction(url: string, admin: ReturnType<typeof getAdmi
   const title = `${domain} — Page`;
   const markdown = `# ${title}\n\nThis is mock content from **${url}**.\n\nProduct: Example Widget\nPrice: $29.99\nCurrency: USD\nRating: 4.5/5\nAvailability: In Stock\n\nFeatures:\n- Durable construction\n- Lightweight design\n- 2-year warranty\n\n> Mock mode — connect a real browser for live scraping.`;
 
-  // Persist scrape job for linkage
-  const { data: job } = await admin
+  const { data: job, error } = await admin
     .from("scrape_jobs")
     .insert({
       user_id: userId,
@@ -62,12 +61,16 @@ async function scrapeForExtraction(url: string, admin: ReturnType<typeof getAdmi
       final_url: url,
       http_status_code: 200,
       duration_ms: 200,
-      credits_used: 0, // extraction has its own charge
+      credits_used: 0,
     })
     .select("id")
     .single();
 
-  return { scrapeJobId: job?.id ?? "", title, markdown };
+  if (error) {
+    console.error("Failed to insert scrape job for extraction:", JSON.stringify(error));
+  }
+
+  return { scrapeJobId: job?.id ?? null, title, markdown };
 }
 
 // ─── AI extraction ───────────────────────────────────────────
@@ -310,7 +313,24 @@ Deno.serve(async (req) => {
       validation.warnings.push("JSON was extracted from wrapped model output");
     }
 
-    // Step 4: Persist result
+    // Step 4: Charge credits FIRST (before marking as completed)
+    const credits = await getUserCredits(ctx.userId);
+    const newBalance = Math.max(0, credits.remaining - EXTRACTION_CREDIT_COST);
+
+    console.log(`Extract billing: user=${ctx.userId} job=${extractJob.id} cost=${EXTRACTION_CREDIT_COST} remaining=${credits.remaining} newBalance=${newBalance} scrapeJobId=${scrapeResult.scrapeJobId ?? "null"}`);
+
+    await recordLedgerEntry({
+      user_id: ctx.userId,
+      api_key_id: ctx.apiKeyId,
+      action: "extract_charge",
+      credits: -EXTRACTION_CREDIT_COST,
+      job_id: scrapeResult.scrapeJobId,
+      source_type: "extract",
+      balance_after: newBalance,
+      metadata_json: { url: normalizedUrl, model, mode: body.schema ? "schema" : "prompt", extraction_job_id: extractJob.id },
+    });
+
+    // Step 5: Persist result (only after billing succeeds)
     await admin.from("extraction_jobs").update({
       status: "completed",
       output_json: parsed as Record<string, unknown>,
@@ -319,21 +339,7 @@ Deno.serve(async (req) => {
       finished_at: new Date().toISOString(),
     }).eq("id", extractJob.id);
 
-    // Step 5: Charge credits
-    const credits = await getUserCredits(ctx.userId);
-    const newBalance = Math.max(0, credits.remaining - EXTRACTION_CREDIT_COST);
-    await recordLedgerEntry({
-      user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId,
-      action: "extract_charge",
-      credits: -EXTRACTION_CREDIT_COST,
-      job_id: scrapeResult.scrapeJobId || null,
-      source_type: "extract",
-      balance_after: newBalance,
-      metadata_json: { url: normalizedUrl, model, mode: body.schema ? "schema" : "prompt", extraction_job_id: extractJob.id },
-    });
-
-    console.log(`Extract completed job=${extractJob.id} model=${model} valid=${validation.valid}`);
+    console.log(`Extract completed job=${extractJob.id} model=${model} valid=${validation.valid} credits_charged=${EXTRACTION_CREDIT_COST}`);
 
     return json({
       success: true,
@@ -354,7 +360,9 @@ Deno.serve(async (req) => {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`Extract failed job=${extractJob.id}: ${msg}`);
 
-    const errorCode = msg.includes("parse JSON") ? "EXTRACTION_FAILED" : "INTERNAL_ERROR";
+    const errorCode = msg.includes("parse JSON") ? "EXTRACTION_FAILED" 
+      : msg.includes("Billing failed") ? "BILLING_ERROR"
+      : "INTERNAL_ERROR";
 
     await admin.from("extraction_jobs").update({
       status: "failed",
