@@ -9,6 +9,7 @@ interface DailyUsage {
   scrape: number;
   crawl: number;
   extract: number;
+  map: number;
 }
 
 interface CreditTrend {
