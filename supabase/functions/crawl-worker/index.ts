@@ -145,12 +145,20 @@ Deno.serve(async (req) => {
     timeoutMs: job.timeout_ms,
   };
 
+  const throttle = new CrawlThrottle({
+    globalRps: Number(Deno.env.get("CRAWL_GLOBAL_RPS") ?? "1.5"),
+    domainMinIntervalMs: Number(Deno.env.get("CRAWL_DOMAIN_MIN_INTERVAL_MS") ?? "800"),
+    domainMaxConcurrent: Number(Deno.env.get("CRAWL_DOMAIN_MAX_CONCURRENT") ?? "1"),
+    jitterMs: Number(Deno.env.get("CRAWL_JITTER_MS") ?? "200"),
+  });
+
   const seenUrls = new Set<string>([job.normalized_root_url]);
   let processedCount = 0;
   let failedCount = 0;
   let creditsUsed = 0;
 
   console.log(`Crawl worker started job=${jobId} root=${job.root_url}`);
+  console.log(`Crawl worker throttle settings job=${jobId}`, throttle.getSettings());
 
   try {
     // Process pages in BFS order
@@ -174,9 +182,11 @@ Deno.serve(async (req) => {
 
       if (!queuedPages || queuedPages.length === 0) break;
 
-      // Process batch
+      // Process batch with global + per-domain throttling
       const results = await Promise.all(
-        queuedPages.map((p) => processPage(admin, jobId, p.id, p.url, p.depth, config, seenUrls))
+        queuedPages.map((p) =>
+          throttle.schedule(p.url, () => processPage(admin, jobId, p.id, p.url, p.depth, config, seenUrls))
+        )
       );
 
       // Track results
