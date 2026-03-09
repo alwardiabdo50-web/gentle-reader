@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, CreditCard, Loader2 } from "lucide-react";
+import { Check, CreditCard, Loader2, ExternalLink, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -11,6 +11,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+
+const PLAN_PRICES: Record<string, { price_id: string; product_id: string }> = {
+  starter: { price_id: "price_1T8rVAF7VmTA91ISjCoQzkq4", product_id: "prod_U75gHF5XUrUy2E" },
+  pro:     { price_id: "price_1T8rVWF7VmTA91ISyNNxcsg6", product_id: "prod_U75gA8gdsRsNaJ" },
+  scale:   { price_id: "price_1T8rWYF7VmTA91ISUTSoy23Z", product_id: "prod_U75h0OkYXcc0mu" },
+};
 
 const plans = [
   { name: "free", label: "Free", price: "$0", credits: 500, features: ["500 credits/month", "5 req/min", "Community support", "Playground access"] },
@@ -27,10 +33,28 @@ export default function BillingPage() {
   const [periodEnd, setPeriodEnd] = useState<string | null>(null);
   const [switching, setSwitching] = useState(false);
   const [confirmPlan, setConfirmPlan] = useState<typeof plans[0] | null>(null);
+  const [hasStripeSubscription, setHasStripeSubscription] = useState(false);
+
+  const checkSubscription = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (!error && data) {
+        setCurrentPlan(data.plan || "free");
+        setHasStripeSubscription(data.subscribed || false);
+        if (data.subscription_end) {
+          setPeriodEnd(data.subscription_end);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to check subscription:", e);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
+      // Load profile data
       const { data } = await supabase
         .from("profiles")
         .select("plan, monthly_credits, extra_credits, credits_used, current_period_end")
@@ -41,31 +65,71 @@ export default function BillingPage() {
         setCreditsRemaining(data.monthly_credits + data.extra_credits - data.credits_used);
         setPeriodEnd(data.current_period_end);
       }
+      // Also check Stripe subscription status
+      await checkSubscription();
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, checkSubscription]);
 
-  const handleSwitchPlan = async () => {
+  // Auto-refresh subscription status every 60s
+  useEffect(() => {
+    const interval = setInterval(checkSubscription, 60000);
+    return () => clearInterval(interval);
+  }, [checkSubscription]);
+
+  // Check for returning from Stripe checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("session_id")) {
+      toast.success("Payment processing! Your plan will update shortly.");
+      // Clean URL
+      window.history.replaceState({}, "", "/billing");
+      // Poll for subscription update
+      const poll = setInterval(async () => {
+        await checkSubscription();
+      }, 3000);
+      setTimeout(() => clearInterval(poll), 30000);
+    }
+  }, [checkSubscription]);
+
+  const handleUpgrade = async () => {
     if (!confirmPlan || !user) return;
-    setSwitching(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        plan: confirmPlan.name,
-        monthly_credits: confirmPlan.credits,
-        credits_used: 0,
-      })
-      .eq("user_id", user.id);
+    if (confirmPlan.name === "free") {
+      // Downgrade to free means canceling subscription via portal
+      await handleManageSubscription();
+      setConfirmPlan(null);
+      return;
+    }
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      setCurrentPlan(confirmPlan.name);
-      setCreditsRemaining(confirmPlan.credits);
-      toast.success(`Switched to ${confirmPlan.label} plan`);
+    setSwitching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { plan: confirmPlan.name },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        toast.info("Stripe checkout opened in a new tab");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create checkout session");
     }
     setSwitching(false);
     setConfirmPlan(null);
+  };
+
+  const handleManageSubscription = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("customer-portal");
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        toast.info("Stripe portal opened in a new tab");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to open subscription management");
+    }
   };
 
   const currentPlanData = plans.find((p) => p.name === currentPlan) ?? plans[0];
@@ -100,6 +164,12 @@ export default function BillingPage() {
               Next billing date: {formattedEnd} · {creditsRemaining.toLocaleString()} credits remaining
             </p>
           </div>
+          {hasStripeSubscription && (
+            <Button variant="outline" size="sm" onClick={handleManageSubscription}>
+              <Settings className="h-4 w-4 mr-1" />
+              Manage Subscription
+            </Button>
+          )}
         </div>
       </div>
 
@@ -147,16 +217,27 @@ export default function BillingPage() {
       <Dialog open={!!confirmPlan} onOpenChange={(open) => !open && setConfirmPlan(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Switch to {confirmPlan?.label}?</DialogTitle>
+            <DialogTitle>
+              {confirmPlan?.name === "free" ? "Downgrade to Free?" : `Upgrade to ${confirmPlan?.label}?`}
+            </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Your plan will change to <strong>{confirmPlan?.label}</strong> ({confirmPlan?.price}/mo) with {confirmPlan?.credits.toLocaleString()} credits. Your credit usage will reset.
+            {confirmPlan?.name === "free" ? (
+              "You'll be redirected to the Stripe portal to cancel your current subscription."
+            ) : (
+              <>
+                You'll be redirected to Stripe Checkout to subscribe to{" "}
+                <strong>{confirmPlan?.label}</strong> ({confirmPlan?.price}/mo) with{" "}
+                {confirmPlan?.credits.toLocaleString()} credits.
+              </>
+            )}
           </p>
           <DialogFooter>
             <Button variant="secondary" onClick={() => setConfirmPlan(null)}>Cancel</Button>
-            <Button onClick={handleSwitchPlan} disabled={switching}>
+            <Button onClick={handleUpgrade} disabled={switching}>
               {switching && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-              Confirm
+              <ExternalLink className="h-4 w-4 mr-1" />
+              {confirmPlan?.name === "free" ? "Manage Subscription" : "Continue to Stripe"}
             </Button>
           </DialogFooter>
         </DialogContent>

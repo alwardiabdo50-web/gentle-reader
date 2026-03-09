@@ -23,3 +23,15 @@ verify_jwt = false
 
 [functions.extract]
 verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
