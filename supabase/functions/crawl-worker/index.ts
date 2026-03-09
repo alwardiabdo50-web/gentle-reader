@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { normalizeUrl, isCrawlable, extractLinks, CrawlConfig } from "../_shared/crawl-utils.ts";
 import { getUserCredits, recordLedgerEntry, checkQuota } from "../_shared/billing.ts";
+import { performScrape } from "../_shared/scrape-pipeline.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,8 +14,11 @@ function getAdmin() {
 
 const CONCURRENCY = 3;
 
-/** Mock scrape a single page (reuses same logic as scrape endpoint) */
-async function scrapePage(url: string, config: CrawlConfig): Promise<{
+/** Scrape a single page (fetch + extraction) */
+async function scrapePage(
+  url: string,
+  config: CrawlConfig
+): Promise<{
   finalUrl: string;
   title: string;
   statusCode: number;
@@ -23,28 +27,27 @@ async function scrapePage(url: string, config: CrawlConfig): Promise<{
   metadata: Record<string, unknown>;
   links: Array<{ href: string; text: string }>;
 }> {
-  await new Promise((r) => setTimeout(r, 150 + Math.random() * 250));
-
-  const domain = new URL(url).hostname;
-  const title = `${domain} — ${url.split("/").pop() || "Home"}`;
-
-  const mockLinks = [
-    { href: `${url}/about`, text: "About" },
-    { href: `${url}/docs`, text: "Docs" },
-    { href: `${url}/pricing`, text: "Pricing" },
-    { href: `${url}/blog`, text: "Blog" },
-  ];
+  const result = await performScrape({
+    url,
+    formats: ["markdown", "html", "metadata", "links"],
+    render_javascript: config.renderJavascript,
+    only_main_content: config.onlyMainContent,
+    timeout_ms: config.timeoutMs,
+    wait_until: "networkidle",
+    screenshot: false,
+  });
 
   return {
-    finalUrl: url,
-    title,
-    statusCode: 200,
-    markdown: `# ${title}\n\nCrawled content from **${url}**.\n\n> Mock mode — connect a real browser for live crawling.`,
-    html: `<html><head><title>${title}</title></head><body><h1>${title}</h1><a href="${url}/about">About</a><a href="${url}/docs">Docs</a><a href="${url}/pricing">Pricing</a><a href="${url}/blog">Blog</a></body></html>`,
-    metadata: { description: `Page at ${url}`, language: "en" },
-    links: mockLinks,
+    finalUrl: result.final_url,
+    title: result.title,
+    statusCode: result.status_code,
+    markdown: result.markdown ?? "",
+    html: result.html ?? "",
+    metadata: (result.metadata ?? {}) as Record<string, unknown>,
+    links: result.links ?? [],
   };
 }
+
 
 /** Process a single page within a crawl */
 async function processPage(
