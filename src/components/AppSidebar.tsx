@@ -9,12 +9,22 @@ import {
   Settings,
   LogOut,
   BookOpen,
+  ChevronsUpDown,
+  User,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import {
   Sidebar,
@@ -54,8 +64,14 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const isActive = (path: string) => location.pathname === path;
+
+  const email = user?.email ?? "";
+  const initials = email
+    .split("@")[0]
+    .slice(0, 2)
+    .toUpperCase();
 
   const [profile, setProfile] = useState<Profile | null>(null);
 
@@ -172,15 +188,47 @@ export function AppSidebar() {
             </div>
           </div>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-          onClick={signOut}
-        >
-          <LogOut className="h-4 w-4" />
-          {!collapsed && "Sign out"}
-        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex w-full items-center gap-2 rounded-lg p-2 text-left hover:bg-sidebar-accent transition-colors outline-none">
+              <Avatar className="h-7 w-7 shrink-0 rounded-md bg-primary/15 text-primary">
+                <AvatarFallback className="rounded-md bg-primary/15 text-primary text-[10px] font-semibold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              {!collapsed && (
+                <>
+                  <span className="flex-1 truncate text-xs text-foreground">{email}</span>
+                  <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start" className="w-56">
+            <div className="px-2 py-1.5">
+              <p className="text-xs font-medium text-foreground">Account</p>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <NavLink to="/settings" className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                Account Settings
+              </NavLink>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <NavLink to="/billing" className="cursor-pointer">
+                <CreditCard className="mr-2 h-4 w-4" />
+                Manage Subscriptions
+              </NavLink>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive focus:text-destructive">
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
     </Sidebar>
   );
