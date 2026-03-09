@@ -191,7 +191,7 @@ export function AppSidebar() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex w-full items-center gap-2 rounded-lg p-2 text-left hover:bg-sidebar-accent transition-colors outline-none">
+            <button className={`flex w-full items-center gap-2 rounded-lg p-2 text-left hover:bg-sidebar-accent transition-colors outline-none ${collapsed ? "justify-center" : ""}`}>
               <Avatar className="h-7 w-7 shrink-0 rounded-md bg-primary/15 text-primary">
                 <AvatarFallback className="rounded-md bg-primary/15 text-primary text-[10px] font-semibold">
                   {initials}
