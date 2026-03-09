@@ -1,5 +1,6 @@
 import { extractApiKey, validateApiKey } from "../_shared/api-key-auth.ts";
 import { checkQuota, getUserCredits, recordLedgerEntry } from "../_shared/billing.ts";
+import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
