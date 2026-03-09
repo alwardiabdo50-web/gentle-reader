@@ -360,7 +360,9 @@ Deno.serve(async (req) => {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`Extract failed job=${extractJob.id}: ${msg}`);
 
-    const errorCode = msg.includes("parse JSON") ? "EXTRACTION_FAILED" : "INTERNAL_ERROR";
+    const errorCode = msg.includes("parse JSON") ? "EXTRACTION_FAILED" 
+      : msg.includes("Billing failed") ? "BILLING_ERROR"
+      : "INTERNAL_ERROR";
 
     await admin.from("extraction_jobs").update({
       status: "failed",
