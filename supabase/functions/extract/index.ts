@@ -61,7 +61,7 @@ async function scrapeForExtraction(url: string, admin: ReturnType<typeof getAdmi
       final_url: url,
       http_status_code: 200,
       duration_ms: 200,
-      credits_used: 0,
+      credits_used: EXTRACTION_CREDIT_COST,
     })
     .select("id")
     .single();

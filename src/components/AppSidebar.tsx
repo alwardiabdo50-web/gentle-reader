@@ -65,9 +65,35 @@ export function AppSidebar() {
         .from("profiles")
         .select("plan, monthly_credits, extra_credits, credits_used")
         .single();
-      if (data) setProfile(data);
+      if (data) setProfile(data as Profile);
     };
     fetchProfile();
+
+    // Realtime subscription for credits updates
+    const channel = supabase
+      .channel("sidebar-credits")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles" },
+        (payload) => {
+          const updated = payload.new as Record<string, unknown>;
+          setProfile((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              credits_used: (updated.credits_used as number) ?? prev.credits_used,
+              monthly_credits: (updated.monthly_credits as number) ?? prev.monthly_credits,
+              extra_credits: (updated.extra_credits as number) ?? prev.extra_credits,
+              plan: (updated.plan as string) ?? prev.plan,
+            };
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const totalCredits = profile ? profile.monthly_credits + profile.extra_credits : 0;
