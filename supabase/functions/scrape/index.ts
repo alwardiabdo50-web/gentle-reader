@@ -68,73 +68,10 @@ function getAdmin() {
 }
 
 /**
- * Mock scrape implementation — returns realistic structured data.
- * Replace with Firecrawl or browser integration when ready.
+ * Real scrape implementation (fetch + DOM parse + Readability + Markdown).
+ * Implemented in ../_shared/scrape-pipeline.ts to keep this handler focused.
  */
-async function performScrape(req: ScrapeRequest): Promise<ScrapeResult> {
-  const startTime = Date.now();
-  const formats = req.formats ?? ["markdown"];
-  const warnings: string[] = [];
 
-  // Simulate navigation time
-  const navStart = Date.now();
-  await new Promise((r) => setTimeout(r, 200 + Math.random() * 300));
-  const navMs = Date.now() - navStart;
-
-  // Mock extraction
-  const extractStart = Date.now();
-  const domain = new URL(req.url).hostname;
-  const title = `${domain} — Page Title`;
-
-  const mockMarkdown = `# ${title}\n\nThis is mock content from **${req.url}**.\n\nThe scrape endpoint is working correctly with API key authentication, request validation, and database persistence.\n\n## Features\n- Markdown extraction\n- HTML capture\n- Metadata parsing\n- Link discovery\n- Screenshot support (placeholder)\n\n> Note: Connect Firecrawl for real browser rendering and content extraction.`;
-
-  const mockHtml = `<!DOCTYPE html><html><head><title>${title}</title><meta name="description" content="Mock page for ${domain}"><meta name="language" content="en"></head><body><h1>${title}</h1><p>Mock content from ${req.url}</p></body></html>`;
-
-  const mockLinks = [
-    { href: `${req.url}/about`, text: "About" },
-    { href: `${req.url}/docs`, text: "Documentation" },
-    { href: `${req.url}/pricing`, text: "Pricing" },
-  ];
-
-  const mockMetadata = {
-    description: `Mock page for ${domain}`,
-    language: "en",
-    canonical_url: req.url,
-    og_title: title,
-    og_type: "website",
-  };
-
-  const extractMs = Date.now() - extractStart;
-
-  if (req.screenshot) {
-    warnings.push("Screenshots are not available in mock mode. Connect Firecrawl for screenshot support.");
-  }
-  if (!req.render_javascript) {
-    warnings.push("JavaScript rendering disabled — static HTML only.");
-  }
-
-  warnings.push("Running in mock mode. Connect Firecrawl for real scraping.");
-
-  const result: ScrapeResult = {
-    url: req.url,
-    final_url: req.url,
-    title,
-    status_code: 200,
-    timings: {
-      navigation_ms: navMs,
-      extraction_ms: extractMs,
-      total_ms: Date.now() - startTime,
-    },
-    warnings,
-  };
-
-  if (formats.includes("markdown")) result.markdown = mockMarkdown;
-  if (formats.includes("html")) result.html = mockHtml;
-  if (formats.includes("metadata")) result.metadata = mockMetadata;
-  if (formats.includes("links")) result.links = mockLinks;
-
-  return result;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
