@@ -40,7 +40,7 @@ const ALLOWED_MODELS = [
 
 // ─── Scrape pipeline reuse (mock) ────────────────────────────
 async function scrapeForExtraction(url: string, admin: ReturnType<typeof getAdmin>, userId: string, apiKeyId: string): Promise<{
-  scrapeJobId: string;
+  scrapeJobId: string | null;
   title: string;
   markdown: string;
 }> {
@@ -48,8 +48,7 @@ async function scrapeForExtraction(url: string, admin: ReturnType<typeof getAdmi
   const title = `${domain} — Page`;
   const markdown = `# ${title}\n\nThis is mock content from **${url}**.\n\nProduct: Example Widget\nPrice: $29.99\nCurrency: USD\nRating: 4.5/5\nAvailability: In Stock\n\nFeatures:\n- Durable construction\n- Lightweight design\n- 2-year warranty\n\n> Mock mode — connect a real browser for live scraping.`;
 
-  // Persist scrape job for linkage
-  const { data: job } = await admin
+  const { data: job, error } = await admin
     .from("scrape_jobs")
     .insert({
       user_id: userId,
@@ -62,12 +61,16 @@ async function scrapeForExtraction(url: string, admin: ReturnType<typeof getAdmi
       final_url: url,
       http_status_code: 200,
       duration_ms: 200,
-      credits_used: 0, // extraction has its own charge
+      credits_used: 0,
     })
     .select("id")
     .single();
 
-  return { scrapeJobId: job?.id ?? "", title, markdown };
+  if (error) {
+    console.error("Failed to insert scrape job for extraction:", JSON.stringify(error));
+  }
+
+  return { scrapeJobId: job?.id ?? null, title, markdown };
 }
 
 // ─── AI extraction ───────────────────────────────────────────
