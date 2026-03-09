@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { normalizeUrl, isCrawlable, extractLinks, CrawlConfig } from "../_shared/crawl-utils.ts";
 import { getUserCredits, recordLedgerEntry, checkQuota } from "../_shared/billing.ts";
 import { performScrape } from "../_shared/scrape-pipeline.ts";
+import { CrawlThrottle } from "../_shared/crawl-throttle.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
