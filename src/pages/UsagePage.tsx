@@ -91,6 +91,7 @@ export default function UsagePage() {
           scrape: dayJobs.filter(j => j.mode === "scrape").length,
           crawl: dayJobs.filter(j => j.mode === "crawl").length,
           extract: dayJobs.filter(j => j.mode === "extract").length,
+          map: dayJobs.filter(j => j.mode === "map").length,
         });
       }
       setDailyUsage(days);
