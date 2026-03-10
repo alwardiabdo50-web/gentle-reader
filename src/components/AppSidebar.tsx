@@ -11,7 +11,9 @@ import {
   BookOpen,
   ChevronsUpDown,
   User,
+  Shield,
 } from "lucide-react";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
