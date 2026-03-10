@@ -11,7 +11,9 @@ import {
   BookOpen,
   ChevronsUpDown,
   User,
+  Shield,
 } from "lucide-react";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -65,6 +67,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { signOut, user } = useAuth();
+  const { isAdmin } = useAdminRole();
   const isActive = (path: string) => location.pathname === path;
 
   const email = user?.email ?? "";
@@ -167,6 +170,16 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/admin" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground">
+                      <Shield className="h-4 w-4" />
+                      {!collapsed && <span>Admin</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
