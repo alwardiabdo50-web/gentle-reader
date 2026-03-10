@@ -5,7 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { AdminLayout } from "@/components/AdminLayout";
 import PlaygroundPage from "@/pages/PlaygroundPage";
 import ApiKeysPage from "@/pages/ApiKeysPage";
 import UsagePage from "@/pages/UsagePage";
@@ -15,6 +17,11 @@ import SettingsPage from "@/pages/SettingsPage";
 import DocsPage from "@/pages/DocsPage";
 import AuthPage from "@/pages/AuthPage";
 import NotFound from "@/pages/NotFound";
+import AdminOverviewPage from "@/pages/admin/AdminOverviewPage";
+import AdminUsersPage from "@/pages/admin/AdminUsersPage";
+import AdminUserDetailPage from "@/pages/admin/AdminUserDetailPage";
+import AdminJobsPage from "@/pages/admin/AdminJobsPage";
+import AdminBillingPage from "@/pages/admin/AdminBillingPage";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +34,22 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
+            <Route
+              path="/admin/*"
+              element={
+                <AdminProtectedRoute>
+                  <AdminLayout>
+                    <Routes>
+                      <Route path="/" element={<AdminOverviewPage />} />
+                      <Route path="/users" element={<AdminUsersPage />} />
+                      <Route path="/users/:userId" element={<AdminUserDetailPage />} />
+                      <Route path="/jobs" element={<AdminJobsPage />} />
+                      <Route path="/billing" element={<AdminBillingPage />} />
+                    </Routes>
+                  </AdminLayout>
+                </AdminProtectedRoute>
+              }
+            />
             <Route
               path="/*"
               element={

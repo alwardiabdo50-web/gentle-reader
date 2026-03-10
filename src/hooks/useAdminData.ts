@@ -3,15 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 async function fetchAdminData(action: string, params?: Record<string, string>) {
   const searchParams = new URLSearchParams({ action, ...params });
-  const { data, error } = await supabase.functions.invoke("admin-stats", {
-    body: null,
-    headers: {},
-  });
-  // We need to use fetch directly since we need query params
   const session = (await supabase.auth.getSession()).data.session;
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const url = `https://${projectId}.supabase.co/functions/v1/admin-stats?${searchParams.toString()}`;
-  
+
   const res = await fetch(url, {
     headers: {
       Authorization: `Bearer ${session?.access_token}`,
@@ -19,12 +14,12 @@ async function fetchAdminData(action: string, params?: Record<string, string>) {
       apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     },
   });
-  
+
   if (!res.ok) {
     const err = await res.json();
     throw new Error(err.error || "Failed to fetch admin data");
   }
-  
+
   const json = await res.json();
   return json.data;
 }
