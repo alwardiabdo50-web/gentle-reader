@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { AdminLayout } from "@/components/AdminLayout";
+import { PublicLayout } from "@/components/public/PublicLayout";
 import PlaygroundPage from "@/pages/PlaygroundPage";
 import ApiKeysPage from "@/pages/ApiKeysPage";
 import UsagePage from "@/pages/UsagePage";
@@ -17,6 +18,8 @@ import SettingsPage from "@/pages/SettingsPage";
 import DocsPage from "@/pages/DocsPage";
 import AuthPage from "@/pages/AuthPage";
 import NotFound from "@/pages/NotFound";
+import HomePage from "@/pages/public/HomePage";
+import PricingPage from "@/pages/public/PricingPage";
 import AdminOverviewPage from "@/pages/admin/AdminOverviewPage";
 import AdminUsersPage from "@/pages/admin/AdminUsersPage";
 import AdminUserDetailPage from "@/pages/admin/AdminUserDetailPage";
@@ -33,7 +36,13 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            {/* Public pages */}
+            <Route path="/home" element={<PublicLayout><HomePage /></PublicLayout>} />
+            <Route path="/pricing" element={<PublicLayout><PricingPage /></PublicLayout>} />
+
             <Route path="/auth" element={<AuthPage />} />
+
+            {/* Admin */}
             <Route
               path="/admin/*"
               element={
@@ -50,6 +59,8 @@ const App = () => (
                 </AdminProtectedRoute>
               }
             />
+
+            {/* Authenticated dashboard */}
             <Route
               path="/*"
               element={
