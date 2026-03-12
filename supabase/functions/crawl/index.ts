@@ -1,5 +1,5 @@
 import { extractApiKey, validateApiKey, authenticateServiceRole } from "../_shared/api-key-auth.ts";
-import { checkQuota, getUserCredits, recordLedgerEntry } from "../_shared/billing.ts";
+import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from "../_shared/billing.ts";
 import { normalizeUrl, CrawlConfig } from "../_shared/crawl-utils.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
