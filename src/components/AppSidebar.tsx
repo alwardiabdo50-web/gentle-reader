@@ -13,6 +13,7 @@ import {
   Shield,
   Webhook,
   Calendar,
+  GitBranch,
 } from "lucide-react";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useCredits } from "@/hooks/useCredits";
