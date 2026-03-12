@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, ExternalLink, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Search, ExternalLink, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Job {
@@ -25,9 +24,11 @@ const statusStyles: Record<string, string> = {
 
 const typeColors: Record<string, string> = {
   scrape: "bg-primary/15 text-primary border-primary/20",
+  batch: "bg-primary/15 text-primary border-primary/20",
   crawl: "bg-nebula-cyan/15 text-nebula-cyan border-nebula-cyan/20",
   extract: "bg-nebula-warning/15 text-nebula-warning border-nebula-warning/20",
   map: "bg-secondary text-secondary-foreground border-border",
+  pipeline: "bg-accent/15 text-accent-foreground border-accent/20",
 };
 
 export default function JobsPage() {
@@ -38,17 +39,82 @@ export default function JobsPage() {
 
   useEffect(() => {
     const fetchJobs = async () => {
-      let query = supabase
-        .from("scrape_jobs")
-        .select("id, mode, url, status, credits_used, duration_ms, created_at, title")
-        .order("created_at", { ascending: false })
-        .limit(50);
+      setLoading(true);
+      const allJobs: Job[] = [];
 
-      if (filter !== "all") query = query.eq("mode", filter);
-      if (search) query = query.ilike("url", `%${search}%`);
+      // Fetch scrape_jobs (unless filtering to extract/pipeline only)
+      if (filter === "all" || filter === "scrape" || filter === "batch" || filter === "crawl" || filter === "map") {
+        let scrapeQuery = supabase
+          .from("scrape_jobs")
+          .select("id, mode, url, status, credits_used, duration_ms, created_at, title")
+          .order("created_at", { ascending: false })
+          .limit(50);
 
-      const { data } = await query;
-      setJobs(data ?? []);
+        if (filter !== "all") scrapeQuery = scrapeQuery.eq("mode", filter);
+        if (search) scrapeQuery = scrapeQuery.ilike("url", `%${search}%`);
+
+        const { data } = await scrapeQuery;
+        if (data) allJobs.push(...data);
+      }
+
+      // Fetch extraction_jobs
+      if (filter === "all" || filter === "extract") {
+        let extractQuery = supabase
+          .from("extraction_jobs")
+          .select("id, status, credits_used, created_at, source_url, started_at, finished_at")
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (search) extractQuery = extractQuery.ilike("source_url", `%${search}%`);
+
+        const { data } = await extractQuery;
+        if (data) {
+          allJobs.push(...data.map((e) => ({
+            id: e.id,
+            mode: "extract",
+            url: e.source_url,
+            status: e.status,
+            credits_used: e.credits_used,
+            duration_ms: e.started_at && e.finished_at
+              ? new Date(e.finished_at).getTime() - new Date(e.started_at).getTime()
+              : null,
+            created_at: e.created_at,
+            title: null,
+          })));
+        }
+      }
+
+      // Fetch pipeline_runs
+      if (filter === "all" || filter === "pipeline") {
+        let pipelineQuery = supabase
+          .from("pipeline_runs")
+          .select("id, status, credits_used, created_at, source_url, started_at, finished_at")
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (search) pipelineQuery = pipelineQuery.ilike("source_url", `%${search}%`);
+
+        const { data } = await pipelineQuery;
+        if (data) {
+          allJobs.push(...data.map((p) => ({
+            id: p.id,
+            mode: "pipeline",
+            url: p.source_url,
+            status: p.status ?? "unknown",
+            credits_used: p.credits_used ?? 0,
+            duration_ms: p.started_at && p.finished_at
+              ? new Date(p.finished_at).getTime() - new Date(p.started_at).getTime()
+              : null,
+            created_at: p.created_at ?? "",
+            title: null,
+          })));
+        }
+      }
+
+      // Sort all jobs by created_at descending
+      allJobs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setJobs(allJobs.slice(0, 50));
       setLoading(false);
     };
     fetchJobs();
@@ -69,7 +135,7 @@ export default function JobsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Job History</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Browse and inspect past scrape, crawl, map, and extract jobs.
+          Browse and inspect past scrape, crawl, map, extract, and pipeline jobs.
         </p>
       </div>
 
@@ -90,9 +156,11 @@ export default function JobsPage() {
           <SelectContent>
             <SelectItem value="all">All types</SelectItem>
             <SelectItem value="scrape">Scrape</SelectItem>
+            <SelectItem value="batch">Batch</SelectItem>
             <SelectItem value="crawl">Crawl</SelectItem>
             <SelectItem value="map">Map</SelectItem>
             <SelectItem value="extract">Extract</SelectItem>
+            <SelectItem value="pipeline">Pipeline</SelectItem>
           </SelectContent>
         </Select>
       </div>
