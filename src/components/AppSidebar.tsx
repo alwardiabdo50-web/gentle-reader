@@ -117,18 +117,18 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className={`space-y-3 ${collapsed ? "p-2" : "p-4"}`}>
-        {!collapsed && profile && (
+        {!collapsed && !credits.loading && (
           <div className="rounded-lg border border-border p-3 surface-2">
             <div className="text-xs text-muted-foreground mb-1">Credits remaining</div>
-            <div className="text-lg font-bold text-foreground">{remaining.toLocaleString()}</div>
+            <div className="text-lg font-bold text-foreground">{credits.creditsRemaining.toLocaleString()}</div>
             <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
               <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${Math.max(0, 100 - usedPct)}%` }}
+                className={`h-full rounded-full transition-all ${barColor}`}
+                style={{ width: `${Math.max(0, 100 - credits.percentUsed)}%` }}
               />
             </div>
             <div className="text-[10px] text-muted-foreground mt-1">
-              {profile.credits_used.toLocaleString()} / {totalCredits.toLocaleString()} used
+              {credits.creditsUsed.toLocaleString()} / {credits.creditsTotal.toLocaleString()} used
             </div>
           </div>
         )}
