@@ -1,0 +1,2 @@
+INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash)
+VALUES ('83d06cbc-854c-4468-84c4-1ea1befa1932', 'Batch Test Key', 'nc_live_test_', 'cc3ebf6bc8ac071b46df8fb87016c7906bfde28c1acbeeecba87657f58489e34');
