@@ -3,6 +3,7 @@ import { normalizeUrl, isCrawlable, extractLinks, CrawlConfig } from "../_shared
 import { getUserCredits, recordLedgerEntry, checkQuota } from "../_shared/billing.ts";
 import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { CrawlThrottle } from "../_shared/crawl-throttle.ts";
+import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
