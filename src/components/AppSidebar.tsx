@@ -13,6 +13,7 @@ import {
   User,
   Shield,
   Webhook,
+  Calendar,
 } from "lucide-react";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { NavLink } from "@/components/NavLink";
