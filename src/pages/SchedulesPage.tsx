@@ -1,108 +1,26 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Clock, Play, Pause, RefreshCw, Calendar, GitCompare, ArrowRight } from "lucide-react";
+import { Plus, Trash2, Clock, Play, RefreshCw, Calendar, GitCompare, ArrowRight, Pencil } from "lucide-react";
 import { format } from "date-fns";
-
-const PRESETS = [
-  { value: "every_hour", label: "Every hour", cron: "0 * * * *" },
-  { value: "every_6_hours", label: "Every 6 hours", cron: "0 */6 * * *" },
-  { value: "every_12_hours", label: "Every 12 hours", cron: "0 */12 * * *" },
-  { value: "daily", label: "Daily (midnight)", cron: "0 0 * * *" },
-  { value: "weekly", label: "Weekly (Sunday)", cron: "0 0 * * 0" },
-  { value: "monthly", label: "Monthly (1st)", cron: "0 0 1 * *" },
-  { value: "custom", label: "Custom cron", cron: "" },
-];
-
-const JOB_TYPES = [
-  { value: "scrape", label: "Scrape" },
-  { value: "crawl", label: "Crawl" },
-  { value: "extract", label: "Extract" },
-];
-
-interface ScheduleData {
-  id: string;
-  name: string;
-  description: string | null;
-  job_type: string;
-  config_json: Record<string, unknown>;
-  cron_expression: string;
-  timezone: string;
-  is_active: boolean;
-  last_run_at: string | null;
-  next_run_at: string | null;
-  last_status: string | null;
-  run_count: number;
-  enable_diff: boolean;
-  last_content_hash: string | null;
-  last_diff_json: Record<string, unknown> | null;
-  created_at: string;
-}
-
-interface RunData {
-  id: string;
-  schedule_id: string;
-  job_id: string | null;
-  job_type: string;
-  status: string;
-  content_changed: boolean;
-  error_message: string | null;
-  started_at: string | null;
-  finished_at: string | null;
-  created_at: string;
-}
-
-async function invokeSchedulesApi(method: string, path = "", body?: object) {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error("Not authenticated");
-
-  const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/schedules-manage`;
-  const url = path ? `${baseUrl}/${path}` : baseUrl;
-
-  const res = await fetch(url, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
-
-  const json = await res.json();
-  if (!json.success) throw new Error(json.error?.message ?? "Unknown error");
-  return json.data;
-}
+import ScheduleFormFields, { defaultFormState, PRESETS, type ScheduleFormState } from "@/components/schedules/ScheduleFormFields";
+import { invokeSchedulesApi, cronLabel, presetFromCron, type ScheduleData, type RunData } from "@/components/schedules/scheduleHelpers";
 
 export default function SchedulesPage() {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<ScheduleData | null>(null);
   const [selectedSchedule, setSelectedSchedule] = useState<string | null>(null);
-
-  // Form state
-  const [newName, setNewName] = useState("");
-  const [newDesc, setNewDesc] = useState("");
-  const [newJobType, setNewJobType] = useState("scrape");
-  const [newUrl, setNewUrl] = useState("");
-  const [newPreset, setNewPreset] = useState("daily");
-  const [newCustomCron, setNewCustomCron] = useState("0 0 * * *");
-  const [newEnableDiff, setNewEnableDiff] = useState(false);
-  // Extract-specific
-  const [newPrompt, setNewPrompt] = useState("");
-  // Crawl-specific
-  const [newMaxPages, setNewMaxPages] = useState("10");
-  const [newMaxDepth, setNewMaxDepth] = useState("2");
+  const [form, setForm] = useState<ScheduleFormState>(defaultFormState);
+  const [editForm, setEditForm] = useState<ScheduleFormState>(defaultFormState);
 
   const { data: schedules = [], isLoading } = useQuery<ScheduleData[]>({
     queryKey: ["schedules"],
@@ -115,32 +33,61 @@ export default function SchedulesPage() {
     enabled: !!selectedSchedule,
   });
 
+  const buildPayload = (f: ScheduleFormState) => {
+    const cronExpr = f.preset === "custom" ? f.customCron : undefined;
+    const preset = f.preset !== "custom" ? f.preset : undefined;
+    const config: Record<string, unknown> = { url: f.url };
+    if (f.jobType === "extract" && f.prompt) config.prompt = f.prompt;
+    if (f.jobType === "crawl") {
+      config.max_pages = parseInt(f.maxPages) || 10;
+      config.max_depth = parseInt(f.maxDepth) || 2;
+    }
+    return {
+      name: f.name,
+      description: f.description || undefined,
+      job_type: f.jobType,
+      config,
+      ...(preset ? { preset } : { cron_expression: cronExpr }),
+      enable_diff: f.enableDiff,
+    };
+  };
+
   const createMutation = useMutation({
-    mutationFn: () => {
-      const cronExpr = newPreset === "custom" ? newCustomCron : undefined;
-      const preset = newPreset !== "custom" ? newPreset : undefined;
-
-      const config: Record<string, unknown> = { url: newUrl };
-      if (newJobType === "extract" && newPrompt) config.prompt = newPrompt;
-      if (newJobType === "crawl") {
-        config.max_pages = parseInt(newMaxPages) || 10;
-        config.max_depth = parseInt(newMaxDepth) || 2;
-      }
-
-      return invokeSchedulesApi("POST", "", {
-        name: newName,
-        description: newDesc || undefined,
-        job_type: newJobType,
-        config,
-        ...(preset ? { preset } : { cron_expression: cronExpr }),
-        enable_diff: newEnableDiff,
-      });
-    },
+    mutationFn: () => invokeSchedulesApi("POST", "", buildPayload(form)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedules"] });
       setCreateOpen(false);
-      resetForm();
+      setForm(defaultFormState);
       toast.success("Schedule created!");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const editMutation = useMutation({
+    mutationFn: () => {
+      if (!editingSchedule) throw new Error("No schedule selected");
+      const payload = buildPayload(editForm);
+      return invokeSchedulesApi("PATCH", editingSchedule.id, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["schedules"] });
+      setEditOpen(false);
+      setEditingSchedule(null);
+      toast.success("Schedule updated!");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const triggerMutation = useMutation({
+    mutationFn: (id: string) => invokeSchedulesApi("POST", id, { action: "trigger" }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["schedules"] });
+      if (selectedSchedule) queryClient.invalidateQueries({ queryKey: ["schedule-runs", selectedSchedule] });
+      if (data?.error) {
+        toast.error(`Run failed: ${data.error}`);
+      } else {
+        toast.success("Job triggered successfully!");
+      }
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -161,22 +108,22 @@ export default function SchedulesPage() {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  function resetForm() {
-    setNewName("");
-    setNewDesc("");
-    setNewJobType("scrape");
-    setNewUrl("");
-    setNewPreset("daily");
-    setNewCustomCron("0 0 * * *");
-    setNewEnableDiff(false);
-    setNewPrompt("");
-    setNewMaxPages("10");
-    setNewMaxDepth("2");
-  }
-
-  const cronLabel = (cron: string) => {
-    const preset = PRESETS.find((p) => p.cron === cron);
-    return preset ? preset.label : cron;
+  const openEdit = (s: ScheduleData) => {
+    const cfg = s.config_json as Record<string, any>;
+    setEditingSchedule(s);
+    setEditForm({
+      name: s.name,
+      description: s.description || "",
+      jobType: s.job_type,
+      url: cfg?.url || "",
+      preset: presetFromCron(s.cron_expression),
+      customCron: s.cron_expression,
+      enableDiff: s.enable_diff,
+      prompt: cfg?.prompt || "",
+      maxPages: String(cfg?.max_pages || 10),
+      maxDepth: String(cfg?.max_depth || 2),
+    });
+    setEditOpen(true);
   };
 
   const statusBadge = (status: string | null) => {
@@ -192,11 +139,7 @@ export default function SchedulesPage() {
       crawl: "bg-green-500/10 text-green-500 border-green-500/20",
       extract: "bg-purple-500/10 text-purple-500 border-purple-500/20",
     };
-    return (
-      <Badge variant="outline" className={colors[type] || ""}>
-        {type}
-      </Badge>
-    );
+    return <Badge variant="outline" className={colors[type] || ""}>{type}</Badge>;
   };
 
   return (
@@ -215,107 +158,34 @@ export default function SchedulesPage() {
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Create Schedule</DialogTitle>
-              <DialogDescription>
-                Configure a recurring job that runs automatically on your chosen schedule.
-              </DialogDescription>
+              <DialogDescription>Configure a recurring job that runs automatically.</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-              <div>
-                <Label>Name</Label>
-                <Input placeholder="My daily scrape" value={newName} onChange={(e) => setNewName(e.target.value)} />
-              </div>
-              <div>
-                <Label>Description (optional)</Label>
-                <Input placeholder="Monitor pricing changes" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
-              </div>
-              <div>
-                <Label>Job Type</Label>
-                <Select value={newJobType} onValueChange={setNewJobType}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {JOB_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>URL</Label>
-                <Input placeholder="https://example.com" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} />
-              </div>
-
-              {newJobType === "extract" && (
-                <div>
-                  <Label>Extraction Prompt</Label>
-                  <Input placeholder="Extract product prices and availability" value={newPrompt} onChange={(e) => setNewPrompt(e.target.value)} />
-                </div>
-              )}
-
-              {newJobType === "crawl" && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Max Pages</Label>
-                    <Input type="number" value={newMaxPages} onChange={(e) => setNewMaxPages(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Max Depth</Label>
-                    <Input type="number" value={newMaxDepth} onChange={(e) => setNewMaxDepth(e.target.value)} />
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <Label>Frequency</Label>
-                <Select value={newPreset} onValueChange={setNewPreset}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {PRESETS.map((p) => (
-                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {newPreset === "custom" && (
-                <div>
-                  <Label>Cron Expression</Label>
-                  <Input
-                    placeholder="0 9 * * 1-5"
-                    value={newCustomCron}
-                    onChange={(e) => setNewCustomCron(e.target.value)}
-                    className="font-mono"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Format: minute hour day-of-month month day-of-week
-                  </p>
-                </div>
-              )}
-
-              <div className="flex items-center gap-3 pt-2">
-                <Checkbox
-                  id="enable-diff"
-                  checked={newEnableDiff}
-                  onCheckedChange={(checked) => setNewEnableDiff(checked === true)}
-                />
-                <div>
-                  <Label htmlFor="enable-diff" className="cursor-pointer">Enable change detection</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Compare results between runs and flag when content changes.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <ScheduleFormFields form={form} onChange={(u) => setForm((p) => ({ ...p, ...u }))} />
             <DialogFooter>
-              <Button
-                onClick={() => createMutation.mutate()}
-                disabled={!newName || !newUrl || createMutation.isPending}
-              >
+              <Button onClick={() => createMutation.mutate()} disabled={!form.name || !form.url || createMutation.isPending}>
                 {createMutation.isPending ? "Creating..." : "Create Schedule"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Schedule</DialogTitle>
+            <DialogDescription>Update the schedule configuration.</DialogDescription>
+          </DialogHeader>
+          <ScheduleFormFields form={editForm} onChange={(u) => setEditForm((p) => ({ ...p, ...u }))} disableJobType />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={() => editMutation.mutate()} disabled={!editForm.name || !editForm.url || editMutation.isPending}>
+              {editMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="schedules" className="w-full">
         <TabsList>
@@ -358,24 +228,28 @@ export default function SchedulesPage() {
                             </Badge>
                           )}
                         </CardTitle>
-                        {s.description && (
-                          <CardDescription className="mt-0.5">{s.description}</CardDescription>
-                        )}
+                        {s.description && <CardDescription className="mt-0.5">{s.description}</CardDescription>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedSchedule(s.id)}
+                        size="icon"
+                        title="Run Now"
+                        disabled={triggerMutation.isPending}
+                        onClick={() => triggerMutation.mutate(s.id)}
                       >
+                        <Play className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Edit" onClick={() => openEdit(s)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedSchedule(s.id)}>
                         <ArrowRight className="h-4 w-4" />
                       </Button>
                       <Switch
                         checked={s.is_active}
-                        onCheckedChange={(checked) =>
-                          toggleMutation.mutate({ id: s.id, is_active: checked })
-                        }
+                        onCheckedChange={(checked) => toggleMutation.mutate({ id: s.id, is_active: checked })}
                       />
                       <Button
                         variant="ghost"
@@ -411,9 +285,7 @@ export default function SchedulesPage() {
                     </div>
                     <div>
                       <span className="text-muted-foreground text-xs">Next Run</span>
-                      <p className="text-xs">
-                        {s.next_run_at ? format(new Date(s.next_run_at), "MMM d HH:mm") : "—"}
-                      </p>
+                      <p className="text-xs">{s.next_run_at ? format(new Date(s.next_run_at), "MMM d HH:mm") : "—"}</p>
                     </div>
                   </div>
                   {s.last_diff_json && (
