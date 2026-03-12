@@ -35,6 +35,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { signOut, user } = useAuth();
   const { isAdmin } = useAdminRole();
+  const credits = useCredits();
   const isActive = (path: string) => location.pathname === path;
 
   const email = user?.email ?? "";
@@ -43,48 +44,11 @@ export function AppSidebar() {
     .slice(0, 2)
     .toUpperCase();
 
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("plan, monthly_credits, extra_credits, credits_used")
-        .single();
-      if (data) setProfile(data as Profile);
-    };
-    fetchProfile();
-
-    // Realtime subscription for credits updates
-    const channel = supabase
-      .channel("sidebar-credits")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles" },
-        (payload) => {
-          const updated = payload.new as Record<string, unknown>;
-          setProfile((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              credits_used: (updated.credits_used as number) ?? prev.credits_used,
-              monthly_credits: (updated.monthly_credits as number) ?? prev.monthly_credits,
-              extra_credits: (updated.extra_credits as number) ?? prev.extra_credits,
-              plan: (updated.plan as string) ?? prev.plan,
-            };
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const totalCredits = profile ? profile.monthly_credits + profile.extra_credits : 0;
-  const remaining = profile ? totalCredits - profile.credits_used : 0;
-  const usedPct = totalCredits > 0 ? ((profile?.credits_used ?? 0) / totalCredits) * 100 : 0;
+  const barColor = credits.percentUsed > 90
+    ? "bg-destructive"
+    : credits.percentUsed > 70
+      ? "bg-yellow-500"
+      : "bg-primary";
 
   return (
     <Sidebar collapsible="icon">
