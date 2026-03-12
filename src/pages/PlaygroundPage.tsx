@@ -54,15 +54,15 @@ export default function PlaygroundPage() {
       const prefix = rawToken.slice(0, 13);
       const encoder = new TextEncoder();
       const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(rawToken));
-      const hashHex = Array.from(new Uint8Array(hashBuffer))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+      const hashHex = Array.from(new Uint8Array(hashBuffer)).
+      map((b) => b.toString(16).padStart(2, "0")).
+      join("");
 
       const { error } = await supabase.from("api_keys").insert({
         user_id: user.id,
         name: "Playground (auto)",
         key_prefix: prefix,
-        key_hash: hashHex,
+        key_hash: hashHex
       });
 
       if (!error) {
@@ -73,10 +73,10 @@ export default function PlaygroundPage() {
   }, []);
 
   const parseBatchUrls = (): string[] => {
-    return batchUrls
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0 && !line.startsWith("#"));
+    return batchUrls.
+    split("\n").
+    map((line) => line.trim()).
+    filter((line) => line.length > 0 && !line.startsWith("#"));
   };
 
   const handleRun = async () => {
@@ -102,7 +102,7 @@ export default function PlaygroundPage() {
             formats: ["markdown", "html", "metadata", "links"],
             render_javascript: renderJs,
             only_main_content: mainContent,
-            cache_ttl: Number(cacheTtl),
+            cache_ttl: Number(cacheTtl)
           };
           break;
         case "batch":
@@ -112,7 +112,7 @@ export default function PlaygroundPage() {
             formats: ["markdown", "html", "metadata", "links"],
             render_javascript: renderJs,
             only_main_content: mainContent,
-            cache_ttl: Number(cacheTtl),
+            cache_ttl: Number(cacheTtl)
           };
           break;
         case "crawl":
@@ -123,7 +123,7 @@ export default function PlaygroundPage() {
             max_depth: Number(maxDepth),
             same_domain_only: true,
             render_javascript: renderJs,
-            only_main_content: mainContent,
+            only_main_content: mainContent
           };
           break;
         case "map":
@@ -132,7 +132,7 @@ export default function PlaygroundPage() {
             url,
             same_domain_only: true,
             include_subdomains: false,
-            max_urls: Number(maxUrls),
+            max_urls: Number(maxUrls)
           };
           break;
         case "extract":
@@ -140,7 +140,7 @@ export default function PlaygroundPage() {
           body = {
             url,
             model: extractModel,
-            only_main_content: mainContent,
+            only_main_content: mainContent
           };
           if (extractPrompt.trim()) body.prompt = extractPrompt;
           if (extractSchema.trim()) {
@@ -162,18 +162,18 @@ export default function PlaygroundPage() {
 
       const { data, error } = await supabase.functions.invoke(functionName, {
         body,
-        headers: { "X-API-Key": apiKey },
+        headers: { "X-API-Key": apiKey }
       });
 
       if (error) {
         setResult({ success: false, error: { code: "NETWORK_ERROR", message: error.message } });
       } else {
         setResult(data);
-        if (mode === "batch") setResultTab("markdown");
-        else if (mode === "map") setResultTab("json");
-        else if (mode === "extract") setResultTab("extracted");
-        else if (mode === "crawl") setResultTab("json");
-        else setResultTab("markdown");
+        if (mode === "batch") setResultTab("markdown");else
+        if (mode === "map") setResultTab("json");else
+        if (mode === "extract") setResultTab("extracted");else
+        if (mode === "crawl") setResultTab("json");else
+        setResultTab("markdown");
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -194,7 +194,7 @@ export default function PlaygroundPage() {
     batch: <Layers className="h-4 w-4" />,
     crawl: <Globe className="h-4 w-4" />,
     map: <Map className="h-4 w-4" />,
-    extract: <Brain className="h-4 w-4" />,
+    extract: <Brain className="h-4 w-4" />
   };
 
   const d = result?.data;
@@ -213,34 +213,34 @@ export default function PlaygroundPage() {
 
       {/* Mode selector */}
       <div className="flex gap-2 flex-wrap">
-        {(["scrape", "batch", "crawl", "map", "extract"] as Mode[]).map((m) => (
-          <Button
-            key={m}
-            variant={mode === m ? "default" : "secondary"}
-            size="sm"
-            onClick={() => { setMode(m); setResult(null); }}
-            className="gap-1.5 capitalize"
-          >
+        {(["scrape", "batch", "crawl", "map", "extract"] as Mode[]).map((m) =>
+        <Button
+          key={m}
+          variant={mode === m ? "default" : "secondary"}
+          size="sm"
+          onClick={() => {setMode(m);setResult(null);}}
+          className="gap-1.5 capitalize">
+          
             {modeIcons[m]}
             {m === "batch" ? "Batch Scrape" : m}
           </Button>
-        ))}
+        )}
       </div>
 
       {/* Input section */}
       <div className="rounded-lg border border-border p-5 bg-card space-y-4">
-        {mode === "batch" ? (
-          <div>
+        {mode === "batch" ?
+        <div>
             <Label htmlFor="batch-urls" className="text-xs text-muted-foreground mb-1.5 block">
               URLs (one per line, max 100)
             </Label>
             <Textarea
-              id="batch-urls"
-              placeholder={"https://example.com\nhttps://httpbin.org/html\nhttps://news.ycombinator.com"}
-              value={batchUrls}
-              onChange={(e) => setBatchUrls(e.target.value)}
-              className="font-mono text-sm min-h-[120px]"
-            />
+            id="batch-urls"
+            placeholder={"https://example.com\nhttps://httpbin.org/html\nhttps://news.ycombinator.com"}
+            value={batchUrls}
+            onChange={(e) => setBatchUrls(e.target.value)}
+            className="font-mono text-sm min-h-[120px]" />
+          
             <div className="flex items-center justify-between mt-2">
               <span className="text-xs text-muted-foreground">
                 {parseBatchUrls().length} URL{parseBatchUrls().length !== 1 ? "s" : ""} entered
@@ -250,21 +250,21 @@ export default function PlaygroundPage() {
                 {loading ? "Running..." : `Batch Scrape (${parseBatchUrls().length})`}
               </Button>
             </div>
-          </div>
-        ) : (
-          <div className="flex gap-3">
+          </div> :
+
+        <div className="flex gap-3">
             <div className="flex-1">
               <Label htmlFor="url" className="text-xs text-muted-foreground mb-1.5 block">
                 Target URL
               </Label>
               <Input
-                id="url"
-                placeholder="https://example.com"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="font-mono text-sm"
-                onKeyDown={(e) => e.key === "Enter" && handleRun()}
-              />
+              id="url"
+              placeholder="https://example.com"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="font-mono text-sm"
+              onKeyDown={(e) => e.key === "Enter" && handleRun()} />
+            
             </div>
             <div className="flex items-end">
               <Button onClick={handleRun} disabled={loading || !url || !apiKey} className="gap-2">
@@ -273,11 +273,11 @@ export default function PlaygroundPage() {
               </Button>
             </div>
           </div>
-        )}
+        }
 
-        <div className="flex flex-wrap gap-6 text-sm items-end">
-          {(mode === "scrape" || mode === "batch" || mode === "extract") && (
-            <>
+        <div className="flex-wrap gap-6 text-sm flex items-center justify-start">
+          {(mode === "scrape" || mode === "batch" || mode === "extract") &&
+          <>
               <div className="flex items-center gap-2">
                 <Switch id="render-js" checked={renderJs} onCheckedChange={setRenderJs} />
                 <Label htmlFor="render-js" className="text-xs text-muted-foreground">Render JS</Label>
@@ -287,10 +287,10 @@ export default function PlaygroundPage() {
                 <Label htmlFor="main-content" className="text-xs text-muted-foreground">Main content only</Label>
               </div>
             </>
-          )}
+          }
 
-          {(mode === "scrape" || mode === "batch") && (
-            <div className="flex items-center gap-2">
+          {(mode === "scrape" || mode === "batch") &&
+          <div className="flex items-center gap-2">
               <Label className="text-xs text-muted-foreground whitespace-nowrap">Cache TTL</Label>
               <Select value={cacheTtl} onValueChange={setCacheTtl}>
                 <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
@@ -303,10 +303,10 @@ export default function PlaygroundPage() {
                 </SelectContent>
               </Select>
             </div>
-          )}
+          }
 
-          {mode === "crawl" && (
-            <>
+          {mode === "crawl" &&
+          <>
               <div className="flex items-center gap-2">
                 <Label className="text-xs text-muted-foreground">Max pages</Label>
                 <Select value={maxPages} onValueChange={setMaxPages}>
@@ -333,10 +333,10 @@ export default function PlaygroundPage() {
                 </Select>
               </div>
             </>
-          )}
+          }
 
-          {mode === "map" && (
-            <div className="flex items-center gap-2">
+          {mode === "map" &&
+          <div className="flex items-center gap-2">
               <Label className="text-xs text-muted-foreground">Max URLs</Label>
               <Select value={maxUrls} onValueChange={setMaxUrls}>
                 <SelectTrigger className="w-24 h-8 text-xs"><SelectValue /></SelectTrigger>
@@ -348,28 +348,28 @@ export default function PlaygroundPage() {
                 </SelectContent>
               </Select>
             </div>
-          )}
+          }
         </div>
 
-        {mode === "extract" && (
-          <div className="space-y-3 pt-2 border-t border-border">
+        {mode === "extract" &&
+        <div className="space-y-3 pt-2 border-t border-border">
             <div>
               <Label className="text-xs text-muted-foreground block mb-1.5">Extraction prompt</Label>
               <Input
-                placeholder="Extract the product name, price, and availability"
-                value={extractPrompt}
-                onChange={(e) => setExtractPrompt(e.target.value)}
-                className="text-xs"
-              />
+              placeholder="Extract the product name, price, and availability"
+              value={extractPrompt}
+              onChange={(e) => setExtractPrompt(e.target.value)}
+              className="text-xs" />
+            
             </div>
             <div>
               <Label className="text-xs text-muted-foreground block mb-1.5">JSON Schema (optional)</Label>
               <Textarea
-                placeholder='{"type":"object","properties":{"name":{"type":"string"},"price":{"type":"number"}},"required":["name"]}'
-                value={extractSchema}
-                onChange={(e) => setExtractSchema(e.target.value)}
-                className="text-xs font-mono min-h-[60px]"
-              />
+              placeholder='{"type":"object","properties":{"name":{"type":"string"},"price":{"type":"number"}},"required":["name"]}'
+              value={extractSchema}
+              onChange={(e) => setExtractSchema(e.target.value)}
+              className="text-xs font-mono min-h-[60px]" />
+            
             </div>
             <div className="flex items-center gap-2">
               <Label className="text-xs text-muted-foreground">Model</Label>
@@ -385,23 +385,23 @@ export default function PlaygroundPage() {
               </Select>
             </div>
           </div>
-        )}
+        }
       </div>
 
       {/* Error state */}
-      {result && !result.success && !isBatchResult && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
+      {result && !result.success && !isBatchResult &&
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
           <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-destructive">{result.error?.code}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{result.error?.message}</p>
           </div>
         </div>
-      )}
+      }
 
       {/* Batch Results */}
-      {isBatchResult && (
-        <div className="rounded-lg border border-border bg-card overflow-hidden">
+      {isBatchResult &&
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
           {/* Batch summary header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-3">
@@ -409,15 +409,15 @@ export default function PlaygroundPage() {
               <span className="text-sm font-medium">
                 Batch complete — {result.meta?.completed ?? 0}/{result.meta?.total ?? 0} succeeded
               </span>
-              {result.meta?.failed > 0 && (
-                <span className="text-xs text-destructive font-medium">{result.meta.failed} failed</span>
-              )}
-              {result.meta?.cache_hits > 0 && (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary px-1.5 py-0.5 rounded bg-primary/10">
+              {result.meta?.failed > 0 &&
+            <span className="text-xs text-destructive font-medium">{result.meta.failed} failed</span>
+            }
+              {result.meta?.cache_hits > 0 &&
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-primary px-1.5 py-0.5 rounded bg-primary/10">
                   <Database className="h-3 w-3" />
                   {result.meta.cache_hits} cached
                 </span>
-              )}
+            }
             </div>
             <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
               <Copy className="h-3 w-3" />
@@ -428,96 +428,96 @@ export default function PlaygroundPage() {
           {/* URL selector row */}
           <div className="px-4 py-2 border-b border-border bg-muted/30 flex gap-2 flex-wrap">
             {(d as any[]).map((item, idx) => {
-              const err = result.errors?.[idx];
-              const isSuccess = item !== null;
-              return (
-                <button
-                  key={idx}
-                  onClick={() => { setBatchSelectedIdx(idx); setResultTab("markdown"); }}
-                  className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                    batchSelectedIdx === idx
-                      ? "bg-primary text-primary-foreground"
-                      : isSuccess
-                      ? "bg-card border border-border text-foreground hover:bg-accent"
-                      : "bg-destructive/10 border border-destructive/30 text-destructive hover:bg-destructive/20"
-                  }`}
-                >
-                  {isSuccess ? (item.title?.slice(0, 30) || item.url?.slice(0, 30) || `URL ${idx + 1}`) : (err?.url?.slice(0, 30) || `URL ${idx + 1} ✗`)}
-                </button>
-              );
-            })}
+            const err = result.errors?.[idx];
+            const isSuccess = item !== null;
+            return (
+              <button
+                key={idx}
+                onClick={() => {setBatchSelectedIdx(idx);setResultTab("markdown");}}
+                className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
+                batchSelectedIdx === idx ?
+                "bg-primary text-primary-foreground" :
+                isSuccess ?
+                "bg-card border border-border text-foreground hover:bg-accent" :
+                "bg-destructive/10 border border-destructive/30 text-destructive hover:bg-destructive/20"}`
+                }>
+                
+                  {isSuccess ? item.title?.slice(0, 30) || item.url?.slice(0, 30) || `URL ${idx + 1}` : err?.url?.slice(0, 30) || `URL ${idx + 1} ✗`}
+                </button>);
+
+          })}
           </div>
 
           {/* Selected item content */}
-          {batchItem ? (
-            <>
+          {batchItem ?
+        <>
               <div className="px-4 py-2 border-b border-border flex items-center gap-3">
                 <span className="text-xs font-mono text-muted-foreground truncate">{batchItem.final_url || batchItem.url}</span>
-                {batchItem.status_code && (
-                  <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded border border-border">{batchItem.status_code}</span>
-                )}
-                {batchItem.timings && (
-                  <span className="text-xs font-mono text-muted-foreground">{batchItem.timings.total_ms}ms</span>
-                )}
+                {batchItem.status_code &&
+            <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded border border-border">{batchItem.status_code}</span>
+            }
+                {batchItem.timings &&
+            <span className="text-xs font-mono text-muted-foreground">{batchItem.timings.total_ms}ms</span>
+            }
               </div>
 
-              {batchItem.warnings?.length > 0 && (
-                <div className="px-4 py-2 border-b border-border bg-muted/30">
-                  {batchItem.warnings.map((w: string, i: number) => (
-                    <p key={i} className="text-xs text-muted-foreground flex items-center gap-1.5">
+              {batchItem.warnings?.length > 0 &&
+          <div className="px-4 py-2 border-b border-border bg-muted/30">
+                  {batchItem.warnings.map((w: string, i: number) =>
+            <p key={i} className="text-xs text-muted-foreground flex items-center gap-1.5">
                       <AlertTriangle className="h-3 w-3 text-destructive/70 shrink-0" />
                       {w}
                     </p>
-                  ))}
+            )}
                 </div>
-              )}
+          }
 
               <Tabs value={resultTab} onValueChange={setResultTab}>
                 <div className="px-4 border-b border-border">
                   <TabsList className="bg-transparent h-9 p-0 gap-4">
-                    {batchItem.markdown !== undefined && (
-                      <TabsTrigger value="markdown" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Markdown</TabsTrigger>
-                    )}
-                    {batchItem.html !== undefined && (
-                      <TabsTrigger value="html" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">HTML</TabsTrigger>
-                    )}
-                    {batchItem.metadata !== undefined && (
-                      <TabsTrigger value="metadata" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Metadata</TabsTrigger>
-                    )}
+                    {batchItem.markdown !== undefined &&
+                <TabsTrigger value="markdown" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Markdown</TabsTrigger>
+                }
+                    {batchItem.html !== undefined &&
+                <TabsTrigger value="html" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">HTML</TabsTrigger>
+                }
+                    {batchItem.metadata !== undefined &&
+                <TabsTrigger value="metadata" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Metadata</TabsTrigger>
+                }
                     <TabsTrigger value="json" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Raw JSON</TabsTrigger>
                   </TabsList>
                 </div>
 
-                {batchItem.markdown !== undefined && (
-                  <TabsContent value="markdown" className="p-4 m-0">
+                {batchItem.markdown !== undefined &&
+            <TabsContent value="markdown" className="p-4 m-0">
                     <pre className="font-mono text-sm text-secondary-foreground whitespace-pre-wrap leading-relaxed">{batchItem.markdown}</pre>
                   </TabsContent>
-                )}
-                {batchItem.html !== undefined && (
-                  <TabsContent value="html" className="p-4 m-0">
+            }
+                {batchItem.html !== undefined &&
+            <TabsContent value="html" className="p-4 m-0">
                     <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">{batchItem.html}</pre>
                   </TabsContent>
-                )}
-                {batchItem.metadata !== undefined && (
-                  <TabsContent value="metadata" className="p-4 m-0">
+            }
+                {batchItem.metadata !== undefined &&
+            <TabsContent value="metadata" className="p-4 m-0">
                     <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">{JSON.stringify(batchItem.metadata, null, 2)}</pre>
                   </TabsContent>
-                )}
+            }
                 <TabsContent value="json" className="p-4 m-0">
                   <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">{JSON.stringify(batchItem, null, 2)}</pre>
                 </TabsContent>
               </Tabs>
-            </>
-          ) : batchError ? (
-            <div className="p-4 flex items-start gap-3">
+            </> :
+        batchError ?
+        <div className="p-4 flex items-start gap-3">
               <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-destructive">{batchError.code}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{batchError.message}</p>
                 <p className="text-xs font-mono text-muted-foreground mt-1">{batchError.url}</p>
               </div>
-            </div>
-          ) : null}
+            </div> :
+        null}
 
           {/* Footer */}
           <div className="px-4 py-3 border-t border-border flex gap-6 text-xs text-muted-foreground">
@@ -529,11 +529,11 @@ export default function PlaygroundPage() {
             {result.meta?.job_id && <span className="font-mono">{result.meta.job_id.slice(0, 8)}…</span>}
           </div>
         </div>
-      )}
+      }
 
       {/* Single-item Results (scrape, crawl, map, extract) */}
-      {d && !isBatchResult && (
-        <div className="rounded-lg border border-border bg-card overflow-hidden">
+      {d && !isBatchResult &&
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -543,18 +543,18 @@ export default function PlaygroundPage() {
                 {mode === "map" && `${result.meta?.count ?? d.urls?.length ?? 0} URLs discovered`}
                 {mode === "extract" && (d.title || "Extraction complete")}
               </span>
-              {d.timings && (
-                <span className="text-xs font-mono text-muted-foreground">{d.timings.total_ms}ms</span>
-              )}
-              {d.status_code && (
-                <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded border border-border">{d.status_code}</span>
-              )}
-              {result?.meta?.cache_hit && (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary px-1.5 py-0.5 rounded bg-primary/10">
+              {d.timings &&
+            <span className="text-xs font-mono text-muted-foreground">{d.timings.total_ms}ms</span>
+            }
+              {d.status_code &&
+            <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded border border-border">{d.status_code}</span>
+            }
+              {result?.meta?.cache_hit &&
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-primary px-1.5 py-0.5 rounded bg-primary/10">
                   <Database className="h-3 w-3" />
                   Cache hit
                 </span>
-              )}
+            }
             </div>
             <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
               <Copy className="h-3 w-3" />
@@ -563,79 +563,79 @@ export default function PlaygroundPage() {
           </div>
 
           {/* Warnings */}
-          {(d.warnings?.length > 0 || result.warnings?.length > 0) && (
-            <div className="px-4 py-2 border-b border-border bg-muted/30">
-              {(d.warnings || result.warnings || []).map((w: string, i: number) => (
-                <p key={i} className="text-xs text-muted-foreground flex items-center gap-1.5">
+          {(d.warnings?.length > 0 || result.warnings?.length > 0) &&
+        <div className="px-4 py-2 border-b border-border bg-muted/30">
+              {(d.warnings || result.warnings || []).map((w: string, i: number) =>
+          <p key={i} className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <AlertTriangle className="h-3 w-3 text-destructive/70 shrink-0" />
                   {w}
                 </p>
-              ))}
-            </div>
           )}
+            </div>
+        }
 
           <Tabs value={resultTab} onValueChange={setResultTab}>
             <div className="px-4 border-b border-border">
               <TabsList className="bg-transparent h-9 p-0 gap-4">
-                {mode === "scrape" && d.markdown !== undefined && (
-                  <TabsTrigger value="markdown" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Markdown</TabsTrigger>
-                )}
-                {mode === "scrape" && d.html !== undefined && (
-                  <TabsTrigger value="html" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">HTML</TabsTrigger>
-                )}
-                {mode === "scrape" && d.metadata !== undefined && (
-                  <TabsTrigger value="metadata" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Metadata</TabsTrigger>
-                )}
-                {mode === "extract" && d.extracted && (
-                  <TabsTrigger value="extracted" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Extracted</TabsTrigger>
-                )}
-                {mode === "map" && d.urls && (
-                  <TabsTrigger value="urls" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">URLs ({d.urls.length})</TabsTrigger>
-                )}
+                {mode === "scrape" && d.markdown !== undefined &&
+              <TabsTrigger value="markdown" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Markdown</TabsTrigger>
+              }
+                {mode === "scrape" && d.html !== undefined &&
+              <TabsTrigger value="html" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">HTML</TabsTrigger>
+              }
+                {mode === "scrape" && d.metadata !== undefined &&
+              <TabsTrigger value="metadata" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Metadata</TabsTrigger>
+              }
+                {mode === "extract" && d.extracted &&
+              <TabsTrigger value="extracted" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Extracted</TabsTrigger>
+              }
+                {mode === "map" && d.urls &&
+              <TabsTrigger value="urls" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">URLs ({d.urls.length})</TabsTrigger>
+              }
                 <TabsTrigger value="json" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Raw JSON</TabsTrigger>
               </TabsList>
             </div>
 
-            {mode === "scrape" && d.markdown !== undefined && (
-              <TabsContent value="markdown" className="p-4 m-0">
+            {mode === "scrape" && d.markdown !== undefined &&
+          <TabsContent value="markdown" className="p-4 m-0">
                 <pre className="font-mono text-sm text-secondary-foreground whitespace-pre-wrap leading-relaxed">{d.markdown}</pre>
               </TabsContent>
-            )}
-            {mode === "scrape" && d.html !== undefined && (
-              <TabsContent value="html" className="p-4 m-0">
+          }
+            {mode === "scrape" && d.html !== undefined &&
+          <TabsContent value="html" className="p-4 m-0">
                 <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">{d.html}</pre>
               </TabsContent>
-            )}
-            {mode === "scrape" && d.metadata !== undefined && (
-              <TabsContent value="metadata" className="p-4 m-0">
+          }
+            {mode === "scrape" && d.metadata !== undefined &&
+          <TabsContent value="metadata" className="p-4 m-0">
                 <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">{JSON.stringify(d.metadata, null, 2)}</pre>
               </TabsContent>
-            )}
-            {mode === "extract" && d.extracted && (
-              <TabsContent value="extracted" className="p-4 m-0">
+          }
+            {mode === "extract" && d.extracted &&
+          <TabsContent value="extracted" className="p-4 m-0">
                 <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">{JSON.stringify(d.extracted, null, 2)}</pre>
-                {d.validation && !d.validation.valid && (
-                  <div className="mt-3 p-3 rounded border border-destructive/20 bg-destructive/5">
+                {d.validation && !d.validation.valid &&
+            <div className="mt-3 p-3 rounded border border-destructive/20 bg-destructive/5">
                     <p className="text-xs font-medium text-destructive mb-1">Validation warnings:</p>
-                    {d.validation.warnings.map((w: string, i: number) => (
-                      <p key={i} className="text-xs text-muted-foreground">• {w}</p>
-                    ))}
+                    {d.validation.warnings.map((w: string, i: number) =>
+              <p key={i} className="text-xs text-muted-foreground">• {w}</p>
+              )}
                   </div>
-                )}
+            }
               </TabsContent>
-            )}
-            {mode === "map" && d.urls && (
-              <TabsContent value="urls" className="p-4 m-0 max-h-96 overflow-y-auto">
+          }
+            {mode === "map" && d.urls &&
+          <TabsContent value="urls" className="p-4 m-0 max-h-96 overflow-y-auto">
                 <div className="space-y-1">
-                  {d.urls.map((u: string, i: number) => (
-                    <div key={i} className="flex items-center gap-2 text-xs font-mono text-secondary-foreground hover:text-primary">
+                  {d.urls.map((u: string, i: number) =>
+              <div key={i} className="flex items-center gap-2 text-xs font-mono text-secondary-foreground hover:text-primary">
                       <span className="text-muted-foreground w-8 text-right shrink-0">{i + 1}</span>
                       <a href={u} target="_blank" rel="noopener noreferrer" className="truncate hover:underline">{u}</a>
                     </div>
-                  ))}
+              )}
                 </div>
               </TabsContent>
-            )}
+          }
             <TabsContent value="json" className="p-4 m-0">
               <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">{JSON.stringify(result, null, 2)}</pre>
             </TabsContent>
@@ -651,7 +651,7 @@ export default function PlaygroundPage() {
             {d.stats && <span>Processed: {d.stats.processed}/{d.stats.discovered}</span>}
           </div>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
