@@ -71,6 +71,41 @@ export async function checkQuota(userId: string, cost: number = 1): Promise<{ co
   return null;
 }
 
+/**
+ * Check rate limit (requests per minute) for a user.
+ * Queries the usage_ledger for entries in the last 60 seconds.
+ * Returns null if OK, or an error object if rate limit exceeded.
+ */
+export async function checkRateLimit(userId: string): Promise<{ code: string; message: string } | null> {
+  const credits = await getUserCredits(userId);
+  const rpm = credits.rpm;
+
+  const admin = getAdmin();
+  const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
+
+  const { count, error } = await admin
+    .from("usage_ledger")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .lt("credits", 0) // only consumption entries
+    .gte("created_at", oneMinuteAgo);
+
+  if (error) {
+    console.error("Rate limit check failed:", JSON.stringify(error));
+    // Fail open — don't block on errors
+    return null;
+  }
+
+  if ((count ?? 0) >= rpm) {
+    return {
+      code: "RATE_LIMIT_EXCEEDED",
+      message: `Rate limit exceeded. Your plan allows ${rpm} requests per minute. Please wait and try again.`,
+    };
+  }
+
+  return null;
+}
+
 export interface LedgerEntry {
   user_id: string;
   api_key_id?: string;
