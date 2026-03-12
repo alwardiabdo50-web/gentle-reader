@@ -29,6 +29,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
+  useSidebar,
+} from "@/components/ui/sidebar";
+
+const mainItems = [
+  { title: "Playground", url: "/", icon: Zap },
+  { title: "API Keys", url: "/api-keys", icon: Key },
+  { title: "Usage", url: "/usage", icon: BarChart3 },
+  { title: "Job History", url: "/jobs", icon: History },
+  { title: "Webhooks", url: "/webhooks", icon: Webhook },
+  { title: "Schedules", url: "/schedules", icon: Calendar },
+  { title: "Docs", url: "/docs", icon: BookOpen },
+];
+
+const settingsItems = [
+  { title: "Billing", url: "/billing", icon: CreditCard },
+  { title: "Settings", url: "/settings", icon: Settings },
+];
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
