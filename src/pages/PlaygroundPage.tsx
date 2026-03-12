@@ -202,11 +202,12 @@ export default function PlaygroundPage() {
         setResult({ success: false, error: { code: "NETWORK_ERROR", message: error.message } });
       } else {
         setResult(data);
-        if (mode === "batch") setResultTab("markdown");else
-        if (mode === "map") setResultTab("json");else
-        if (mode === "extract") setResultTab("extracted");else
-        if (mode === "crawl") setResultTab("json");else
-        setResultTab("markdown");
+        if (mode === "batch") setResultTab("markdown");
+        else if (mode === "map") setResultTab("json");
+        else if (mode === "extract") setResultTab("extracted");
+        else if (mode === "crawl") setResultTab("json");
+        else if (mode === "pipeline") setResultTab("pipeline");
+        else setResultTab("markdown");
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
