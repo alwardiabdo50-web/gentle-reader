@@ -421,6 +421,50 @@ export default function PlaygroundPage() {
             </div>
           </div>
         }
+
+        {mode === "pipeline" &&
+        <div className="space-y-3 pt-2 border-t border-border">
+            <p className="text-xs font-medium text-foreground">Extract Stage</p>
+            <div>
+              <Label className="text-xs text-muted-foreground block mb-1.5">Extraction prompt</Label>
+              <Input
+              placeholder="Extract the product name, price, and availability"
+              value={pipelinePrompt}
+              onChange={(e) => setPipelinePrompt(e.target.value)}
+              className="text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground block mb-1.5">JSON Schema (optional)</Label>
+              <Textarea
+              placeholder='{"type":"object","properties":{"name":{"type":"string"},"price":{"type":"number"}},"required":["name"]}'
+              value={pipelineSchema}
+              onChange={(e) => setPipelineSchema(e.target.value)}
+              className="text-xs font-mono min-h-[60px]" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground">Model</Label>
+              <Select value={pipelineModel} onValueChange={setPipelineModel}>
+                <SelectTrigger className="w-56 h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash (fast)</SelectItem>
+                  <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                  <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                  <SelectItem value="openai/gpt-5-mini">GPT-5 Mini</SelectItem>
+                  <SelectItem value="openai/gpt-5">GPT-5</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs font-medium text-foreground pt-2">Transform Stage (optional)</p>
+            <div>
+              <Label className="text-xs text-muted-foreground block mb-1.5">Transform prompt</Label>
+              <Textarea
+              placeholder="Normalize all prices to USD, flatten nested arrays"
+              value={pipelineTransformPrompt}
+              onChange={(e) => setPipelineTransformPrompt(e.target.value)}
+              className="text-xs min-h-[50px]" />
+            </div>
+          </div>
+        }
       </div>
 
       {/* Error state */}
