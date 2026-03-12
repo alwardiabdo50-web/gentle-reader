@@ -24,6 +24,7 @@ export default function PlaygroundPage() {
   const [copied, setCopied] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [batchSelectedIdx, setBatchSelectedIdx] = useState(0);
+  const [cacheTtl, setCacheTtl] = useState("3600");
 
   // Crawl options
   const [maxPages, setMaxPages] = useState("50");
