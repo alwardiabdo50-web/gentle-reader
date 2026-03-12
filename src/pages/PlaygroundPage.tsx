@@ -525,6 +525,7 @@ export default function PlaygroundPage() {
             <span>Completed: {result.meta?.completed}</span>
             <span>Failed: {result.meta?.failed}</span>
             <span>Credits: {result.meta?.credits_used}</span>
+            {result.meta?.cache_hits > 0 && <span>Cache hits: {result.meta.cache_hits}</span>}
             {result.meta?.job_id && <span className="font-mono">{result.meta.job_id.slice(0, 8)}…</span>}
           </div>
         </div>
