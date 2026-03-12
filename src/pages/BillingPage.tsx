@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Check, CreditCard, Loader2, ExternalLink, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCredits } from "@/hooks/useCredits";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   Dialog,
