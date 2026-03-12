@@ -6,15 +6,16 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ScrapeResponse } from "@/lib/api/scrape";
 
-type Mode = "scrape" | "crawl" | "map" | "extract";
+type Mode = "scrape" | "batch" | "crawl" | "map" | "extract";
 
 export default function PlaygroundPage() {
   const [mode, setMode] = useState<Mode>("scrape");
   const [url, setUrl] = useState("");
+  const [batchUrls, setBatchUrls] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [resultTab, setResultTab] = useState("markdown");
@@ -22,6 +23,7 @@ export default function PlaygroundPage() {
   const [mainContent, setMainContent] = useState(true);
   const [copied, setCopied] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [batchSelectedIdx, setBatchSelectedIdx] = useState(0);
 
   // Crawl options
   const [maxPages, setMaxPages] = useState("50");
@@ -69,10 +71,23 @@ export default function PlaygroundPage() {
     })();
   }, []);
 
+  const parseBatchUrls = (): string[] => {
+    return batchUrls
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0 && !line.startsWith("#"));
+  };
+
   const handleRun = async () => {
-    if (!url || !apiKey) return;
+    if (mode === "batch") {
+      const urls = parseBatchUrls();
+      if (urls.length === 0 || !apiKey) return;
+    } else {
+      if (!url || !apiKey) return;
+    }
     setLoading(true);
     setResult(null);
+    setBatchSelectedIdx(0);
 
     try {
       let functionName: string;
@@ -83,6 +98,15 @@ export default function PlaygroundPage() {
           functionName = "scrape";
           body = {
             url,
+            formats: ["markdown", "html", "metadata", "links"],
+            render_javascript: renderJs,
+            only_main_content: mainContent,
+          };
+          break;
+        case "batch":
+          functionName = "batch-scrape";
+          body = {
+            urls: parseBatchUrls(),
             formats: ["markdown", "html", "metadata", "links"],
             render_javascript: renderJs,
             only_main_content: mainContent,
@@ -142,8 +166,8 @@ export default function PlaygroundPage() {
         setResult({ success: false, error: { code: "NETWORK_ERROR", message: error.message } });
       } else {
         setResult(data);
-        // Auto-select best result tab
-        if (mode === "map") setResultTab("json");
+        if (mode === "batch") setResultTab("markdown");
+        else if (mode === "map") setResultTab("json");
         else if (mode === "extract") setResultTab("extracted");
         else if (mode === "crawl") setResultTab("json");
         else setResultTab("markdown");
@@ -164,25 +188,29 @@ export default function PlaygroundPage() {
 
   const modeIcons: Record<Mode, React.ReactNode> = {
     scrape: <Zap className="h-4 w-4" />,
+    batch: <Layers className="h-4 w-4" />,
     crawl: <Globe className="h-4 w-4" />,
     map: <Map className="h-4 w-4" />,
     extract: <Brain className="h-4 w-4" />,
   };
 
   const d = result?.data;
+  const isBatchResult = mode === "batch" && Array.isArray(d);
+  const batchItem = isBatchResult ? d[batchSelectedIdx] : null;
+  const batchError = isBatchResult && result?.errors ? result.errors[batchSelectedIdx] : null;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Playground</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Test scrape, crawl, map, and extract endpoints interactively.
+          Test scrape, batch scrape, crawl, map, and extract endpoints interactively.
         </p>
       </div>
 
       {/* Mode selector */}
-      <div className="flex gap-2">
-        {(["scrape", "crawl", "map", "extract"] as Mode[]).map((m) => (
+      <div className="flex gap-2 flex-wrap">
+        {(["scrape", "batch", "crawl", "map", "extract"] as Mode[]).map((m) => (
           <Button
             key={m}
             variant={mode === m ? "default" : "secondary"}
@@ -191,37 +219,61 @@ export default function PlaygroundPage() {
             className="gap-1.5 capitalize"
           >
             {modeIcons[m]}
-            {m}
+            {m === "batch" ? "Batch Scrape" : m}
           </Button>
         ))}
       </div>
 
       {/* Input section */}
       <div className="rounded-lg border border-border p-5 bg-card space-y-4">
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <Label htmlFor="url" className="text-xs text-muted-foreground mb-1.5 block">
-              Target URL
+        {mode === "batch" ? (
+          <div>
+            <Label htmlFor="batch-urls" className="text-xs text-muted-foreground mb-1.5 block">
+              URLs (one per line, max 100)
             </Label>
-            <Input
-              id="url"
-              placeholder="https://example.com"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="font-mono text-sm"
-              onKeyDown={(e) => e.key === "Enter" && handleRun()}
+            <Textarea
+              id="batch-urls"
+              placeholder={"https://example.com\nhttps://httpbin.org/html\nhttps://news.ycombinator.com"}
+              value={batchUrls}
+              onChange={(e) => setBatchUrls(e.target.value)}
+              className="font-mono text-sm min-h-[120px]"
             />
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs text-muted-foreground">
+                {parseBatchUrls().length} URL{parseBatchUrls().length !== 1 ? "s" : ""} entered
+              </span>
+              <Button onClick={handleRun} disabled={loading || parseBatchUrls().length === 0 || !apiKey} className="gap-2">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Layers className="h-4 w-4" />}
+                {loading ? "Running..." : `Batch Scrape (${parseBatchUrls().length})`}
+              </Button>
+            </div>
           </div>
-          <div className="flex items-end">
-            <Button onClick={handleRun} disabled={loading || !url || !apiKey} className="gap-2">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : modeIcons[mode]}
-              {loading ? "Running..." : "Run"}
-            </Button>
+        ) : (
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <Label htmlFor="url" className="text-xs text-muted-foreground mb-1.5 block">
+                Target URL
+              </Label>
+              <Input
+                id="url"
+                placeholder="https://example.com"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                className="font-mono text-sm"
+                onKeyDown={(e) => e.key === "Enter" && handleRun()}
+              />
+            </div>
+            <div className="flex items-end">
+              <Button onClick={handleRun} disabled={loading || !url || !apiKey} className="gap-2">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : modeIcons[mode]}
+                {loading ? "Running..." : "Run"}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex flex-wrap gap-6 text-sm">
-          {(mode === "scrape" || mode === "extract") && (
+          {(mode === "scrape" || mode === "batch" || mode === "extract") && (
             <>
               <div className="flex items-center gap-2">
                 <Switch id="render-js" checked={renderJs} onCheckedChange={setRenderJs} />
@@ -318,7 +370,7 @@ export default function PlaygroundPage() {
       </div>
 
       {/* Error state */}
-      {result && !result.success && (
+      {result && !result.success && !isBatchResult && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
           <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
           <div>
@@ -328,8 +380,133 @@ export default function PlaygroundPage() {
         </div>
       )}
 
-      {/* Results */}
-      {d && (
+      {/* Batch Results */}
+      {isBatchResult && (
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
+          {/* Batch summary header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                Batch complete — {result.meta?.completed ?? 0}/{result.meta?.total ?? 0} succeeded
+              </span>
+              {result.meta?.failed > 0 && (
+                <span className="text-xs text-destructive font-medium">{result.meta.failed} failed</span>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
+              <Copy className="h-3 w-3" />
+              {copied ? "Copied!" : "Copy JSON"}
+            </Button>
+          </div>
+
+          {/* URL selector row */}
+          <div className="px-4 py-2 border-b border-border bg-muted/30 flex gap-2 flex-wrap">
+            {(d as any[]).map((item, idx) => {
+              const err = result.errors?.[idx];
+              const isSuccess = item !== null;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => { setBatchSelectedIdx(idx); setResultTab("markdown"); }}
+                  className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
+                    batchSelectedIdx === idx
+                      ? "bg-primary text-primary-foreground"
+                      : isSuccess
+                      ? "bg-card border border-border text-foreground hover:bg-accent"
+                      : "bg-destructive/10 border border-destructive/30 text-destructive hover:bg-destructive/20"
+                  }`}
+                >
+                  {isSuccess ? (item.title?.slice(0, 30) || item.url?.slice(0, 30) || `URL ${idx + 1}`) : (err?.url?.slice(0, 30) || `URL ${idx + 1} ✗`)}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Selected item content */}
+          {batchItem ? (
+            <>
+              <div className="px-4 py-2 border-b border-border flex items-center gap-3">
+                <span className="text-xs font-mono text-muted-foreground truncate">{batchItem.final_url || batchItem.url}</span>
+                {batchItem.status_code && (
+                  <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded border border-border">{batchItem.status_code}</span>
+                )}
+                {batchItem.timings && (
+                  <span className="text-xs font-mono text-muted-foreground">{batchItem.timings.total_ms}ms</span>
+                )}
+              </div>
+
+              {batchItem.warnings?.length > 0 && (
+                <div className="px-4 py-2 border-b border-border bg-muted/30">
+                  {batchItem.warnings.map((w: string, i: number) => (
+                    <p key={i} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <AlertTriangle className="h-3 w-3 text-destructive/70 shrink-0" />
+                      {w}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              <Tabs value={resultTab} onValueChange={setResultTab}>
+                <div className="px-4 border-b border-border">
+                  <TabsList className="bg-transparent h-9 p-0 gap-4">
+                    {batchItem.markdown !== undefined && (
+                      <TabsTrigger value="markdown" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Markdown</TabsTrigger>
+                    )}
+                    {batchItem.html !== undefined && (
+                      <TabsTrigger value="html" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">HTML</TabsTrigger>
+                    )}
+                    {batchItem.metadata !== undefined && (
+                      <TabsTrigger value="metadata" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Metadata</TabsTrigger>
+                    )}
+                    <TabsTrigger value="json" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Raw JSON</TabsTrigger>
+                  </TabsList>
+                </div>
+
+                {batchItem.markdown !== undefined && (
+                  <TabsContent value="markdown" className="p-4 m-0">
+                    <pre className="font-mono text-sm text-secondary-foreground whitespace-pre-wrap leading-relaxed">{batchItem.markdown}</pre>
+                  </TabsContent>
+                )}
+                {batchItem.html !== undefined && (
+                  <TabsContent value="html" className="p-4 m-0">
+                    <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">{batchItem.html}</pre>
+                  </TabsContent>
+                )}
+                {batchItem.metadata !== undefined && (
+                  <TabsContent value="metadata" className="p-4 m-0">
+                    <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">{JSON.stringify(batchItem.metadata, null, 2)}</pre>
+                  </TabsContent>
+                )}
+                <TabsContent value="json" className="p-4 m-0">
+                  <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">{JSON.stringify(batchItem, null, 2)}</pre>
+                </TabsContent>
+              </Tabs>
+            </>
+          ) : batchError ? (
+            <div className="p-4 flex items-start gap-3">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-destructive">{batchError.code}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{batchError.message}</p>
+                <p className="text-xs font-mono text-muted-foreground mt-1">{batchError.url}</p>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Footer */}
+          <div className="px-4 py-3 border-t border-border flex gap-6 text-xs text-muted-foreground">
+            <span>Total: {result.meta?.total}</span>
+            <span>Completed: {result.meta?.completed}</span>
+            <span>Failed: {result.meta?.failed}</span>
+            <span>Credits: {result.meta?.credits_used}</span>
+            {result.meta?.job_id && <span className="font-mono">{result.meta.job_id.slice(0, 8)}…</span>}
+          </div>
+        </div>
+      )}
+
+      {/* Single-item Results (scrape, crawl, map, extract) */}
+      {d && !isBatchResult && (
         <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-3">
