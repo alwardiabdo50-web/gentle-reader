@@ -6,11 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database } from "lucide-react";
+import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database, GitBranch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ScrapeResponse } from "@/lib/api/scrape";
 
-type Mode = "scrape" | "batch" | "crawl" | "map" | "extract";
+type Mode = "scrape" | "batch" | "crawl" | "map" | "extract" | "pipeline";
 
 export default function PlaygroundPage() {
   const [mode, setMode] = useState<Mode>("scrape");
