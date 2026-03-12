@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { extractApiKey, validateApiKey } from "../_shared/api-key-auth.ts";
-import { checkQuota, getUserCredits, recordLedgerEntry } from "../_shared/billing.ts";
+import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from "../_shared/billing.ts";
 import { normalizeUrl, isSameDomain, isBlockedUrl, extractLinks } from "../_shared/crawl-utils.ts";
 
 const corsHeaders = {
@@ -265,6 +265,12 @@ Deno.serve(async (req) => {
   const normalizedRoot = normalizeUrl(body.url);
   if (!normalizedRoot) {
     return json({ success: false, error: { code: "INVALID_URL", message: `Invalid URL: ${body.url}` } }, 422);
+  }
+
+  // Rate limit check
+  const rateLimitError = await checkRateLimit(ctx.userId);
+  if (rateLimitError) {
+    return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
   }
 
   // Quota check (1 credit for map)

@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Check, CreditCard, Loader2, ExternalLink, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCredits } from "@/hooks/useCredits";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -26,6 +28,7 @@ const plans = [
 ];
 
 export default function BillingPage() {
+  const credits = useCredits();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [currentPlan, setCurrentPlan] = useState("free");
@@ -172,6 +175,34 @@ export default function BillingPage() {
           )}
         </div>
       </div>
+
+      {/* Credit Usage Progress */}
+      {!credits.loading && (
+        <div className="rounded-lg border border-border p-5 surface-1">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-medium">Credit Usage</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {credits.creditsUsed.toLocaleString()} of {credits.creditsTotal.toLocaleString()} credits used this period
+              </p>
+            </div>
+            <span className="text-2xl font-bold text-foreground">
+              {credits.creditsRemaining.toLocaleString()}
+              <span className="text-xs font-normal text-muted-foreground ml-1">remaining</span>
+            </span>
+          </div>
+          <Progress
+            value={credits.percentUsed}
+            className={`h-3 ${
+              credits.percentUsed > 90
+                ? "[&>div]:bg-destructive"
+                : credits.percentUsed > 70
+                  ? "[&>div]:bg-yellow-500"
+                  : ""
+            }`}
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {plans.map((plan) => {

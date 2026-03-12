@@ -1,5 +1,5 @@
 import { extractApiKey, validateApiKey, authenticateServiceRole } from "../_shared/api-key-auth.ts";
-import { checkQuota, getUserCredits, recordLedgerEntry } from "../_shared/billing.ts";
+import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from "../_shared/billing.ts";
 import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -167,6 +167,12 @@ Deno.serve(async (req) => {
     proxy: body.proxy ?? null,
     remove_selectors: body.remove_selectors ?? [],
   };
+
+  // --- Rate limit check ---
+  const rateLimitError = await checkRateLimit(ctx.userId);
+  if (rateLimitError) {
+    return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
+  }
 
   // --- Quota check ---
   const quotaError = await checkQuota(ctx.userId, 1);
