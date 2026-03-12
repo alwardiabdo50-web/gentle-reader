@@ -1,6 +1,7 @@
 import { extractApiKey, validateApiKey } from "../_shared/api-key-auth.ts";
 import { checkQuota, getUserCredits, recordLedgerEntry } from "../_shared/billing.ts";
 import { performScrape } from "../_shared/scrape-pipeline.ts";
+import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -202,6 +203,16 @@ Deno.serve(async (req) => {
       .eq("id", job.id);
 
     console.error(`Scrape failed job=${job.id}: ${classified.code} — ${classified.message}`);
+
+    // Fire webhook for failure
+    dispatchWebhooks({
+      userId: ctx.userId,
+      eventType: "scrape.failed",
+      jobId: job.id,
+      jobType: "scrape",
+      payload: { url: scrapeReq.url, error: { code: classified.code, message: classified.message } },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
+
     return json({
       success: false,
       error: { code: classified.code, message: classified.message },
@@ -243,6 +254,15 @@ Deno.serve(async (req) => {
   });
 
   console.log(`Scrape completed job=${job.id} url=${result.final_url} time=${result.timings.total_ms}ms credits_remaining=${newBalance}`);
+
+  // Fire webhook for success
+  dispatchWebhooks({
+    userId: ctx.userId,
+    eventType: "scrape.completed",
+    jobId: job.id,
+    jobType: "scrape",
+    payload: { url: result.url, final_url: result.final_url, title: result.title, duration_ms: result.timings.total_ms },
+  }).catch((e) => console.error("Webhook dispatch error:", e));
 
   // --- Return response ---
   return json({

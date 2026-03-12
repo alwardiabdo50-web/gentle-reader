@@ -12,6 +12,7 @@ import {
   ChevronsUpDown,
   User,
   Shield,
+  Webhook,
 } from "lucide-react";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { NavLink } from "@/components/NavLink";
@@ -47,6 +48,7 @@ const mainItems = [
   { title: "API Keys", url: "/api-keys", icon: Key },
   { title: "Usage", url: "/usage", icon: BarChart3 },
   { title: "Job History", url: "/jobs", icon: History },
+  { title: "Webhooks", url: "/webhooks", icon: Webhook },
   { title: "Docs", url: "/docs", icon: BookOpen },
 ];
 

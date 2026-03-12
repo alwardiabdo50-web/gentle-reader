@@ -1,6 +1,7 @@
 import { extractApiKey, validateApiKey } from "../_shared/api-key-auth.ts";
 import { checkQuota, getUserCredits, recordLedgerEntry } from "../_shared/billing.ts";
 import { normalizeUrl } from "../_shared/crawl-utils.ts";
+import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -341,6 +342,14 @@ Deno.serve(async (req) => {
 
     console.log(`Extract completed job=${extractJob.id} model=${model} valid=${validation.valid} credits_charged=${EXTRACTION_CREDIT_COST}`);
 
+    dispatchWebhooks({
+      userId: ctx.userId,
+      eventType: "extract.completed",
+      jobId: extractJob.id,
+      jobType: "extract",
+      payload: { url: normalizedUrl, model, valid: validation.valid },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
+
     return json({
       success: true,
       data: {
@@ -370,6 +379,14 @@ Deno.serve(async (req) => {
       error_message: msg,
       finished_at: new Date().toISOString(),
     }).eq("id", extractJob.id);
+
+    dispatchWebhooks({
+      userId: ctx.userId,
+      eventType: "extract.failed",
+      jobId: extractJob.id,
+      jobType: "extract",
+      payload: { url: normalizedUrl, error: { code: errorCode, message: msg } },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
 
     return json({
       success: false,

@@ -3,6 +3,7 @@ import { normalizeUrl, isCrawlable, extractLinks, CrawlConfig } from "../_shared
 import { getUserCredits, recordLedgerEntry, checkQuota } from "../_shared/billing.ts";
 import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { CrawlThrottle } from "../_shared/crawl-throttle.ts";
+import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -269,6 +270,15 @@ Deno.serve(async (req) => {
           error_message: quotaErr.message,
           finished_at: new Date().toISOString(),
         }).eq("id", jobId);
+
+        dispatchWebhooks({
+          userId: job.user_id,
+          eventType: "crawl.failed",
+          jobId,
+          jobType: "crawl",
+          payload: { root_url: job.root_url, error: { code: "INSUFFICIENT_CREDITS", message: quotaErr.message }, processed: processedCount },
+        }).catch((e) => console.error("Webhook dispatch error:", e));
+
         return new Response(JSON.stringify({ status: "failed", reason: "quota" }), { status: 200 });
       }
     }
@@ -280,6 +290,14 @@ Deno.serve(async (req) => {
         status: "completed",
         finished_at: new Date().toISOString(),
       }).eq("id", jobId);
+
+      dispatchWebhooks({
+        userId: job.user_id,
+        eventType: "crawl.completed",
+        jobId,
+        jobType: "crawl",
+        payload: { root_url: job.root_url, processed: processedCount, failed: failedCount, credits_used: creditsUsed },
+      }).catch((e) => console.error("Webhook dispatch error:", e));
     }
 
     console.log(`Crawl worker finished job=${jobId} processed=${processedCount} failed=${failedCount} credits=${creditsUsed}`);
@@ -291,6 +309,14 @@ Deno.serve(async (req) => {
       error_message: err instanceof Error ? err.message : String(err),
       finished_at: new Date().toISOString(),
     }).eq("id", jobId);
+
+    dispatchWebhooks({
+      userId: job.user_id,
+      eventType: "crawl.failed",
+      jobId,
+      jobType: "crawl",
+      payload: { root_url: job.root_url, error: { code: "WORKER_ERROR", message: err instanceof Error ? err.message : String(err) }, processed: processedCount },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
   }
 
   return new Response(JSON.stringify({ status: "done", processed: processedCount }), {

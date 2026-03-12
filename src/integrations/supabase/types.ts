@@ -555,6 +555,74 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_deliveries: {
+        Row: {
+          attempts: number
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          event_type: string
+          failed_at: string | null
+          http_status_code: number | null
+          id: string
+          job_id: string | null
+          job_type: string
+          max_attempts: number
+          next_retry_at: string | null
+          payload_json: Json
+          response_body: string | null
+          status: string
+          updated_at: string
+          webhook_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          event_type: string
+          failed_at?: string | null
+          http_status_code?: number | null
+          id?: string
+          job_id?: string | null
+          job_type: string
+          max_attempts?: number
+          next_retry_at?: string | null
+          payload_json?: Json
+          response_body?: string | null
+          status?: string
+          updated_at?: string
+          webhook_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          event_type?: string
+          failed_at?: string | null
+          http_status_code?: number | null
+          id?: string
+          job_id?: string | null
+          job_type?: string
+          max_attempts?: number
+          next_retry_at?: string | null
+          payload_json?: Json
+          response_body?: string | null
+          status?: string
+          updated_at?: string
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_deliveries_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_events: {
         Row: {
           created_at: string
@@ -588,6 +656,42 @@ export type Database = {
           processed?: boolean
           processed_at?: string | null
           provider?: string
+        }
+        Relationships: []
+      }
+      webhooks: {
+        Row: {
+          created_at: string
+          description: string | null
+          events: string[]
+          id: string
+          is_active: boolean
+          secret: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          events?: string[]
+          id?: string
+          is_active?: boolean
+          secret: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          events?: string[]
+          id?: string
+          is_active?: boolean
+          secret?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
         }
         Relationships: []
       }
