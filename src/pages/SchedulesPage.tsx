@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Clock, Play, Pause, RefreshCw, Calendar, Diff, ArrowRight } from "lucide-react";
+import { Plus, Trash2, Clock, Play, Pause, RefreshCw, Calendar, GitCompare, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 
 const PRESETS = [
