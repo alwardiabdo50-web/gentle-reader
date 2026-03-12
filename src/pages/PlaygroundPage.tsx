@@ -200,7 +200,8 @@ export default function PlaygroundPage() {
     batch: <Layers className="h-4 w-4" />,
     crawl: <Globe className="h-4 w-4" />,
     map: <Map className="h-4 w-4" />,
-    extract: <Brain className="h-4 w-4" />
+    extract: <Brain className="h-4 w-4" />,
+    pipeline: <GitBranch className="h-4 w-4" />,
   };
 
   const d = result?.data;
