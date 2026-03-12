@@ -6,11 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database } from "lucide-react";
+import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database, GitBranch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ScrapeResponse } from "@/lib/api/scrape";
 
-type Mode = "scrape" | "batch" | "crawl" | "map" | "extract";
+type Mode = "scrape" | "batch" | "crawl" | "map" | "extract" | "pipeline";
 
 export default function PlaygroundPage() {
   const [mode, setMode] = useState<Mode>("scrape");
@@ -37,6 +37,12 @@ export default function PlaygroundPage() {
   const [extractPrompt, setExtractPrompt] = useState("");
   const [extractSchema, setExtractSchema] = useState("");
   const [extractModel, setExtractModel] = useState("google/gemini-3-flash-preview");
+
+  // Pipeline options
+  const [pipelinePrompt, setPipelinePrompt] = useState("");
+  const [pipelineSchema, setPipelineSchema] = useState("");
+  const [pipelineTransformPrompt, setPipelineTransformPrompt] = useState("");
+  const [pipelineModel, setPipelineModel] = useState("google/gemini-3-flash-preview");
 
   // Fetch (or create) a playground API key on mount
   useEffect(() => {
@@ -158,6 +164,33 @@ export default function PlaygroundPage() {
             return;
           }
           break;
+        case "pipeline":
+          functionName = "pipeline";
+          body = {
+            url,
+            extract: {} as Record<string, unknown>,
+          };
+          if (pipelinePrompt.trim()) (body.extract as Record<string, unknown>).prompt = pipelinePrompt;
+          if (pipelineSchema.trim()) {
+            try {
+              (body.extract as Record<string, unknown>).schema = JSON.parse(pipelineSchema);
+            } catch {
+              setResult({ success: false, error: { code: "INVALID_SCHEMA", message: "Invalid JSON schema" } });
+              setLoading(false);
+              return;
+            }
+          }
+          (body.extract as Record<string, unknown>).model = pipelineModel;
+          if (!(body.extract as Record<string, unknown>).prompt && !(body.extract as Record<string, unknown>).schema) {
+            setResult({ success: false, error: { code: "BAD_REQUEST", message: "Provide a prompt or schema for extraction" } });
+            setLoading(false);
+            return;
+          }
+          if (pipelineTransformPrompt.trim()) {
+            body.transform = { prompt: pipelineTransformPrompt, model: pipelineModel };
+          }
+          body.scrape_options = { render_javascript: renderJs, only_main_content: mainContent, cache_ttl: Number(cacheTtl) };
+          break;
       }
 
       const { data, error } = await supabase.functions.invoke(functionName, {
@@ -169,11 +202,12 @@ export default function PlaygroundPage() {
         setResult({ success: false, error: { code: "NETWORK_ERROR", message: error.message } });
       } else {
         setResult(data);
-        if (mode === "batch") setResultTab("markdown");else
-        if (mode === "map") setResultTab("json");else
-        if (mode === "extract") setResultTab("extracted");else
-        if (mode === "crawl") setResultTab("json");else
-        setResultTab("markdown");
+        if (mode === "batch") setResultTab("markdown");
+        else if (mode === "map") setResultTab("json");
+        else if (mode === "extract") setResultTab("extracted");
+        else if (mode === "crawl") setResultTab("json");
+        else if (mode === "pipeline") setResultTab("pipeline");
+        else setResultTab("markdown");
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -194,7 +228,8 @@ export default function PlaygroundPage() {
     batch: <Layers className="h-4 w-4" />,
     crawl: <Globe className="h-4 w-4" />,
     map: <Map className="h-4 w-4" />,
-    extract: <Brain className="h-4 w-4" />
+    extract: <Brain className="h-4 w-4" />,
+    pipeline: <GitBranch className="h-4 w-4" />,
   };
 
   const d = result?.data;
@@ -213,7 +248,7 @@ export default function PlaygroundPage() {
 
       {/* Mode selector */}
       <div className="flex gap-2 flex-wrap">
-        {(["scrape", "batch", "crawl", "map", "extract"] as Mode[]).map((m) =>
+        {(["scrape", "batch", "crawl", "map", "extract", "pipeline"] as Mode[]).map((m) =>
         <Button
           key={m}
           variant={mode === m ? "default" : "secondary"}
@@ -276,7 +311,7 @@ export default function PlaygroundPage() {
         }
 
         <div className="flex-wrap gap-6 text-sm flex items-center justify-start">
-          {(mode === "scrape" || mode === "batch" || mode === "extract") &&
+          {(mode === "scrape" || mode === "batch" || mode === "extract" || mode === "pipeline") &&
           <>
               <div className="flex items-center gap-2">
                 <Switch id="render-js" checked={renderJs} onCheckedChange={setRenderJs} />
@@ -289,7 +324,7 @@ export default function PlaygroundPage() {
             </>
           }
 
-          {(mode === "scrape" || mode === "batch") &&
+          {(mode === "scrape" || mode === "batch" || mode === "pipeline") &&
           <div className="flex items-center gap-2">
               <Label className="text-xs text-muted-foreground whitespace-nowrap">Cache TTL</Label>
               <Select value={cacheTtl} onValueChange={setCacheTtl}>
@@ -383,6 +418,50 @@ export default function PlaygroundPage() {
                   <SelectItem value="openai/gpt-5">GPT-5</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+        }
+
+        {mode === "pipeline" &&
+        <div className="space-y-3 pt-2 border-t border-border">
+            <p className="text-xs font-medium text-foreground">Extract Stage</p>
+            <div>
+              <Label className="text-xs text-muted-foreground block mb-1.5">Extraction prompt</Label>
+              <Input
+              placeholder="Extract the product name, price, and availability"
+              value={pipelinePrompt}
+              onChange={(e) => setPipelinePrompt(e.target.value)}
+              className="text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground block mb-1.5">JSON Schema (optional)</Label>
+              <Textarea
+              placeholder='{"type":"object","properties":{"name":{"type":"string"},"price":{"type":"number"}},"required":["name"]}'
+              value={pipelineSchema}
+              onChange={(e) => setPipelineSchema(e.target.value)}
+              className="text-xs font-mono min-h-[60px]" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground">Model</Label>
+              <Select value={pipelineModel} onValueChange={setPipelineModel}>
+                <SelectTrigger className="w-56 h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash (fast)</SelectItem>
+                  <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                  <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                  <SelectItem value="openai/gpt-5-mini">GPT-5 Mini</SelectItem>
+                  <SelectItem value="openai/gpt-5">GPT-5</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs font-medium text-foreground pt-2">Transform Stage (optional)</p>
+            <div>
+              <Label className="text-xs text-muted-foreground block mb-1.5">Transform prompt</Label>
+              <Textarea
+              placeholder="Normalize all prices to USD, flatten nested arrays"
+              value={pipelineTransformPrompt}
+              onChange={(e) => setPipelineTransformPrompt(e.target.value)}
+              className="text-xs min-h-[50px]" />
             </div>
           </div>
         }
@@ -531,8 +610,79 @@ export default function PlaygroundPage() {
         </div>
       }
 
+      {/* Pipeline Results */}
+      {mode === "pipeline" && d && result?.success &&
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Pipeline completed — {result.meta?.credits_used} credits</span>
+              {d.stages?.scrape?.cache_hit &&
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-primary px-1.5 py-0.5 rounded bg-primary/10">
+                  <Database className="h-3 w-3" /> Scrape cached
+                </span>
+            }
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
+              <Copy className="h-3 w-3" />
+              {copied ? "Copied!" : "Copy JSON"}
+            </Button>
+          </div>
+
+          <div className="p-4 space-y-3">
+            {/* Scrape */}
+            <div className="rounded border border-border p-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Stage 1: Scrape</p>
+              <p className="text-xs text-foreground">{d.stages?.scrape?.title}</p>
+              {d.stages?.scrape?.markdown && (
+                <pre className="text-xs font-mono text-secondary-foreground whitespace-pre-wrap mt-2 max-h-32 overflow-y-auto">{d.stages.scrape.markdown}</pre>
+              )}
+            </div>
+
+            {/* Extract */}
+            <div className="rounded border border-border p-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Stage 2: Extract</p>
+              <pre className="text-xs font-mono text-secondary-foreground whitespace-pre-wrap max-h-48 overflow-y-auto">
+                {JSON.stringify(d.stages?.extract?.data, null, 2)}
+              </pre>
+              {d.stages?.extract?.validation && !d.stages.extract.validation.valid && (
+                <div className="mt-2 p-2 rounded border border-destructive/20 bg-destructive/5">
+                  <p className="text-xs text-destructive">⚠ Validation warnings:</p>
+                  {d.stages.extract.validation.warnings?.map((w: string, i: number) => (
+                    <p key={i} className="text-xs text-muted-foreground">• {w}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Transform */}
+            {d.stages?.transform && (
+              <div className="rounded border border-border p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Stage 3: Transform</p>
+                <pre className="text-xs font-mono text-secondary-foreground whitespace-pre-wrap max-h-48 overflow-y-auto">
+                  {JSON.stringify(d.stages.transform.data, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            {/* Final output */}
+            <div className="rounded border border-primary/30 bg-primary/5 p-3">
+              <p className="text-xs font-medium text-primary mb-1">Final Output</p>
+              <pre className="text-xs font-mono text-secondary-foreground whitespace-pre-wrap max-h-64 overflow-y-auto">
+                {JSON.stringify(d.final_output, null, 2)}
+              </pre>
+            </div>
+          </div>
+
+          <div className="px-4 py-3 border-t border-border flex gap-6 text-xs text-muted-foreground">
+            <span>Credits: {result.meta?.credits_used}</span>
+            {result.meta?.run_id && <span className="font-mono">{result.meta.run_id.slice(0, 8)}…</span>}
+          </div>
+        </div>
+      }
+
       {/* Single-item Results (scrape, crawl, map, extract) */}
-      {d && !isBatchResult &&
+      {d && !isBatchResult && mode !== "pipeline" &&
       <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-3">

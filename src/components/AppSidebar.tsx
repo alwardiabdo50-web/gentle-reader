@@ -13,6 +13,7 @@ import {
   Shield,
   Webhook,
   Calendar,
+  GitBranch,
 } from "lucide-react";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useCredits } from "@/hooks/useCredits";
@@ -50,6 +51,7 @@ const mainItems = [
   { title: "Job History", url: "/jobs", icon: History },
   { title: "Webhooks", url: "/webhooks", icon: Webhook },
   { title: "Schedules", url: "/schedules", icon: Calendar },
+  { title: "Pipelines", url: "/pipelines", icon: GitBranch },
   { title: "Docs", url: "/docs", icon: BookOpen },
 ];
 

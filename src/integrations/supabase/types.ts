@@ -319,6 +319,125 @@ export type Database = {
           },
         ]
       }
+      pipeline_runs: {
+        Row: {
+          api_key_id: string | null
+          created_at: string | null
+          credits_used: number | null
+          error_code: string | null
+          error_message: string | null
+          extract_result: Json | null
+          extraction_job_id: string | null
+          final_output: Json | null
+          finished_at: string | null
+          id: string
+          pipeline_id: string | null
+          scrape_job_id: string | null
+          scrape_result: Json | null
+          source_url: string
+          started_at: string | null
+          status: string | null
+          transform_result: Json | null
+          user_id: string
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string | null
+          credits_used?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          extract_result?: Json | null
+          extraction_job_id?: string | null
+          final_output?: Json | null
+          finished_at?: string | null
+          id?: string
+          pipeline_id?: string | null
+          scrape_job_id?: string | null
+          scrape_result?: Json | null
+          source_url: string
+          started_at?: string | null
+          status?: string | null
+          transform_result?: Json | null
+          user_id: string
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string | null
+          credits_used?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          extract_result?: Json | null
+          extraction_job_id?: string | null
+          final_output?: Json | null
+          finished_at?: string | null
+          id?: string
+          pipeline_id?: string | null
+          scrape_job_id?: string | null
+          scrape_result?: Json | null
+          source_url?: string
+          started_at?: string | null
+          status?: string | null
+          transform_result?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_runs_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipelines: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          extract_model: string | null
+          extract_prompt: string | null
+          extract_schema: Json | null
+          id: string
+          is_active: boolean | null
+          name: string
+          scrape_options: Json | null
+          transform_model: string | null
+          transform_prompt: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          extract_model?: string | null
+          extract_prompt?: string | null
+          extract_schema?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          scrape_options?: Json | null
+          transform_model?: string | null
+          transform_prompt?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          extract_model?: string | null
+          extract_prompt?: string | null
+          extract_schema?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          scrape_options?: Json | null
+          transform_model?: string | null
+          transform_prompt?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
