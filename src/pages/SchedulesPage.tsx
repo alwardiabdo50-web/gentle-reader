@@ -354,7 +354,7 @@ export default function SchedulesPage() {
                           {jobTypeBadge(s.job_type)}
                           {s.enable_diff && (
                             <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20">
-                              <Diff className="h-3 w-3 mr-1" />Diff
+                              <GitCompare className="h-3 w-3 mr-1" />Diff
                             </Badge>
                           )}
                         </CardTitle>
