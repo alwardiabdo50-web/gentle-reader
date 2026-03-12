@@ -270,6 +270,15 @@ Deno.serve(async (req) => {
           error_message: quotaErr.message,
           finished_at: new Date().toISOString(),
         }).eq("id", jobId);
+
+        dispatchWebhooks({
+          userId: job.user_id,
+          eventType: "crawl.failed",
+          jobId,
+          jobType: "crawl",
+          payload: { root_url: job.root_url, error: { code: "INSUFFICIENT_CREDITS", message: quotaErr.message }, processed: processedCount },
+        }).catch((e) => console.error("Webhook dispatch error:", e));
+
         return new Response(JSON.stringify({ status: "failed", reason: "quota" }), { status: 200 });
       }
     }
