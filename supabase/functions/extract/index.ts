@@ -275,6 +275,12 @@ Deno.serve(async (req) => {
 
   const model = body.model && ALLOWED_MODELS.includes(body.model) ? body.model : DEFAULT_MODEL;
 
+  // Rate limit check
+  const rateLimitError = await checkRateLimit(ctx.userId);
+  if (rateLimitError) {
+    return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
+  }
+
   // Quota check
   const quotaError = await checkQuota(ctx.userId, EXTRACTION_CREDIT_COST);
   if (quotaError) {

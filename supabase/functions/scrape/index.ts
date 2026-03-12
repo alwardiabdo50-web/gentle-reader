@@ -168,6 +168,12 @@ Deno.serve(async (req) => {
     remove_selectors: body.remove_selectors ?? [],
   };
 
+  // --- Rate limit check ---
+  const rateLimitError = await checkRateLimit(ctx.userId);
+  if (rateLimitError) {
+    return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
+  }
+
   // --- Quota check ---
   const quotaError = await checkQuota(ctx.userId, 1);
   if (quotaError) {

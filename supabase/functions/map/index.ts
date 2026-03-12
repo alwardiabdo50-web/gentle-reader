@@ -267,6 +267,12 @@ Deno.serve(async (req) => {
     return json({ success: false, error: { code: "INVALID_URL", message: `Invalid URL: ${body.url}` } }, 422);
   }
 
+  // Rate limit check
+  const rateLimitError = await checkRateLimit(ctx.userId);
+  if (rateLimitError) {
+    return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
+  }
+
   // Quota check (1 credit for map)
   const quotaError = await checkQuota(ctx.userId, 1);
   if (quotaError) {

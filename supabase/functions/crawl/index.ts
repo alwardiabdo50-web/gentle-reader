@@ -76,6 +76,12 @@ async function handleCreateCrawl(req: Request, ctx: { userId: string; apiKeyId: 
   const maxPages = Math.min(Math.max(Number(body.max_pages) || 100, 1), 1000);
   const maxDepth = Math.min(Math.max(Number(body.max_depth) || 3, 1), 10);
 
+  // Rate limit check
+  const rateLimitError = await checkRateLimit(ctx.userId);
+  if (rateLimitError) {
+    return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
+  }
+
   // Quota check — need at least 1 credit to start
   const quotaError = await checkQuota(ctx.userId, 1);
   if (quotaError) {
