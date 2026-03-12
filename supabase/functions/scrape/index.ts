@@ -122,13 +122,17 @@ Deno.serve(async (req) => {
 
   // --- Parse & validate request ---
   let body: ScrapeRequest;
-  try {
-    body = await req.json();
-  } catch {
-    return json({
-      success: false,
-      error: { code: "BAD_REQUEST", message: "Invalid JSON body" },
-    }, 400);
+  if (Object.keys(peekBody).length > 0) {
+    body = peekBody as unknown as ScrapeRequest;
+  } else {
+    try {
+      body = await req.json();
+    } catch {
+      return json({
+        success: false,
+        error: { code: "BAD_REQUEST", message: "Invalid JSON body" },
+      }, 400);
+    }
   }
 
   if (!body.url || typeof body.url !== "string") {
