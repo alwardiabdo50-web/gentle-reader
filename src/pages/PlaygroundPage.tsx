@@ -164,6 +164,33 @@ export default function PlaygroundPage() {
             return;
           }
           break;
+        case "pipeline":
+          functionName = "pipeline";
+          body = {
+            url,
+            extract: {} as Record<string, unknown>,
+          };
+          if (pipelinePrompt.trim()) (body.extract as Record<string, unknown>).prompt = pipelinePrompt;
+          if (pipelineSchema.trim()) {
+            try {
+              (body.extract as Record<string, unknown>).schema = JSON.parse(pipelineSchema);
+            } catch {
+              setResult({ success: false, error: { code: "INVALID_SCHEMA", message: "Invalid JSON schema" } });
+              setLoading(false);
+              return;
+            }
+          }
+          (body.extract as Record<string, unknown>).model = pipelineModel;
+          if (!(body.extract as Record<string, unknown>).prompt && !(body.extract as Record<string, unknown>).schema) {
+            setResult({ success: false, error: { code: "BAD_REQUEST", message: "Provide a prompt or schema for extraction" } });
+            setLoading(false);
+            return;
+          }
+          if (pipelineTransformPrompt.trim()) {
+            body.transform = { prompt: pipelineTransformPrompt, model: pipelineModel };
+          }
+          body.scrape_options = { render_javascript: renderJs, only_main_content: mainContent, cache_ttl: Number(cacheTtl) };
+          break;
       }
 
       const { data, error } = await supabase.functions.invoke(functionName, {
