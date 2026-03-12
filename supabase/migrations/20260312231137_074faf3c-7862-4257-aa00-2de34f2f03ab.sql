@@ -1,0 +1,1 @@
+DELETE FROM api_keys WHERE name = 'Batch Test Key' AND key_prefix = 'nc_live_test_';
