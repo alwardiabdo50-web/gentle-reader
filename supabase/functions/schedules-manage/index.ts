@@ -115,9 +115,116 @@ Deno.serve(async (req) => {
     // ─── POST ────────────────────────────────────────────
     if (req.method === "POST") {
       const body = await req.json();
-      const { name, description, job_type, config, cron_expression, preset, timezone, enable_diff } = body;
 
-      if (!name || !job_type || !config) {
+      // ── Trigger (Run Now) ──────────────────────────────
+      if (scheduleId && body.action === "trigger") {
+        // Verify ownership
+        const { data: schedule, error: fetchErr } = await admin
+          .from("scheduled_jobs")
+          .select("*")
+          .eq("id", scheduleId)
+          .eq("user_id", user.id)
+          .single();
+        if (fetchErr || !schedule) return json({ success: false, error: { message: "Schedule not found" } }, 404);
+
+        // Call the schedule-runner's triggerJob logic inline
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+        // Create run record
+        const { data: run } = await admin
+          .from("schedule_runs")
+          .insert({
+            schedule_id: schedule.id,
+            job_type: schedule.job_type,
+            status: "running",
+            started_at: new Date().toISOString(),
+          })
+          .select("id")
+          .single();
+        if (!run) return json({ success: false, error: { message: "Failed to create run" } }, 500);
+
+        // Build request for the job endpoint
+        const config = schedule.config_json as Record<string, any>;
+        let endpoint: string;
+        let jobBody: Record<string, unknown>;
+
+        switch (schedule.job_type) {
+          case "scrape":
+            endpoint = `${supabaseUrl}/functions/v1/scrape`;
+            jobBody = { url: config.url, formats: config.formats ?? ["markdown"], render_javascript: config.render_javascript ?? true, only_main_content: config.only_main_content ?? true, _scheduled: true, _schedule_id: schedule.id, _run_id: run.id };
+            break;
+          case "crawl":
+            endpoint = `${supabaseUrl}/functions/v1/crawl`;
+            jobBody = { url: config.url, max_pages: config.max_pages ?? 10, max_depth: config.max_depth ?? 2, same_domain_only: config.same_domain_only ?? true, _scheduled: true, _schedule_id: schedule.id, _run_id: run.id };
+            break;
+          case "extract":
+            endpoint = `${supabaseUrl}/functions/v1/extract`;
+            jobBody = { url: config.url, prompt: config.prompt ?? "Extract all key information", model: config.model ?? "google/gemini-3-flash-preview", _scheduled: true, _schedule_id: schedule.id, _run_id: run.id };
+            break;
+          default:
+            return json({ success: false, error: { message: `Unknown job type` } }, 400);
+        }
+
+        let jobId: string | null = null;
+        let content = "";
+        let jobError: string | null = null;
+
+        try {
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}`, apikey: serviceKey },
+            body: JSON.stringify(jobBody),
+          });
+          const result = await res.json();
+          if (!res.ok) {
+            jobError = result.error?.message || result.error || `HTTP ${res.status}`;
+          } else {
+            jobId = result.data?.id || result.id || null;
+            content = result.data?.markdown || (result.data?.output_json ? JSON.stringify(result.data.output_json) : "") || "";
+          }
+        } catch (err) {
+          jobError = err instanceof Error ? err.message : String(err);
+        }
+
+        // Diff detection
+        let contentChanged = false;
+        let diffSummary: Record<string, unknown> | null = null;
+        let contentHash: string | null = null;
+        if (schedule.enable_diff && content && !jobError) {
+          const encoder = new TextEncoder();
+          const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(content));
+          contentHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+          if (schedule.last_content_hash && schedule.last_content_hash !== contentHash) {
+            contentChanged = true;
+            diffSummary = { previous_hash: schedule.last_content_hash, new_hash: contentHash, changed_at: new Date().toISOString(), content_length: content.length };
+          }
+          await admin.from("scheduled_jobs").update({ last_content_hash: contentHash, ...(contentChanged ? { last_diff_json: diffSummary } : {}) }).eq("id", schedule.id);
+        }
+
+        // Update schedule
+        await admin.from("scheduled_jobs").update({
+          last_run_at: new Date().toISOString(),
+          last_job_id: jobId,
+          last_status: jobError ? "failed" : "completed",
+          run_count: (schedule.run_count || 0) + 1,
+        }).eq("id", schedule.id);
+
+        // Update run
+        await admin.from("schedule_runs").update({
+          job_id: jobId, status: jobError ? "failed" : "completed",
+          content_hash: contentHash, content_changed: contentChanged,
+          diff_summary_json: diffSummary, error_message: jobError,
+          finished_at: new Date().toISOString(),
+        }).eq("id", run.id);
+
+        return json({ success: true, data: { run_id: run.id, status: jobError ? "failed" : "completed", error: jobError } });
+      }
+
+      // ── Create schedule ────────────────────────────────
+      const { name, description, job_type, config: cfgBody, cron_expression, preset, timezone, enable_diff } = body;
+
+      if (!name || !job_type || !cfgBody) {
         return json({ success: false, error: { message: "name, job_type, and config are required" } }, 400);
       }
 
@@ -144,7 +251,7 @@ Deno.serve(async (req) => {
           name,
           description: description || null,
           job_type,
-          config_json: config,
+          config_json: cfgBody,
           cron_expression: cron,
           timezone: tz,
           enable_diff: enable_diff ?? false,
