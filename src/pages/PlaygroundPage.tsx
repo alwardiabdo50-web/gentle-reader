@@ -610,8 +610,79 @@ export default function PlaygroundPage() {
         </div>
       }
 
+      {/* Pipeline Results */}
+      {mode === "pipeline" && d && result?.success &&
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Pipeline completed — {result.meta?.credits_used} credits</span>
+              {d.stages?.scrape?.cache_hit &&
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-primary px-1.5 py-0.5 rounded bg-primary/10">
+                  <Database className="h-3 w-3" /> Scrape cached
+                </span>
+            }
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
+              <Copy className="h-3 w-3" />
+              {copied ? "Copied!" : "Copy JSON"}
+            </Button>
+          </div>
+
+          <div className="p-4 space-y-3">
+            {/* Scrape */}
+            <div className="rounded border border-border p-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Stage 1: Scrape</p>
+              <p className="text-xs text-foreground">{d.stages?.scrape?.title}</p>
+              {d.stages?.scrape?.markdown && (
+                <pre className="text-xs font-mono text-secondary-foreground whitespace-pre-wrap mt-2 max-h-32 overflow-y-auto">{d.stages.scrape.markdown}</pre>
+              )}
+            </div>
+
+            {/* Extract */}
+            <div className="rounded border border-border p-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Stage 2: Extract</p>
+              <pre className="text-xs font-mono text-secondary-foreground whitespace-pre-wrap max-h-48 overflow-y-auto">
+                {JSON.stringify(d.stages?.extract?.data, null, 2)}
+              </pre>
+              {d.stages?.extract?.validation && !d.stages.extract.validation.valid && (
+                <div className="mt-2 p-2 rounded border border-destructive/20 bg-destructive/5">
+                  <p className="text-xs text-destructive">⚠ Validation warnings:</p>
+                  {d.stages.extract.validation.warnings?.map((w: string, i: number) => (
+                    <p key={i} className="text-xs text-muted-foreground">• {w}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Transform */}
+            {d.stages?.transform && (
+              <div className="rounded border border-border p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Stage 3: Transform</p>
+                <pre className="text-xs font-mono text-secondary-foreground whitespace-pre-wrap max-h-48 overflow-y-auto">
+                  {JSON.stringify(d.stages.transform.data, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            {/* Final output */}
+            <div className="rounded border border-primary/30 bg-primary/5 p-3">
+              <p className="text-xs font-medium text-primary mb-1">Final Output</p>
+              <pre className="text-xs font-mono text-secondary-foreground whitespace-pre-wrap max-h-64 overflow-y-auto">
+                {JSON.stringify(d.final_output, null, 2)}
+              </pre>
+            </div>
+          </div>
+
+          <div className="px-4 py-3 border-t border-border flex gap-6 text-xs text-muted-foreground">
+            <span>Credits: {result.meta?.credits_used}</span>
+            {result.meta?.run_id && <span className="font-mono">{result.meta.run_id.slice(0, 8)}…</span>}
+          </div>
+        </div>
+      }
+
       {/* Single-item Results (scrape, crawl, map, extract) */}
-      {d && !isBatchResult &&
+      {d && !isBatchResult && mode !== "pipeline" &&
       <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-3">
