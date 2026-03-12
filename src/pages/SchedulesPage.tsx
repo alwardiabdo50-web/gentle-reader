@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Clock, Play, Pause, RefreshCw, Calendar, Diff, ArrowRight } from "lucide-react";
+import { Plus, Trash2, Clock, Play, Pause, RefreshCw, Calendar, GitCompare, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 
 const PRESETS = [
@@ -354,7 +354,7 @@ export default function SchedulesPage() {
                           {jobTypeBadge(s.job_type)}
                           {s.enable_diff && (
                             <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20">
-                              <Diff className="h-3 w-3 mr-1" />Diff
+                              <GitCompare className="h-3 w-3 mr-1" />Diff
                             </Badge>
                           )}
                         </CardTitle>
