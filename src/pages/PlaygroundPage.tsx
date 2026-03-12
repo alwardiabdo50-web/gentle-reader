@@ -311,7 +311,7 @@ export default function PlaygroundPage() {
         }
 
         <div className="flex-wrap gap-6 text-sm flex items-center justify-start">
-          {(mode === "scrape" || mode === "batch" || mode === "extract") &&
+          {(mode === "scrape" || mode === "batch" || mode === "extract" || mode === "pipeline") &&
           <>
               <div className="flex items-center gap-2">
                 <Switch id="render-js" checked={renderJs} onCheckedChange={setRenderJs} />
