@@ -342,6 +342,14 @@ Deno.serve(async (req) => {
 
     console.log(`Extract completed job=${extractJob.id} model=${model} valid=${validation.valid} credits_charged=${EXTRACTION_CREDIT_COST}`);
 
+    dispatchWebhooks({
+      userId: ctx.userId,
+      eventType: "extract.completed",
+      jobId: extractJob.id,
+      jobType: "extract",
+      payload: { url: normalizedUrl, model, valid: validation.valid },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
+
     return json({
       success: true,
       data: {
