@@ -548,6 +548,12 @@ export default function PlaygroundPage() {
               {d.status_code && (
                 <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded border border-border">{d.status_code}</span>
               )}
+              {result?.meta?.cache_hit && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary px-1.5 py-0.5 rounded bg-primary/10">
+                  <Database className="h-3 w-3" />
+                  Cache hit
+                </span>
+              )}
             </div>
             <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
               <Copy className="h-3 w-3" />
