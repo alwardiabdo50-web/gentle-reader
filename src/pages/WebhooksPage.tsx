@@ -148,7 +148,7 @@ export default function WebhooksPage() {
   };
 
   const statusBadge = (status: string) => {
-    if (status === "delivered") return <Badge variant="default" className="bg-green-600 text-white">Delivered</Badge>;
+    if (status === "delivered") return <Badge variant="default">Delivered</Badge>;
     if (status === "failed") return <Badge variant="destructive">Failed</Badge>;
     return <Badge variant="secondary">Pending</Badge>;
   };
