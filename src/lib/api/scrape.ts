@@ -29,7 +29,7 @@ export interface ScrapeResponse {
     warnings: string[];
   };
   error?: { code: string; message: string };
-  meta?: { job_id: string; credits_used: number };
+  meta?: { job_id: string; credits_used: number; cache_hit?: boolean };
 }
 
 /**
