@@ -364,6 +364,125 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_runs: {
+        Row: {
+          content_changed: boolean | null
+          content_hash: string | null
+          created_at: string
+          diff_summary_json: Json | null
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          job_id: string | null
+          job_type: string
+          schedule_id: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          content_changed?: boolean | null
+          content_hash?: string | null
+          created_at?: string
+          diff_summary_json?: Json | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          job_id?: string | null
+          job_type: string
+          schedule_id: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          content_changed?: boolean | null
+          content_hash?: string | null
+          created_at?: string
+          diff_summary_json?: Json | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          job_id?: string | null
+          job_type?: string
+          schedule_id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_runs_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_jobs: {
+        Row: {
+          config_json: Json
+          created_at: string
+          cron_expression: string
+          description: string | null
+          enable_diff: boolean
+          id: string
+          is_active: boolean
+          job_type: string
+          last_content_hash: string | null
+          last_diff_json: Json | null
+          last_job_id: string | null
+          last_run_at: string | null
+          last_status: string | null
+          name: string
+          next_run_at: string | null
+          run_count: number
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config_json?: Json
+          created_at?: string
+          cron_expression?: string
+          description?: string | null
+          enable_diff?: boolean
+          id?: string
+          is_active?: boolean
+          job_type?: string
+          last_content_hash?: string | null
+          last_diff_json?: Json | null
+          last_job_id?: string | null
+          last_run_at?: string | null
+          last_status?: string | null
+          name: string
+          next_run_at?: string | null
+          run_count?: number
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config_json?: Json
+          created_at?: string
+          cron_expression?: string
+          description?: string | null
+          enable_diff?: boolean
+          id?: string
+          is_active?: boolean
+          job_type?: string
+          last_content_hash?: string | null
+          last_diff_json?: Json | null
+          last_job_id?: string | null
+          last_run_at?: string | null
+          last_status?: string | null
+          name?: string
+          next_run_at?: string | null
+          run_count?: number
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scrape_jobs: {
         Row: {
           api_key_id: string | null
