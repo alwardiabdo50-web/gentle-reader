@@ -112,6 +112,7 @@ export default function PlaygroundPage() {
             formats: ["markdown", "html", "metadata", "links"],
             render_javascript: renderJs,
             only_main_content: mainContent,
+            cache_ttl: Number(cacheTtl),
           };
           break;
         case "crawl":
