@@ -19,8 +19,16 @@ const json = (body: object, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-/** Authenticate via API key */
-async function authenticate(req: Request) {
+/** Authenticate via API key or service-role for scheduled jobs */
+async function authenticate(req: Request, body?: Record<string, unknown>) {
+  // Check service-role auth first (for scheduled jobs)
+  if (body) {
+    const serviceCtx = authenticateServiceRole(req, body);
+    if (serviceCtx) {
+      return { ok: true as const, ctx: serviceCtx };
+    }
+  }
+
   const rawKey = extractApiKey(req);
   if (!rawKey) {
     return { ok: false as const, response: json({ success: false, error: { code: "UNAUTHORIZED", message: "Missing API key" } }, 401) };
