@@ -38,6 +38,12 @@ export default function PlaygroundPage() {
   const [extractSchema, setExtractSchema] = useState("");
   const [extractModel, setExtractModel] = useState("google/gemini-3-flash-preview");
 
+  // Pipeline options
+  const [pipelinePrompt, setPipelinePrompt] = useState("");
+  const [pipelineSchema, setPipelineSchema] = useState("");
+  const [pipelineTransformPrompt, setPipelineTransformPrompt] = useState("");
+  const [pipelineModel, setPipelineModel] = useState("google/gemini-3-flash-preview");
+
   // Fetch (or create) a playground API key on mount
   useEffect(() => {
     const stored = sessionStorage.getItem("playground_api_key");
