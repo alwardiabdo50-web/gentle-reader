@@ -2,6 +2,7 @@ import { extractApiKey, validateApiKey, authenticateServiceRole } from "../_shar
 import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from "../_shared/billing.ts";
 import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
+import { buildCacheKey, getCachedResult, setCachedResult } from "../_shared/scrape-cache.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -23,6 +24,7 @@ interface ScrapeRequest {
   cookies?: Array<{ name: string; value: string; domain?: string }>;
   proxy?: string | null;
   remove_selectors?: string[];
+  cache_ttl?: number;
 }
 
 interface ScrapeResult {
@@ -68,12 +70,6 @@ function getAdmin() {
   return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 }
 
-/**
- * Real scrape implementation (fetch + DOM parse + Readability + Markdown).
- * Implemented in ../_shared/scrape-pipeline.ts to keep this handler focused.
- */
-
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -90,7 +86,6 @@ Deno.serve(async (req) => {
   }
 
   // --- Auth ---
-  // Try to peek at the body for service-role scheduled auth
   const clonedReq = req.clone();
   let peekBody: Record<string, unknown> = {};
   try { peekBody = await clonedReq.json(); } catch {}
@@ -168,13 +163,81 @@ Deno.serve(async (req) => {
     remove_selectors: body.remove_selectors ?? [],
   };
 
+  const cacheTtl = typeof body.cache_ttl === "number" ? Math.max(0, Math.floor(body.cache_ttl)) : 3600;
+
   // --- Rate limit check ---
   const rateLimitError = await checkRateLimit(ctx.userId);
   if (rateLimitError) {
     return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
   }
 
-  // --- Quota check ---
+  // --- Cache check ---
+  let cacheHit = false;
+  let cachedData = null;
+
+  if (cacheTtl > 0) {
+    const cacheKey = await buildCacheKey(normalizedUrl, {
+      formats: scrapeReq.formats,
+      render_javascript: scrapeReq.render_javascript,
+      only_main_content: scrapeReq.only_main_content,
+      remove_selectors: scrapeReq.remove_selectors,
+    });
+
+    cachedData = await getCachedResult(cacheKey);
+    if (cachedData) {
+      cacheHit = true;
+      console.log(`Cache hit for url=${normalizedUrl} key=${cacheKey.slice(0, 12)}`);
+
+      const admin = getAdmin();
+
+      // Create job record for cache hit (no credits)
+      const { data: job } = await admin
+        .from("scrape_jobs")
+        .insert({
+          user_id: ctx.userId,
+          api_key_id: ctx.apiKeyId,
+          url: normalizedUrl,
+          mode: "scrape",
+          status: "completed",
+          final_url: cachedData.final_url,
+          title: cachedData.title,
+          http_status_code: cachedData.status_code,
+          markdown: cachedData.markdown,
+          html: cachedData.html,
+          metadata_json: cachedData.metadata_json,
+          links_json: cachedData.links_json,
+          warnings_json: cachedData.warnings_json,
+          duration_ms: 0,
+          credits_used: 0,
+          request_json: { ...scrapeReq, cache_hit: true } as unknown as Record<string, unknown>,
+        })
+        .select("id")
+        .single();
+
+      return json({
+        success: true,
+        data: {
+          url: cachedData.url,
+          final_url: cachedData.final_url,
+          title: cachedData.title,
+          status_code: cachedData.status_code,
+          ...(cachedData.markdown !== null && { markdown: cachedData.markdown }),
+          ...(cachedData.html !== null && { html: cachedData.html }),
+          ...(cachedData.metadata_json !== null && { metadata: cachedData.metadata_json }),
+          ...(cachedData.links_json !== null && { links: cachedData.links_json }),
+          timings: { navigation_ms: 0, extraction_ms: 0, total_ms: 0 },
+          warnings: cachedData.warnings_json ?? [],
+        },
+        meta: {
+          job_id: job?.id ?? null,
+          credits_used: 0,
+          cache_hit: true,
+        },
+      });
+    }
+  }
+
+  // --- Quota check (only on cache miss) ---
   const quotaError = await checkQuota(ctx.userId, 1);
   if (quotaError) {
     console.warn(`Quota rejected: user=${ctx.userId} — ${quotaError.message}`);
@@ -225,7 +288,6 @@ Deno.serve(async (req) => {
 
     console.error(`Scrape failed job=${job.id}: ${classified.code} — ${classified.message}`);
 
-    // Fire webhook for failure
     dispatchWebhooks({
       userId: ctx.userId,
       eventType: "scrape.failed",
@@ -260,6 +322,19 @@ Deno.serve(async (req) => {
     })
     .eq("id", job.id);
 
+  // --- Store in cache ---
+  if (cacheTtl > 0) {
+    const cacheKey = await buildCacheKey(normalizedUrl, {
+      formats: scrapeReq.formats,
+      render_javascript: scrapeReq.render_javascript,
+      only_main_content: scrapeReq.only_main_content,
+      remove_selectors: scrapeReq.remove_selectors,
+    });
+    setCachedResult(cacheKey, result, cacheTtl).catch((e) =>
+      console.error("Cache store error:", e)
+    );
+  }
+
   // --- Record ledger entry (charge 1 credit) ---
   const userCredits = await getUserCredits(ctx.userId);
   const newBalance = Math.max(0, userCredits.remaining - 1);
@@ -276,7 +351,6 @@ Deno.serve(async (req) => {
 
   console.log(`Scrape completed job=${job.id} url=${result.final_url} time=${result.timings.total_ms}ms credits_remaining=${newBalance}`);
 
-  // Fire webhook for success
   dispatchWebhooks({
     userId: ctx.userId,
     eventType: "scrape.completed",
@@ -285,7 +359,6 @@ Deno.serve(async (req) => {
     payload: { url: result.url, final_url: result.final_url, title: result.title, duration_ms: result.timings.total_ms },
   }).catch((e) => console.error("Webhook dispatch error:", e));
 
-  // --- Return response ---
   return json({
     success: true,
     data: {
@@ -304,6 +377,7 @@ Deno.serve(async (req) => {
     meta: {
       job_id: job.id,
       credits_used: 1,
+      cache_hit: false,
     },
   });
 });

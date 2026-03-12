@@ -85,6 +85,7 @@ export interface BatchScrapeResponse {
     completed: number;
     failed: number;
     credits_used: number;
+    cache_hits?: number;
   };
   error?: { code: string; message: string };
 }

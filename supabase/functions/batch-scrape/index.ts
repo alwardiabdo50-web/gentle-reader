@@ -2,6 +2,7 @@ import { extractApiKey, validateApiKey } from "../_shared/api-key-auth.ts";
 import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from "../_shared/billing.ts";
 import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
+import { buildCacheKey, getCachedResult, setCachedResult } from "../_shared/scrape-cache.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -42,7 +43,6 @@ function getAdmin() {
   return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 }
 
-/** Run async tasks with a concurrency pool */
 async function pooled<T>(items: T[], concurrency: number, fn: (item: T, index: number) => Promise<void>): Promise<void> {
   let idx = 0;
   const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
@@ -62,6 +62,7 @@ interface BatchRequest {
   timeout_ms?: number;
   headers?: Record<string, string>;
   remove_selectors?: string[];
+  cache_ttl?: number;
 }
 
 Deno.serve(async (req) => {
@@ -82,7 +83,7 @@ Deno.serve(async (req) => {
   // --- Auth ---
   const rawKey = extractApiKey(req);
   if (!rawKey) {
-    return json({ success: false, error: { code: "UNAUTHORIZED", message: "Missing API key. Use Authorization: Bearer <key> or X-API-Key header." } }, 401);
+    return json({ success: false, error: { code: "UNAUTHORIZED", message: "Missing API key." } }, 401);
   }
   const authResult = await validateApiKey(rawKey);
   if (!authResult.ok) {
@@ -99,22 +100,20 @@ Deno.serve(async (req) => {
   }
 
   if (!Array.isArray(body.urls) || body.urls.length === 0) {
-    return json({ success: false, error: { code: "BAD_REQUEST", message: "Field 'urls' must be a non-empty array of strings" } }, 400);
+    return json({ success: false, error: { code: "BAD_REQUEST", message: "Field 'urls' must be a non-empty array" } }, 400);
   }
   if (body.urls.length > MAX_URLS) {
-    return json({ success: false, error: { code: "BAD_REQUEST", message: `Maximum ${MAX_URLS} URLs per batch request` } }, 400);
+    return json({ success: false, error: { code: "BAD_REQUEST", message: `Maximum ${MAX_URLS} URLs per batch` } }, 400);
   }
 
-  // Normalize all URLs
   const normalized: (string | null)[] = body.urls.map(normalizeUrl);
   const invalidIndices = normalized.map((u, i) => u === null ? i : -1).filter(i => i >= 0);
   if (invalidIndices.length > 0) {
-    return json({
-      success: false,
-      error: { code: "INVALID_URL", message: `Invalid URLs at indices: ${invalidIndices.join(", ")}` },
-    }, 422);
+    return json({ success: false, error: { code: "INVALID_URL", message: `Invalid URLs at indices: ${invalidIndices.join(", ")}` } }, 422);
   }
   const urls = normalized as string[];
+
+  const cacheTtl = typeof body.cache_ttl === "number" ? Math.max(0, Math.floor(body.cache_ttl)) : 3600;
 
   // --- Rate limit ---
   const rateLimitError = await checkRateLimit(ctx.userId);
@@ -122,10 +121,43 @@ Deno.serve(async (req) => {
     return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
   }
 
-  // --- Upfront quota check for full batch ---
-  const quotaError = await checkQuota(ctx.userId, urls.length);
-  if (quotaError) {
-    return json({ success: false, error: { code: quotaError.code, message: quotaError.message } }, 402);
+  const sharedOptions = {
+    formats: body.formats ?? ["markdown"],
+    render_javascript: body.render_javascript ?? true,
+    only_main_content: body.only_main_content ?? true,
+    timeout_ms: Math.min(body.timeout_ms ?? 30000, 60000),
+    headers: body.headers ?? {},
+    remove_selectors: body.remove_selectors ?? [],
+  };
+
+  // --- Pre-check cache to determine how many credits we actually need ---
+  let cacheHits = 0;
+  const cacheKeys: string[] = [];
+  const cachedResults: (Awaited<ReturnType<typeof getCachedResult>>)[] = [];
+
+  if (cacheTtl > 0) {
+    await Promise.all(urls.map(async (url, i) => {
+      const key = await buildCacheKey(url, {
+        formats: sharedOptions.formats,
+        render_javascript: sharedOptions.render_javascript,
+        only_main_content: sharedOptions.only_main_content,
+        remove_selectors: sharedOptions.remove_selectors,
+      });
+      cacheKeys[i] = key;
+      const cached = await getCachedResult(key);
+      cachedResults[i] = cached;
+      if (cached) cacheHits++;
+    }));
+  }
+
+  const creditsNeeded = urls.length - cacheHits;
+
+  // --- Quota check only for cache misses ---
+  if (creditsNeeded > 0) {
+    const quotaError = await checkQuota(ctx.userId, creditsNeeded);
+    if (quotaError) {
+      return json({ success: false, error: { code: quotaError.code, message: quotaError.message } }, 402);
+    }
   }
 
   const admin = getAdmin();
@@ -149,25 +181,58 @@ Deno.serve(async (req) => {
     return json({ success: false, error: { code: "INTERNAL_ERROR", message: "Failed to create batch job" } }, 500);
   }
 
-  console.log(`Batch scrape started job=${parentJob.id} urls=${urls.length} user=${ctx.userId}`);
+  console.log(`Batch scrape started job=${parentJob.id} urls=${urls.length} cache_hits=${cacheHits} user=${ctx.userId}`);
 
-  // --- Process URLs in parallel with concurrency pool ---
+  // --- Process URLs ---
   const results: (Record<string, unknown> | null)[] = new Array(urls.length).fill(null);
   const errors: (Record<string, unknown> | null)[] = new Array(urls.length).fill(null);
   let successCount = 0;
   let failCount = 0;
-
-  const sharedOptions = {
-    formats: body.formats ?? ["markdown"],
-    render_javascript: body.render_javascript ?? true,
-    only_main_content: body.only_main_content ?? true,
-    timeout_ms: Math.min(body.timeout_ms ?? 30000, 60000),
-    headers: body.headers ?? {},
-    remove_selectors: body.remove_selectors ?? [],
-  };
+  let actualCacheHits = 0;
 
   await pooled(urls, CONCURRENCY, async (url, index) => {
-    // Create child job row
+    // Check cache first
+    const cached = cacheTtl > 0 ? cachedResults[index] : null;
+    if (cached) {
+      // Create child job for cache hit
+      await admin.from("scrape_jobs").insert({
+        user_id: ctx.userId,
+        api_key_id: ctx.apiKeyId,
+        url,
+        mode: "scrape",
+        status: "completed",
+        final_url: cached.final_url,
+        title: cached.title,
+        http_status_code: cached.status_code,
+        markdown: cached.markdown,
+        html: cached.html,
+        metadata_json: cached.metadata_json,
+        links_json: cached.links_json,
+        warnings_json: cached.warnings_json,
+        duration_ms: 0,
+        credits_used: 0,
+        request_json: { ...sharedOptions, url, _batch_parent_id: parentJob.id, cache_hit: true },
+      });
+
+      results[index] = {
+        url: cached.url,
+        final_url: cached.final_url,
+        title: cached.title,
+        status_code: cached.status_code,
+        ...(cached.markdown !== null && { markdown: cached.markdown }),
+        ...(cached.html !== null && { html: cached.html }),
+        ...(cached.metadata_json !== null && { metadata: cached.metadata_json }),
+        ...(cached.links_json !== null && { links: cached.links_json }),
+        timings: { navigation_ms: 0, extraction_ms: 0, total_ms: 0 },
+        warnings: cached.warnings_json ?? [],
+        cache_hit: true,
+      };
+      successCount++;
+      actualCacheHits++;
+      return;
+    }
+
+    // Cache miss — perform scrape
     const { data: childJob } = await admin
       .from("scrape_jobs")
       .insert({
@@ -186,7 +251,6 @@ Deno.serve(async (req) => {
     try {
       const result = await performScrape({ url, ...sharedOptions });
 
-      // Update child job
       if (childId) {
         await admin.from("scrape_jobs").update({
           status: "completed",
@@ -203,6 +267,13 @@ Deno.serve(async (req) => {
         }).eq("id", childId);
       }
 
+      // Store in cache
+      if (cacheTtl > 0 && cacheKeys[index]) {
+        setCachedResult(cacheKeys[index], result, cacheTtl).catch((e) =>
+          console.error("Cache store error:", e)
+        );
+      }
+
       results[index] = {
         url: result.url,
         final_url: result.final_url,
@@ -214,11 +285,11 @@ Deno.serve(async (req) => {
         ...(result.links !== undefined && { links: result.links }),
         timings: result.timings,
         warnings: result.warnings,
+        cache_hit: false,
       };
       successCount++;
     } catch (err) {
       const classified = classifyError(err);
-
       if (childId) {
         await admin.from("scrape_jobs").update({
           status: "failed",
@@ -226,14 +297,13 @@ Deno.serve(async (req) => {
           error_message: classified.message,
         }).eq("id", childId);
       }
-
       errors[index] = { url, code: classified.code, message: classified.message };
       failCount++;
     }
   });
 
-  // --- Charge credits only for successful scrapes ---
-  const creditsUsed = successCount;
+  // --- Charge credits only for cache misses that succeeded ---
+  const creditsUsed = successCount - actualCacheHits;
   if (creditsUsed > 0) {
     const userCredits = await getUserCredits(ctx.userId);
     const newBalance = Math.max(0, userCredits.remaining - creditsUsed);
@@ -246,7 +316,7 @@ Deno.serve(async (req) => {
       job_id: parentJob.id,
       source_type: "scrape",
       balance_after: newBalance,
-      metadata_json: { total: urls.length, completed: successCount, failed: failCount },
+      metadata_json: { total: urls.length, completed: successCount, failed: failCount, cache_hits: actualCacheHits },
     });
   }
 
@@ -257,7 +327,7 @@ Deno.serve(async (req) => {
     credits_used: creditsUsed,
   }).eq("id", parentJob.id);
 
-  console.log(`Batch scrape done job=${parentJob.id} completed=${successCount} failed=${failCount} credits=${creditsUsed}`);
+  console.log(`Batch done job=${parentJob.id} ok=${successCount} fail=${failCount} cache=${actualCacheHits} credits=${creditsUsed}`);
 
   // --- Dispatch webhook ---
   const eventType = batchStatus === "failed" ? "batch.failed" : batchStatus === "partial" ? "batch.partial" : "batch.completed";
@@ -266,10 +336,9 @@ Deno.serve(async (req) => {
     eventType,
     jobId: parentJob.id,
     jobType: "batch",
-    payload: { total: urls.length, completed: successCount, failed: failCount, credits_used: creditsUsed },
+    payload: { total: urls.length, completed: successCount, failed: failCount, credits_used: creditsUsed, cache_hits: actualCacheHits },
   }).catch((e) => console.error("Webhook dispatch error:", e));
 
-  // --- Return response ---
   return json({
     success: batchStatus !== "failed",
     data: results,
@@ -280,6 +349,7 @@ Deno.serve(async (req) => {
       completed: successCount,
       failed: failCount,
       credits_used: creditsUsed,
+      cache_hits: actualCacheHits,
     },
   });
 });
