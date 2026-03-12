@@ -50,3 +50,61 @@ export async function scrapeUrl(
 
   return data as ScrapeResponse;
 }
+
+// --- Batch Scrape ---
+
+export interface BatchScrapeOptions extends ScrapeOptions {}
+
+export interface BatchScrapeResultItem {
+  url: string;
+  final_url: string;
+  title: string;
+  status_code: number;
+  markdown?: string;
+  html?: string;
+  metadata?: Record<string, unknown>;
+  links?: Array<{ href: string; text: string }>;
+  timings: { navigation_ms: number; extraction_ms: number; total_ms: number };
+  warnings: string[];
+}
+
+export interface BatchScrapeErrorItem {
+  url: string;
+  code: string;
+  message: string;
+}
+
+export interface BatchScrapeResponse {
+  success: boolean;
+  data: (BatchScrapeResultItem | null)[];
+  errors: (BatchScrapeErrorItem | null)[];
+  meta?: {
+    job_id: string;
+    total: number;
+    completed: number;
+    failed: number;
+    credits_used: number;
+  };
+  error?: { code: string; message: string };
+}
+
+/**
+ * Call the /v1/batch-scrape endpoint using an API key.
+ * Accepts up to 100 URLs and processes them in parallel.
+ */
+export async function batchScrapeUrls(
+  urls: string[],
+  apiKey: string,
+  options?: BatchScrapeOptions
+): Promise<BatchScrapeResponse> {
+  const { data, error } = await supabase.functions.invoke<BatchScrapeResponse>("batch-scrape", {
+    body: { urls, ...options },
+    headers: { "X-API-Key": apiKey },
+  });
+
+  if (error) {
+    return { success: false, data: [], errors: [], error: { code: "NETWORK_ERROR", message: error.message } };
+  }
+
+  return data as BatchScrapeResponse;
+}
