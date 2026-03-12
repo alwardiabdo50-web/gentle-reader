@@ -78,6 +78,7 @@ const App = () => (
                       <Route path="/settings" element={<SettingsPage />} />
                       <Route path="/webhooks" element={<WebhooksPage />} />
                       <Route path="/schedules" element={<SchedulesPage />} />
+                      <Route path="/pipelines" element={<PipelinesPage />} />
                       <Route path="/docs" element={<DocsPage />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>

@@ -110,3 +110,51 @@ export async function batchScrapeUrls(
 
   return data as BatchScrapeResponse;
 }
+
+// --- Pipeline ---
+
+export interface PipelineRequest {
+  url: string;
+  pipeline_id?: string;
+  scrape_options?: ScrapeOptions;
+  extract?: {
+    prompt?: string;
+    schema?: Record<string, unknown>;
+    model?: string;
+  };
+  transform?: {
+    prompt: string;
+    model?: string;
+  };
+}
+
+export interface PipelineResponse {
+  success: boolean;
+  data?: {
+    url: string;
+    stages: {
+      scrape: { title: string; markdown: string; cache_hit: boolean };
+      extract: { data: unknown; validation: { valid: boolean; warnings: string[] } };
+      transform?: { data: unknown };
+    };
+    final_output: unknown;
+  };
+  error?: { code: string; message: string };
+  meta?: { run_id: string; pipeline_id: string | null; credits_used: number };
+}
+
+export async function runPipeline(
+  request: PipelineRequest,
+  apiKey: string
+): Promise<PipelineResponse> {
+  const { data, error } = await supabase.functions.invoke<PipelineResponse>("pipeline", {
+    body: request,
+    headers: { "X-API-Key": apiKey },
+  });
+
+  if (error) {
+    return { success: false, error: { code: "NETWORK_ERROR", message: error.message } };
+  }
+
+  return data as PipelineResponse;
+}
