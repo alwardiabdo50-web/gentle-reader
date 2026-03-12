@@ -483,6 +483,57 @@ export type Database = {
         }
         Relationships: []
       }
+      scrape_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          duration_ms: number | null
+          expires_at: string
+          final_url: string | null
+          html: string | null
+          id: string
+          links_json: Json | null
+          markdown: string | null
+          metadata_json: Json | null
+          status_code: number | null
+          title: string | null
+          url: string
+          warnings_json: Json | null
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          duration_ms?: number | null
+          expires_at: string
+          final_url?: string | null
+          html?: string | null
+          id?: string
+          links_json?: Json | null
+          markdown?: string | null
+          metadata_json?: Json | null
+          status_code?: number | null
+          title?: string | null
+          url: string
+          warnings_json?: Json | null
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          duration_ms?: number | null
+          expires_at?: string
+          final_url?: string | null
+          html?: string | null
+          id?: string
+          links_json?: Json | null
+          markdown?: string | null
+          metadata_json?: Json | null
+          status_code?: number | null
+          title?: string | null
+          url?: string
+          warnings_json?: Json | null
+        }
+        Relationships: []
+      }
       scrape_jobs: {
         Row: {
           api_key_id: string | null
