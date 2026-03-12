@@ -10,6 +10,7 @@ export interface ScrapeOptions {
   mobile?: boolean;
   headers?: Record<string, string>;
   remove_selectors?: string[];
+  cache_ttl?: number;
 }
 
 export interface ScrapeResponse {
@@ -28,7 +29,7 @@ export interface ScrapeResponse {
     warnings: string[];
   };
   error?: { code: string; message: string };
-  meta?: { job_id: string; credits_used: number };
+  meta?: { job_id: string; credits_used: number; cache_hit?: boolean };
 }
 
 /**
@@ -84,6 +85,7 @@ export interface BatchScrapeResponse {
     completed: number;
     failed: number;
     credits_used: number;
+    cache_hits?: number;
   };
   error?: { code: string; message: string };
 }

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers } from "lucide-react";
+import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ScrapeResponse } from "@/lib/api/scrape";
 
@@ -24,6 +24,7 @@ export default function PlaygroundPage() {
   const [copied, setCopied] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [batchSelectedIdx, setBatchSelectedIdx] = useState(0);
+  const [cacheTtl, setCacheTtl] = useState("3600");
 
   // Crawl options
   const [maxPages, setMaxPages] = useState("50");
@@ -101,6 +102,7 @@ export default function PlaygroundPage() {
             formats: ["markdown", "html", "metadata", "links"],
             render_javascript: renderJs,
             only_main_content: mainContent,
+            cache_ttl: Number(cacheTtl),
           };
           break;
         case "batch":
@@ -110,6 +112,7 @@ export default function PlaygroundPage() {
             formats: ["markdown", "html", "metadata", "links"],
             render_javascript: renderJs,
             only_main_content: mainContent,
+            cache_ttl: Number(cacheTtl),
           };
           break;
         case "crawl":
@@ -272,7 +275,7 @@ export default function PlaygroundPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-6 text-sm">
+        <div className="flex flex-wrap gap-6 text-sm items-end">
           {(mode === "scrape" || mode === "batch" || mode === "extract") && (
             <>
               <div className="flex items-center gap-2">
@@ -284,6 +287,22 @@ export default function PlaygroundPage() {
                 <Label htmlFor="main-content" className="text-xs text-muted-foreground">Main content only</Label>
               </div>
             </>
+          )}
+
+          {(mode === "scrape" || mode === "batch") && (
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground whitespace-nowrap">Cache TTL</Label>
+              <Select value={cacheTtl} onValueChange={setCacheTtl}>
+                <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Disabled</SelectItem>
+                  <SelectItem value="300">5 min</SelectItem>
+                  <SelectItem value="1800">30 min</SelectItem>
+                  <SelectItem value="3600">1 hour</SelectItem>
+                  <SelectItem value="86400">24 hours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           )}
 
           {mode === "crawl" && (
@@ -393,6 +412,12 @@ export default function PlaygroundPage() {
               {result.meta?.failed > 0 && (
                 <span className="text-xs text-destructive font-medium">{result.meta.failed} failed</span>
               )}
+              {result.meta?.cache_hits > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary px-1.5 py-0.5 rounded bg-primary/10">
+                  <Database className="h-3 w-3" />
+                  {result.meta.cache_hits} cached
+                </span>
+              )}
             </div>
             <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
               <Copy className="h-3 w-3" />
@@ -500,6 +525,7 @@ export default function PlaygroundPage() {
             <span>Completed: {result.meta?.completed}</span>
             <span>Failed: {result.meta?.failed}</span>
             <span>Credits: {result.meta?.credits_used}</span>
+            {result.meta?.cache_hits > 0 && <span>Cache hits: {result.meta.cache_hits}</span>}
             {result.meta?.job_id && <span className="font-mono">{result.meta.job_id.slice(0, 8)}…</span>}
           </div>
         </div>
@@ -522,6 +548,12 @@ export default function PlaygroundPage() {
               )}
               {d.status_code && (
                 <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded border border-border">{d.status_code}</span>
+              )}
+              {result?.meta?.cache_hit && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary px-1.5 py-0.5 rounded bg-primary/10">
+                  <Database className="h-3 w-3" />
+                  Cache hit
+                </span>
               )}
             </div>
             <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
