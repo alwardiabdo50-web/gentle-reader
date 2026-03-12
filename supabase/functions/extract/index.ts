@@ -1,4 +1,4 @@
-import { extractApiKey, validateApiKey } from "../_shared/api-key-auth.ts";
+import { extractApiKey, validateApiKey, authenticateServiceRole } from "../_shared/api-key-auth.ts";
 import { checkQuota, getUserCredits, recordLedgerEntry } from "../_shared/billing.ts";
 import { normalizeUrl } from "../_shared/crawl-utils.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
@@ -214,16 +214,28 @@ Deno.serve(async (req) => {
     return json({ success: false, error: { code: "METHOD_NOT_ALLOWED", message: "Use POST" } }, 405);
   }
 
-  // Auth
-  const rawKey = extractApiKey(req);
-  if (!rawKey) {
-    return json({ success: false, error: { code: "UNAUTHORIZED", message: "Missing API key" } }, 401);
+  // Auth — try service-role first (for scheduled jobs), then API key
+  let peekBody: Record<string, unknown> = {};
+  const clonedReq = req.clone();
+  try { peekBody = await clonedReq.json(); } catch {}
+
+  const serviceCtx = authenticateServiceRole(req, peekBody);
+  let ctx: { userId: string; apiKeyId: string; apiKeyName?: string; plan?: string };
+
+  if (serviceCtx) {
+    ctx = serviceCtx;
+    console.log(`Scheduled extract for user=${ctx.userId}`);
+  } else {
+    const rawKey = extractApiKey(req);
+    if (!rawKey) {
+      return json({ success: false, error: { code: "UNAUTHORIZED", message: "Missing API key" } }, 401);
+    }
+    const authResult = await validateApiKey(rawKey);
+    if (!authResult.ok) {
+      return json({ success: false, error: { code: "UNAUTHORIZED", message: authResult.error } }, authResult.status);
+    }
+    ctx = authResult.ctx;
   }
-  const authResult = await validateApiKey(rawKey);
-  if (!authResult.ok) {
-    return json({ success: false, error: { code: "UNAUTHORIZED", message: authResult.error } }, authResult.status);
-  }
-  const { ctx } = authResult;
 
   // Parse body
   let body: {
@@ -233,10 +245,14 @@ Deno.serve(async (req) => {
     model?: string;
     only_main_content?: boolean;
   };
-  try {
-    body = await req.json();
-  } catch {
-    return json({ success: false, error: { code: "BAD_REQUEST", message: "Invalid JSON body" } }, 400);
+  if (Object.keys(peekBody).length > 0) {
+    body = peekBody as any;
+  } else {
+    try {
+      body = await req.json();
+    } catch {
+      return json({ success: false, error: { code: "BAD_REQUEST", message: "Invalid JSON body" } }, 400);
+    }
   }
 
   // Validate

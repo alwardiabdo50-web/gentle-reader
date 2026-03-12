@@ -92,3 +92,29 @@ export async function validateApiKey(rawKey: string): Promise<{ ok: true; ctx: A
     },
   };
 }
+
+/**
+ * Check if the request is authenticated with the service role key (used by scheduled jobs).
+ * Returns the user_id from the request body's _schedule_user_id if present.
+ */
+export function authenticateServiceRole(req: Request, body: Record<string, unknown>): AuthContext | null {
+  const authHeader = req.headers.get("authorization");
+  const apikeyHeader = req.headers.get("apikey");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!serviceKey) return null;
+
+  const isServiceRole = (authHeader === `Bearer ${serviceKey}`) || (apikeyHeader === serviceKey);
+  if (!isServiceRole) return null;
+  if (!body._scheduled) return null;
+
+  const userId = body._schedule_user_id as string;
+  if (!userId) return null;
+
+  return {
+    userId,
+    apiKeyId: "scheduled",
+    apiKeyName: "Scheduled Job",
+    plan: "scheduled",
+  };
+}

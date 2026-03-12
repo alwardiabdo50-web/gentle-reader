@@ -1,4 +1,4 @@
-import { extractApiKey, validateApiKey } from "../_shared/api-key-auth.ts";
+import { extractApiKey, validateApiKey, authenticateServiceRole } from "../_shared/api-key-auth.ts";
 import { checkQuota, getUserCredits, recordLedgerEntry } from "../_shared/billing.ts";
 import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
@@ -90,34 +90,49 @@ Deno.serve(async (req) => {
   }
 
   // --- Auth ---
-  const rawKey = extractApiKey(req);
-  if (!rawKey) {
-    return json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "Missing API key. Use Authorization: Bearer <key> or X-API-Key header." },
-    }, 401);
-  }
+  // Try to peek at the body for service-role scheduled auth
+  const clonedReq = req.clone();
+  let peekBody: Record<string, unknown> = {};
+  try { peekBody = await clonedReq.json(); } catch {}
 
-  const authResult = await validateApiKey(rawKey);
-  if (!authResult.ok) {
-    return json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: authResult.error },
-    }, authResult.status);
-  }
+  const serviceCtx = authenticateServiceRole(req, peekBody);
+  let ctx: { userId: string; apiKeyId: string; apiKeyName?: string; plan?: string };
 
-  const { ctx } = authResult;
+  if (serviceCtx) {
+    ctx = serviceCtx;
+    console.log(`Scheduled scrape for user=${ctx.userId}`);
+  } else {
+    const rawKey = extractApiKey(req);
+    if (!rawKey) {
+      return json({
+        success: false,
+        error: { code: "UNAUTHORIZED", message: "Missing API key. Use Authorization: Bearer <key> or X-API-Key header." },
+      }, 401);
+    }
+    const authResult = await validateApiKey(rawKey);
+    if (!authResult.ok) {
+      return json({
+        success: false,
+        error: { code: "UNAUTHORIZED", message: authResult.error },
+      }, authResult.status);
+    }
+    ctx = authResult.ctx;
+  }
   console.log(`Scrape request from user=${ctx.userId} key=${ctx.apiKeyId}`);
 
   // --- Parse & validate request ---
   let body: ScrapeRequest;
-  try {
-    body = await req.json();
-  } catch {
-    return json({
-      success: false,
-      error: { code: "BAD_REQUEST", message: "Invalid JSON body" },
-    }, 400);
+  if (Object.keys(peekBody).length > 0) {
+    body = peekBody as unknown as ScrapeRequest;
+  } else {
+    try {
+      body = await req.json();
+    } catch {
+      return json({
+        success: false,
+        error: { code: "BAD_REQUEST", message: "Invalid JSON body" },
+      }, 400);
+    }
   }
 
   if (!body.url || typeof body.url !== "string") {

@@ -1,4 +1,4 @@
-import { extractApiKey, validateApiKey } from "../_shared/api-key-auth.ts";
+import { extractApiKey, validateApiKey, authenticateServiceRole } from "../_shared/api-key-auth.ts";
 import { checkQuota, getUserCredits, recordLedgerEntry } from "../_shared/billing.ts";
 import { normalizeUrl, CrawlConfig } from "../_shared/crawl-utils.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -19,8 +19,16 @@ const json = (body: object, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-/** Authenticate via API key */
-async function authenticate(req: Request) {
+/** Authenticate via API key or service-role for scheduled jobs */
+async function authenticate(req: Request, body?: Record<string, unknown>) {
+  // Check service-role auth first (for scheduled jobs)
+  if (body) {
+    const serviceCtx = authenticateServiceRole(req, body);
+    if (serviceCtx) {
+      return { ok: true as const, ctx: serviceCtx };
+    }
+  }
+
   const rawKey = extractApiKey(req);
   if (!rawKey) {
     return { ok: false as const, response: json({ success: false, error: { code: "UNAUTHORIZED", message: "Missing API key" } }, 401) };
@@ -44,12 +52,16 @@ function extractCrawlId(url: string): string | null {
 }
 
 // ─── POST /v1/crawl ──────────────────────────────────────────
-async function handleCreateCrawl(req: Request, ctx: { userId: string; apiKeyId: string }) {
+async function handleCreateCrawl(req: Request, ctx: { userId: string; apiKeyId: string }, preloadedBody?: Record<string, unknown>) {
   let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return json({ success: false, error: { code: "BAD_REQUEST", message: "Invalid JSON body" } }, 400);
+  if (preloadedBody && Object.keys(preloadedBody).length > 0) {
+    body = preloadedBody;
+  } else {
+    try {
+      body = await req.json();
+    } catch {
+      return json({ success: false, error: { code: "BAD_REQUEST", message: "Invalid JSON body" } }, 400);
+    }
   }
 
   if (!body.url || typeof body.url !== "string") {
@@ -235,14 +247,22 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const auth = await authenticate(req);
+  // For POST, peek body for service-role auth
+  let peekBody: Record<string, unknown> | undefined;
+  if (req.method === "POST") {
+    const cloned = req.clone();
+    try { peekBody = await cloned.json(); } catch {}
+  }
+
+  const auth = await authenticate(req, peekBody);
   if (!auth.ok) return auth.response;
   const { ctx } = auth;
 
   const crawlId = extractCrawlId(req.url);
 
   if (req.method === "POST" && !crawlId) {
-    return handleCreateCrawl(req, ctx);
+    // Pass peeked body to avoid double-consume
+    return handleCreateCrawl(req, ctx, peekBody);
   }
 
   if (req.method === "GET" && crawlId) {

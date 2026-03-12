@@ -152,15 +152,15 @@ Deno.serve(async (req) => {
         switch (schedule.job_type) {
           case "scrape":
             endpoint = `${supabaseUrl}/functions/v1/scrape`;
-            jobBody = { url: config.url, formats: config.formats ?? ["markdown"], render_javascript: config.render_javascript ?? true, only_main_content: config.only_main_content ?? true, _scheduled: true, _schedule_id: schedule.id, _run_id: run.id };
+            jobBody = { url: config.url, formats: config.formats ?? ["markdown"], render_javascript: config.render_javascript ?? true, only_main_content: config.only_main_content ?? true, _scheduled: true, _schedule_id: schedule.id, _run_id: run.id, _schedule_user_id: schedule.user_id };
             break;
           case "crawl":
             endpoint = `${supabaseUrl}/functions/v1/crawl`;
-            jobBody = { url: config.url, max_pages: config.max_pages ?? 10, max_depth: config.max_depth ?? 2, same_domain_only: config.same_domain_only ?? true, _scheduled: true, _schedule_id: schedule.id, _run_id: run.id };
+            jobBody = { url: config.url, max_pages: config.max_pages ?? 10, max_depth: config.max_depth ?? 2, same_domain_only: config.same_domain_only ?? true, _scheduled: true, _schedule_id: schedule.id, _run_id: run.id, _schedule_user_id: schedule.user_id };
             break;
           case "extract":
             endpoint = `${supabaseUrl}/functions/v1/extract`;
-            jobBody = { url: config.url, prompt: config.prompt ?? "Extract all key information", model: config.model ?? "google/gemini-3-flash-preview", _scheduled: true, _schedule_id: schedule.id, _run_id: run.id };
+            jobBody = { url: config.url, prompt: config.prompt ?? "Extract all key information", model: config.model ?? "google/gemini-3-flash-preview", _scheduled: true, _schedule_id: schedule.id, _run_id: run.id, _schedule_user_id: schedule.user_id };
             break;
           default:
             return json({ success: false, error: { message: `Unknown job type` } }, 400);
