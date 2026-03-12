@@ -52,12 +52,16 @@ function extractCrawlId(url: string): string | null {
 }
 
 // ─── POST /v1/crawl ──────────────────────────────────────────
-async function handleCreateCrawl(req: Request, ctx: { userId: string; apiKeyId: string }) {
+async function handleCreateCrawl(req: Request, ctx: { userId: string; apiKeyId: string }, preloadedBody?: Record<string, unknown>) {
   let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return json({ success: false, error: { code: "BAD_REQUEST", message: "Invalid JSON body" } }, 400);
+  if (preloadedBody && Object.keys(preloadedBody).length > 0) {
+    body = preloadedBody;
+  } else {
+    try {
+      body = await req.json();
+    } catch {
+      return json({ success: false, error: { code: "BAD_REQUEST", message: "Invalid JSON body" } }, 400);
+    }
   }
 
   if (!body.url || typeof body.url !== "string") {
