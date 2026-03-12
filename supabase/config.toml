@@ -2,3 +2,9 @@ project_id = "ltaeqlnikprpodhwmzdn"
 
 [functions.batch-scrape]
 verify_jwt = false
+
+[functions.pipeline]
+verify_jwt = false
+
+[functions.pipelines-manage]
+verify_jwt = false
