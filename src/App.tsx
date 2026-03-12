@@ -16,6 +16,7 @@ import JobsPage from "@/pages/JobsPage";
 import BillingPage from "@/pages/BillingPage";
 import SettingsPage from "@/pages/SettingsPage";
 import DocsPage from "@/pages/DocsPage";
+import WebhooksPage from "@/pages/WebhooksPage";
 import AuthPage from "@/pages/AuthPage";
 import NotFound from "@/pages/NotFound";
 import HomePage from "@/pages/public/HomePage";
