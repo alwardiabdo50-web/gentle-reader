@@ -92,6 +92,7 @@ async function triggerJob(
         _scheduled: true,
         _schedule_id: schedule.id,
         _run_id: runId,
+        _schedule_user_id: schedule.user_id,
       };
       break;
     case "crawl":
@@ -106,6 +107,7 @@ async function triggerJob(
         _scheduled: true,
         _schedule_id: schedule.id,
         _run_id: runId,
+        _schedule_user_id: schedule.user_id,
       };
       break;
     case "extract":
@@ -118,6 +120,7 @@ async function triggerJob(
         _scheduled: true,
         _schedule_id: schedule.id,
         _run_id: runId,
+        _schedule_user_id: schedule.user_id,
       };
       break;
     default:
