@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Zap,
   Key,
@@ -16,10 +15,10 @@ import {
   Calendar,
 } from "lucide-react";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import { useCredits } from "@/hooks/useCredits";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -29,42 +28,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-  useSidebar,
-} from "@/components/ui/sidebar";
-
-const mainItems = [
-  { title: "Playground", url: "/", icon: Zap },
-  { title: "API Keys", url: "/api-keys", icon: Key },
-  { title: "Usage", url: "/usage", icon: BarChart3 },
-  { title: "Job History", url: "/jobs", icon: History },
-  { title: "Webhooks", url: "/webhooks", icon: Webhook },
-  { title: "Schedules", url: "/schedules", icon: Calendar },
-  { title: "Docs", url: "/docs", icon: BookOpen },
-];
-
-const settingsItems = [
-  { title: "Billing", url: "/billing", icon: CreditCard },
-  { title: "Settings", url: "/settings", icon: Settings },
-];
-
-interface Profile {
-  plan: string;
-  monthly_credits: number;
-  extra_credits: number;
-  credits_used: number;
-}
 
 export function AppSidebar() {
   const { state } = useSidebar();
