@@ -17,6 +17,7 @@ import BillingPage from "@/pages/BillingPage";
 import SettingsPage from "@/pages/SettingsPage";
 import DocsPage from "@/pages/DocsPage";
 import WebhooksPage from "@/pages/WebhooksPage";
+import SchedulesPage from "@/pages/SchedulesPage";
 import AuthPage from "@/pages/AuthPage";
 import NotFound from "@/pages/NotFound";
 import HomePage from "@/pages/public/HomePage";
