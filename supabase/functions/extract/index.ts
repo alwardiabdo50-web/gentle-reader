@@ -380,6 +380,14 @@ Deno.serve(async (req) => {
       finished_at: new Date().toISOString(),
     }).eq("id", extractJob.id);
 
+    dispatchWebhooks({
+      userId: ctx.userId,
+      eventType: "extract.failed",
+      jobId: extractJob.id,
+      jobType: "extract",
+      payload: { url: normalizedUrl, error: { code: errorCode, message: msg } },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
+
     return json({
       success: false,
       error: { code: errorCode, message: msg },

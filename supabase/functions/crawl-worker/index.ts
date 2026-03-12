@@ -309,6 +309,14 @@ Deno.serve(async (req) => {
       error_message: err instanceof Error ? err.message : String(err),
       finished_at: new Date().toISOString(),
     }).eq("id", jobId);
+
+    dispatchWebhooks({
+      userId: job.user_id,
+      eventType: "crawl.failed",
+      jobId,
+      jobType: "crawl",
+      payload: { root_url: job.root_url, error: { code: "WORKER_ERROR", message: err instanceof Error ? err.message : String(err) }, processed: processedCount },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
   }
 
   return new Response(JSON.stringify({ status: "done", processed: processedCount }), {

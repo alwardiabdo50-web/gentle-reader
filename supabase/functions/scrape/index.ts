@@ -255,6 +255,15 @@ Deno.serve(async (req) => {
 
   console.log(`Scrape completed job=${job.id} url=${result.final_url} time=${result.timings.total_ms}ms credits_remaining=${newBalance}`);
 
+  // Fire webhook for success
+  dispatchWebhooks({
+    userId: ctx.userId,
+    eventType: "scrape.completed",
+    jobId: job.id,
+    jobType: "scrape",
+    payload: { url: result.url, final_url: result.final_url, title: result.title, duration_ms: result.timings.total_ms },
+  }).catch((e) => console.error("Webhook dispatch error:", e));
+
   // --- Return response ---
   return json({
     success: true,
