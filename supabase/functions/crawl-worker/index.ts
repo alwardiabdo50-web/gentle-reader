@@ -290,6 +290,14 @@ Deno.serve(async (req) => {
         status: "completed",
         finished_at: new Date().toISOString(),
       }).eq("id", jobId);
+
+      dispatchWebhooks({
+        userId: job.user_id,
+        eventType: "crawl.completed",
+        jobId,
+        jobType: "crawl",
+        payload: { root_url: job.root_url, processed: processedCount, failed: failedCount, credits_used: creditsUsed },
+      }).catch((e) => console.error("Webhook dispatch error:", e));
     }
 
     console.log(`Crawl worker finished job=${jobId} processed=${processedCount} failed=${failedCount} credits=${creditsUsed}`);
