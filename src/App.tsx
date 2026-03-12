@@ -74,6 +74,7 @@ const App = () => (
                       <Route path="/jobs" element={<JobsPage />} />
                       <Route path="/billing" element={<BillingPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
+                      <Route path="/webhooks" element={<WebhooksPage />} />
                       <Route path="/docs" element={<DocsPage />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
