@@ -275,7 +275,7 @@ export default function PlaygroundPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-6 text-sm">
+        <div className="flex flex-wrap gap-6 text-sm items-end">
           {(mode === "scrape" || mode === "batch" || mode === "extract") && (
             <>
               <div className="flex items-center gap-2">
@@ -287,6 +287,22 @@ export default function PlaygroundPage() {
                 <Label htmlFor="main-content" className="text-xs text-muted-foreground">Main content only</Label>
               </div>
             </>
+          )}
+
+          {(mode === "scrape" || mode === "batch") && (
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground whitespace-nowrap">Cache TTL</Label>
+              <Select value={cacheTtl} onValueChange={setCacheTtl}>
+                <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Disabled</SelectItem>
+                  <SelectItem value="300">5 min</SelectItem>
+                  <SelectItem value="1800">30 min</SelectItem>
+                  <SelectItem value="3600">1 hour</SelectItem>
+                  <SelectItem value="86400">24 hours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           )}
 
           {mode === "crawl" && (
