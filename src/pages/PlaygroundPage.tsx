@@ -324,7 +324,7 @@ export default function PlaygroundPage() {
             </>
           }
 
-          {(mode === "scrape" || mode === "batch") &&
+          {(mode === "scrape" || mode === "batch" || mode === "pipeline") &&
           <div className="flex items-center gap-2">
               <Label className="text-xs text-muted-foreground whitespace-nowrap">Cache TTL</Label>
               <Select value={cacheTtl} onValueChange={setCacheTtl}>
