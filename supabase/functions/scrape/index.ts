@@ -1,4 +1,4 @@
-import { extractApiKey, validateApiKey } from "../_shared/api-key-auth.ts";
+import { extractApiKey, validateApiKey, authenticateServiceRole } from "../_shared/api-key-auth.ts";
 import { checkQuota, getUserCredits, recordLedgerEntry } from "../_shared/billing.ts";
 import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
