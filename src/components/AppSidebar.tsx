@@ -50,6 +50,7 @@ const mainItems = [
   { title: "Usage", url: "/usage", icon: BarChart3 },
   { title: "Job History", url: "/jobs", icon: History },
   { title: "Webhooks", url: "/webhooks", icon: Webhook },
+  { title: "Schedules", url: "/schedules", icon: Calendar },
   { title: "Docs", url: "/docs", icon: BookOpen },
 ];
 
