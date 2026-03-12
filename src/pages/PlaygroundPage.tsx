@@ -412,6 +412,12 @@ export default function PlaygroundPage() {
               {result.meta?.failed > 0 && (
                 <span className="text-xs text-destructive font-medium">{result.meta.failed} failed</span>
               )}
+              {result.meta?.cache_hits > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary px-1.5 py-0.5 rounded bg-primary/10">
+                  <Database className="h-3 w-3" />
+                  {result.meta.cache_hits} cached
+                </span>
+              )}
             </div>
             <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
               <Copy className="h-3 w-3" />
