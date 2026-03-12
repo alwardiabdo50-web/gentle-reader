@@ -90,23 +90,34 @@ Deno.serve(async (req) => {
   }
 
   // --- Auth ---
-  const rawKey = extractApiKey(req);
-  if (!rawKey) {
-    return json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "Missing API key. Use Authorization: Bearer <key> or X-API-Key header." },
-    }, 401);
-  }
+  // Try to peek at the body for service-role scheduled auth
+  const clonedReq = req.clone();
+  let peekBody: Record<string, unknown> = {};
+  try { peekBody = await clonedReq.json(); } catch {}
 
-  const authResult = await validateApiKey(rawKey);
-  if (!authResult.ok) {
-    return json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: authResult.error },
-    }, authResult.status);
-  }
+  const serviceCtx = authenticateServiceRole(req, peekBody);
+  let ctx: { userId: string; apiKeyId: string; apiKeyName?: string; plan?: string };
 
-  const { ctx } = authResult;
+  if (serviceCtx) {
+    ctx = serviceCtx;
+    console.log(`Scheduled scrape for user=${ctx.userId}`);
+  } else {
+    const rawKey = extractApiKey(req);
+    if (!rawKey) {
+      return json({
+        success: false,
+        error: { code: "UNAUTHORIZED", message: "Missing API key. Use Authorization: Bearer <key> or X-API-Key header." },
+      }, 401);
+    }
+    const authResult = await validateApiKey(rawKey);
+    if (!authResult.ok) {
+      return json({
+        success: false,
+        error: { code: "UNAUTHORIZED", message: authResult.error },
+      }, authResult.status);
+    }
+    ctx = authResult.ctx;
+  }
   console.log(`Scrape request from user=${ctx.userId} key=${ctx.apiKeyId}`);
 
   // --- Parse & validate request ---
