@@ -10,6 +10,7 @@ export interface ScrapeOptions {
   mobile?: boolean;
   headers?: Record<string, string>;
   remove_selectors?: string[];
+  cache_ttl?: number;
 }
 
 export interface ScrapeResponse {
