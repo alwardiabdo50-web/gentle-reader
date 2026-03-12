@@ -28,6 +28,7 @@ const plans = [
 ];
 
 export default function BillingPage() {
+  const credits = useCredits();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [currentPlan, setCurrentPlan] = useState("free");
