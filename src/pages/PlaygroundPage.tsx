@@ -248,7 +248,7 @@ export default function PlaygroundPage() {
 
       {/* Mode selector */}
       <div className="flex gap-2 flex-wrap">
-        {(["scrape", "batch", "crawl", "map", "extract"] as Mode[]).map((m) =>
+        {(["scrape", "batch", "crawl", "map", "extract", "pipeline"] as Mode[]).map((m) =>
         <Button
           key={m}
           variant={mode === m ? "default" : "secondary"}
