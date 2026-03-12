@@ -203,6 +203,16 @@ Deno.serve(async (req) => {
       .eq("id", job.id);
 
     console.error(`Scrape failed job=${job.id}: ${classified.code} — ${classified.message}`);
+
+    // Fire webhook for failure
+    dispatchWebhooks({
+      userId: ctx.userId,
+      eventType: "scrape.failed",
+      jobId: job.id,
+      jobType: "scrape",
+      payload: { url: scrapeReq.url, error: { code: classified.code, message: classified.message } },
+    }).catch((e) => console.error("Webhook dispatch error:", e));
+
     return json({
       success: false,
       error: { code: classified.code, message: classified.message },
