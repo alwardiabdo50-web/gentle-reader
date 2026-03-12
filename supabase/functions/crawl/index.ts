@@ -243,14 +243,22 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const auth = await authenticate(req);
+  // For POST, peek body for service-role auth
+  let peekBody: Record<string, unknown> | undefined;
+  if (req.method === "POST") {
+    const cloned = req.clone();
+    try { peekBody = await cloned.json(); } catch {}
+  }
+
+  const auth = await authenticate(req, peekBody);
   if (!auth.ok) return auth.response;
   const { ctx } = auth;
 
   const crawlId = extractCrawlId(req.url);
 
   if (req.method === "POST" && !crawlId) {
-    return handleCreateCrawl(req, ctx);
+    // Pass peeked body to avoid double-consume
+    return handleCreateCrawl(req, ctx, peekBody);
   }
 
   if (req.method === "GET" && crawlId) {
