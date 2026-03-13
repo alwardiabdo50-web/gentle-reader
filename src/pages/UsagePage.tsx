@@ -228,7 +228,9 @@ export default function UsagePage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Usage</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Monitor your API usage, credits, and performance this billing cycle.
+          {activeOrg
+            ? `Monitoring usage for ${activeOrg.name}.`
+            : "Monitor your API usage, credits, and performance this billing cycle."}
         </p>
       </div>
 
