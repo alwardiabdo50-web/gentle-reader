@@ -95,7 +95,67 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (action === "accept") {
+    if (action === "my-invitations") {
+      // Fetch all pending invitations for the current user's email
+      if (!user.email) {
+        return new Response(JSON.stringify({ invitations: [] }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: invs } = await admin
+        .from("org_invitations")
+        .select("id, org_id, email, role, created_at, expires_at")
+        .eq("email", user.email)
+        .is("accepted_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false });
+
+      const enriched = [];
+      for (const inv of invs || []) {
+        const { data: org } = await admin
+          .from("organizations")
+          .select("name")
+          .eq("id", inv.org_id)
+          .single();
+        enriched.push({
+          id: inv.id,
+          org_name: org?.name ?? "Unknown",
+          role: inv.role,
+          email: inv.email,
+          created_at: inv.created_at,
+        });
+      }
+
+      return new Response(JSON.stringify({ invitations: enriched }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "decline") {
+      const { invitation_id } = body;
+      const { data: inv } = await admin
+        .from("org_invitations")
+        .select("id, email, accepted_at")
+        .eq("id", invitation_id)
+        .single();
+
+      if (!inv) {
+        return new Response(JSON.stringify({ error: "Invitation not found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (inv.email !== user.email) {
+        return new Response(JSON.stringify({ error: "Email mismatch" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await admin.from("org_invitations").delete().eq("id", invitation_id);
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
       const { invitation_id } = body;
       const { data: inv, error: invError } = await admin
         .from("org_invitations")
