@@ -55,27 +55,6 @@ export default function BillingPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      if (activeOrg) {
-        // Use org-level data
-        setCurrentPlan(activeOrg.plan);
-        setCreditsRemaining(activeOrg.monthly_credits + activeOrg.extra_credits - activeOrg.credits_used);
-        setPeriodEnd(null);
-        // Still check Stripe for org subscription
-        await checkSubscription();
-        setLoading(false);
-        return;
-      }
-      // Load personal profile data
-      const { data } = await supabase
-        .from("profiles")
-        .select("plan, monthly_credits, extra_credits, credits_used, current_period_end")
-        .eq("user_id", user.id)
-        .single();
-      if (data) {
-        setCurrentPlan(data.plan);
-        setCreditsRemaining(data.monthly_credits + data.extra_credits - data.credits_used);
-        setPeriodEnd(data.current_period_end);
-      }
       await checkSubscription();
       setLoading(false);
     })();
