@@ -33,19 +33,25 @@ export function useCredits(): CreditInfo {
       setLoading(true);
 
       if (activeOrg) {
-        // Use org-level credits
-        const total = activeOrg.monthly_credits + activeOrg.extra_credits;
-        const remaining = Math.max(0, total - activeOrg.credits_used);
-        const pct = total > 0 ? (activeOrg.credits_used / total) * 100 : 0;
-        setState({
-          plan: activeOrg.plan,
-          creditsUsed: activeOrg.credits_used,
-          creditsTotal: total,
-          creditsRemaining: remaining,
-          percentUsed: pct,
-          isOrg: true,
-          orgName: activeOrg.name,
-        });
+        // Shared credits model: org uses the owner's personal credits
+        const { data, error } = await supabase
+          .rpc("get_org_owner_credits", { _org_id: activeOrg.id });
+
+        if (!error && data && data.length > 0) {
+          const ownerCredits = data[0];
+          const total = ownerCredits.monthly_credits + ownerCredits.extra_credits;
+          const remaining = Math.max(0, total - ownerCredits.credits_used);
+          const pct = total > 0 ? (ownerCredits.credits_used / total) * 100 : 0;
+          setState({
+            plan: ownerCredits.plan,
+            creditsUsed: ownerCredits.credits_used,
+            creditsTotal: total,
+            creditsRemaining: remaining,
+            percentUsed: pct,
+            isOrg: true,
+            orgName: activeOrg.name,
+          });
+        }
         setLoading(false);
         return;
       }
