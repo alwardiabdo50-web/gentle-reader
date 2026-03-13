@@ -37,17 +37,29 @@ export async function getUserCredits(userId: string, orgId?: string | null): Pro
   const admin = getAdmin();
 
   if (orgId) {
+    // Shared credits model: org members use the org owner's personal credits
     const { data: org } = await admin
       .from("organizations")
-      .select("plan, monthly_credits, extra_credits, credits_used, current_period_start, current_period_end")
+      .select("owner_id")
       .eq("id", orgId)
       .single();
 
-    const plan = org?.plan ?? "free";
+    if (!org) {
+      // Fallback to personal credits if org not found
+      return getUserCredits(userId);
+    }
+
+    const { data: ownerProfile } = await admin
+      .from("profiles")
+      .select("plan, monthly_credits, extra_credits, credits_used, current_period_start, current_period_end")
+      .eq("user_id", org.owner_id)
+      .single();
+
+    const plan = ownerProfile?.plan ?? "free";
     const config = getPlanConfig(plan);
-    const monthly = org?.monthly_credits ?? config.monthly_credits;
-    const extra = org?.extra_credits ?? 0;
-    const used = org?.credits_used ?? 0;
+    const monthly = ownerProfile?.monthly_credits ?? config.monthly_credits;
+    const extra = ownerProfile?.extra_credits ?? 0;
+    const used = ownerProfile?.credits_used ?? 0;
     const remaining = Math.max(0, monthly + extra - used);
 
     return {
@@ -180,21 +192,29 @@ export async function recordLedgerEntry(entry: LedgerEntry): Promise<{ id: strin
     const absAmount = Math.abs(entry.credits);
 
     if (entry.org_id) {
-      // Update org credits
+      // Shared credits model: deduct from the org owner's personal credits
       const { data: org } = await admin
         .from("organizations")
-        .select("credits_used")
+        .select("owner_id")
         .eq("id", entry.org_id)
         .single();
 
       if (org) {
-        const { error: updateError } = await admin
-          .from("organizations")
-          .update({ credits_used: org.credits_used + absAmount })
-          .eq("id", entry.org_id);
+        const { data: ownerProfile } = await admin
+          .from("profiles")
+          .select("credits_used")
+          .eq("user_id", org.owner_id)
+          .single();
 
-        if (updateError) {
-          console.error("BILLING ERROR: Failed to update org credits_used:", JSON.stringify(updateError));
+        if (ownerProfile) {
+          const { error: updateError } = await admin
+            .from("profiles")
+            .update({ credits_used: ownerProfile.credits_used + absAmount })
+            .eq("user_id", org.owner_id);
+
+          if (updateError) {
+            console.error("BILLING ERROR: Failed to update org owner credits_used:", JSON.stringify(updateError));
+          }
         }
       }
     } else {

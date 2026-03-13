@@ -1194,6 +1194,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_org_owner_credits: {
+        Args: { _org_id: string }
+        Returns: {
+          credits_used: number
+          current_period_end: string
+          extra_credits: number
+          monthly_credits: number
+          plan: string
+        }[]
+      }
       get_org_role: {
         Args: { _org_id: string; _user_id: string }
         Returns: string
