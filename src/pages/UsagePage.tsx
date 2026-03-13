@@ -44,13 +44,12 @@ const RPM_LIMITS: Record<string, number> = {
 
 export default function UsagePage() {
   const { user, activeOrg } = useAuth();
+  const credits = useCredits();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ creditsUsed: 0, scrapeJobs: 0, crawlJobs: 0, successRate: 0 });
+  const [stats, setStats] = useState({ scrapeJobs: 0, crawlJobs: 0, successRate: 0 });
   const [dailyUsage, setDailyUsage] = useState<DailyUsage[]>([]);
   const [creditTrend, setCreditTrend] = useState<CreditTrend[]>([]);
-  const [totalCredits, setTotalCredits] = useState(0);
   const [ledgerEntries, setLedgerEntries] = useState<LedgerRow[]>([]);
-  const [plan, setPlan] = useState("free");
 
   // Rate limit state
   const [hourlyRateData, setHourlyRateData] = useState<HourlyRateData[]>([]);
