@@ -48,6 +48,7 @@ const App = () => (
             <Route path="/home" element={<PublicLayout><HomePage /></PublicLayout>} />
             <Route path="/pricing" element={<PublicLayout><PricingPage /></PublicLayout>} />
             <Route path="/status" element={<PublicLayout><StatusPage /></PublicLayout>} />
+            <Route path="/docs" element={<PublicLayout><PublicDocsPage /></PublicLayout>} />
 
             <Route path="/auth" element={<AuthPage />} />
 
