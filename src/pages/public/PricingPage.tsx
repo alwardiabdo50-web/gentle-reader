@@ -99,8 +99,8 @@ export default function PricingPage() {
               key={plan.name}
               className={`rounded-xl border p-6 flex flex-col ${
                 plan.highlighted
-                  ? "border-primary glow-primary bg-background"
-                  : "border-border surface-1"
+                  ? "border-primary bg-card"
+                  : "border-border bg-card"
               }`}
             >
               {plan.highlighted && (
