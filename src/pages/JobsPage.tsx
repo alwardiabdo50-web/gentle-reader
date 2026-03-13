@@ -18,15 +18,15 @@ interface Job {
 const statusStyles: Record<string, string> = {
   completed: "border-primary/30 text-primary bg-primary/10",
   failed: "border-destructive/30 text-destructive bg-destructive/10",
-  running: "border-nebula-cyan/30 text-nebula-cyan bg-nebula-cyan/10",
+  running: "border-info/30 text-info bg-info/10",
   queued: "border-muted-foreground/30 text-muted-foreground bg-muted",
 };
 
 const typeColors: Record<string, string> = {
   scrape: "bg-primary/15 text-primary border-primary/20",
   batch: "bg-primary/15 text-primary border-primary/20",
-  crawl: "bg-nebula-cyan/15 text-nebula-cyan border-nebula-cyan/20",
-  extract: "bg-nebula-warning/15 text-nebula-warning border-nebula-warning/20",
+  crawl: "bg-info/15 text-info border-info/20",
+  extract: "bg-warning/15 text-warning border-warning/20",
   map: "bg-secondary text-secondary-foreground border-border",
   pipeline: "bg-accent/15 text-accent-foreground border-accent/20",
 };
