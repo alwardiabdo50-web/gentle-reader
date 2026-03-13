@@ -203,6 +203,7 @@ export default function ApiKeysPage() {
             )}
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="rounded-lg border border-border overflow-hidden">
