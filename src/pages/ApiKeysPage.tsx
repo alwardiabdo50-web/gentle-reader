@@ -138,21 +138,22 @@ export default function ApiKeysPage() {
             )}
           </p>
         </div>
-        <Dialog
-          open={dialogOpen}
-          onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) {
-              setCreatedToken(null);
-              setNewKeyName("");
-            }
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button className="gap-1.5 glow-primary">
-              <Plus className="h-4 w-4" /> New Key
-            </Button>
-          </DialogTrigger>
+        {canCreateKeys && (
+          <Dialog
+            open={dialogOpen}
+            onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) {
+                setCreatedToken(null);
+                setNewKeyName("");
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button className="gap-1.5 glow-primary">
+                <Plus className="h-4 w-4" /> New Key
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{createdToken ? "Key Created" : "Create API Key"}</DialogTitle>
