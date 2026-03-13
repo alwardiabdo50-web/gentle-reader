@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Copy, Eye, EyeOff, Globe, Webhook, RefreshCw } from "lucide-react";
+import { Plus, Trash2, Copy, Eye, EyeOff, Globe, Webhook, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 
 const EVENT_OPTIONS = [
@@ -82,6 +82,8 @@ export default function WebhooksPage() {
   const [newDesc, setNewDesc] = useState("");
   const [newEvents, setNewEvents] = useState<string[]>(["job.completed", "job.failed"]);
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
+  const [deliveryPage, setDeliveryPage] = useState(1);
+  const DELIVERIES_PER_PAGE = 20;
 
   // Fetch webhooks
   const { data: webhooks = [], isLoading } = useQuery<WebhookData[]>({
@@ -325,34 +327,57 @@ export default function WebhooksPage() {
                 <div className="p-8 text-center text-muted-foreground">
                   No deliveries yet. They'll appear here once your jobs trigger webhooks.
                 </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Event</TableHead>
-                      <TableHead>Job Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>HTTP</TableHead>
-                      <TableHead>Time</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {deliveries.map((d) => (
-                      <TableRow key={d.id}>
-                        <TableCell className="font-mono text-xs">{d.event_type}</TableCell>
-                        <TableCell className="text-sm">{d.job_type}</TableCell>
-                        <TableCell>{statusBadge(d.status)}</TableCell>
-                        <TableCell className="text-sm">
-                          {d.http_status_code ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {format(new Date(d.created_at), "MMM d HH:mm:ss")}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+              ) : (() => {
+                const totalDeliveryPages = Math.max(1, Math.ceil(deliveries.length / DELIVERIES_PER_PAGE));
+                const pagedDeliveries = deliveries.slice(
+                  (deliveryPage - 1) * DELIVERIES_PER_PAGE,
+                  deliveryPage * DELIVERIES_PER_PAGE
+                );
+                return (
+                  <>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Event</TableHead>
+                          <TableHead>Job Type</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>HTTP</TableHead>
+                          <TableHead>Time</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pagedDeliveries.map((d) => (
+                          <TableRow key={d.id}>
+                            <TableCell className="font-mono text-xs">{d.event_type}</TableCell>
+                            <TableCell className="text-sm">{d.job_type}</TableCell>
+                            <TableCell>{statusBadge(d.status)}</TableCell>
+                            <TableCell className="text-sm">
+                              {d.http_status_code ?? "—"}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {format(new Date(d.created_at), "MMM d HH:mm:ss")}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {totalDeliveryPages > 1 && (
+                      <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                        <span className="text-xs text-muted-foreground">{deliveries.length} total</span>
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="outline" disabled={deliveryPage <= 1} onClick={() => setDeliveryPage(deliveryPage - 1)}>
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <span className="text-xs text-muted-foreground">Page {deliveryPage} of {totalDeliveryPages}</span>
+                          <Button size="sm" variant="outline" disabled={deliveryPage >= totalDeliveryPages} onClick={() => setDeliveryPage(deliveryPage + 1)}>
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>

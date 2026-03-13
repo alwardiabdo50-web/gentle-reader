@@ -89,10 +89,13 @@ export default function AdminUsersPage() {
             <span className="text-xs text-muted-foreground">
               {data?.total ?? 0} total users
             </span>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
+              <span className="text-xs text-muted-foreground">
+                Page {page} of {Math.max(1, Math.ceil((data?.total ?? 0) / (data?.limit ?? 20)))}
+              </span>
               <Button size="sm" variant="outline" disabled={(data?.users?.length ?? 0) < data?.limit} onClick={() => setPage(page + 1)}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
