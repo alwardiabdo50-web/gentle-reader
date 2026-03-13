@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
-import { BarChart3, TrendingUp, Zap, Globe, Loader2, ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { BarChart3, TrendingUp, Zap, Globe, Loader2, ArrowDownRight, ArrowUpRight, Gauge, ShieldAlert, Activity } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -27,6 +28,19 @@ interface LedgerRow {
   metadata_json: Record<string, unknown> | null;
 }
 
+interface HourlyRateData {
+  hour: string;
+  requests: number;
+  limited: number;
+}
+
+const RPM_LIMITS: Record<string, number> = {
+  free: 20,
+  starter: 60,
+  pro: 120,
+  scale: 600,
+};
+
 export default function UsagePage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -35,17 +49,72 @@ export default function UsagePage() {
   const [creditTrend, setCreditTrend] = useState<CreditTrend[]>([]);
   const [totalCredits, setTotalCredits] = useState(0);
   const [ledgerEntries, setLedgerEntries] = useState<LedgerRow[]>([]);
+  const [plan, setPlan] = useState("free");
+
+  // Rate limit state
+  const [hourlyRateData, setHourlyRateData] = useState<HourlyRateData[]>([]);
+  const [rateLimitHits24h, setRateLimitHits24h] = useState(0);
+  const [totalRequests24h, setTotalRequests24h] = useState(0);
+  const [recentRequestCount, setRecentRequestCount] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     fetchUsageData();
+    fetchRateLimitData();
   }, [user]);
+
+  async function fetchRateLimitData() {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
+
+    const [logRes, recentRes] = await Promise.all([
+      supabase.from("rate_limit_log")
+        .select("hit_at, was_limited, endpoint")
+        .eq("user_id", user!.id)
+        .gte("hit_at", twentyFourHoursAgo)
+        .order("hit_at", { ascending: true })
+        .limit(1000),
+      supabase.from("rate_limit_log")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .gte("hit_at", oneMinuteAgo),
+    ]);
+
+    const logs = logRes.data || [];
+    const recent = recentRes.count || 0;
+    setRecentRequestCount(recent);
+
+    // Aggregate by hour
+    const hourMap = new Map<string, { requests: number; limited: number }>();
+    let limitedCount = 0;
+
+    for (const log of logs) {
+      const hour = new Date(log.hit_at).toLocaleTimeString([], { hour: "2-digit", hour12: true });
+      const existing = hourMap.get(hour) || { requests: 0, limited: 0 };
+      existing.requests++;
+      if (log.was_limited) {
+        existing.limited++;
+        limitedCount++;
+      }
+      hourMap.set(hour, existing);
+    }
+
+    setRateLimitHits24h(limitedCount);
+    setTotalRequests24h(logs.length);
+
+    const hourly: HourlyRateData[] = Array.from(hourMap.entries()).map(([hour, data]) => ({
+      hour,
+      requests: data.requests - data.limited,
+      limited: data.limited,
+    }));
+    setHourlyRateData(hourly);
+  }
 
   async function fetchUsageData() {
     setLoading(true);
     try {
       const [profileRes, jobsRes, ledgerRes] = await Promise.all([
-        supabase.from("profiles").select("credits_used, monthly_credits, extra_credits").eq("user_id", user!.id).single(),
+        supabase.from("profiles").select("credits_used, monthly_credits, extra_credits, plan").eq("user_id", user!.id).single(),
         supabase.from("scrape_jobs").select("id, mode, status, credits_used, created_at").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1000),
         supabase.from("usage_ledger").select("id, credits, balance_after, created_at, action, source_type, metadata_json").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(100),
       ]);
@@ -56,8 +125,8 @@ export default function UsagePage() {
 
       const total = (profile?.monthly_credits ?? 500) + (profile?.extra_credits ?? 0);
       setTotalCredits(total);
+      setPlan(profile?.plan ?? "free");
 
-      // Stats
       const scrapeCount = jobs.filter(j => j.mode === "scrape").length;
       const crawlCount = jobs.filter(j => j.mode === "crawl").length;
       const successCount = jobs.filter(j => j.status === "completed").length;
@@ -70,7 +139,6 @@ export default function UsagePage() {
         successRate: Math.round(rate * 10) / 10,
       });
 
-      // Daily usage (last 7 days)
       const now = new Date();
       const days: DailyUsage[] = [];
       const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -96,7 +164,6 @@ export default function UsagePage() {
       }
       setDailyUsage(days);
 
-      // Credit trend from ledger (ascending for chart)
       const ascLedger = [...ledger].reverse();
       if (ascLedger.length > 0) {
         const trendMap = new Map<string, number>();
@@ -115,7 +182,6 @@ export default function UsagePage() {
         setCreditTrend([{ date: "Today", remaining: total - (profile?.credits_used ?? 0) }]);
       }
 
-      // Ledger entries (already desc)
       setLedgerEntries(ledger.slice(0, 20));
     } catch (err) {
       console.error("Failed to fetch usage data", err);
@@ -123,6 +189,10 @@ export default function UsagePage() {
       setLoading(false);
     }
   }
+
+  const rpmLimit = RPM_LIMITS[plan] || 20;
+  const rpmPercent = Math.min(100, (recentRequestCount / rpmLimit) * 100);
+  const avgRpm = totalRequests24h > 0 ? Math.round(totalRequests24h / 24 / 60 * 100) / 100 : 0;
 
   const statCards = [
     { label: "Credits Used", value: stats.creditsUsed.toLocaleString(), icon: Zap },
@@ -162,6 +232,74 @@ export default function UsagePage() {
             )}
           </div>
         ))}
+      </div>
+
+      {/* Rate Limits Section */}
+      <div>
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Gauge className="h-5 w-5 text-primary" /> Rate Limits
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="rounded-lg border border-border p-4 bg-card">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs text-muted-foreground">Requests This Minute</span>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="text-2xl font-bold">{recentRequestCount}</div>
+            <Progress value={rpmPercent} className="mt-2 h-1.5" />
+          </div>
+          <div className="rounded-lg border border-border p-4 bg-card">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs text-muted-foreground">RPM Limit</span>
+              <Gauge className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="text-2xl font-bold">{rpmLimit}</div>
+            <div className="text-xs text-muted-foreground mt-1 capitalize">{plan} plan</div>
+          </div>
+          <div className="rounded-lg border border-border p-4 bg-card">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs text-muted-foreground">Rate Limit Hits (24h)</span>
+              <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className={`text-2xl font-bold ${rateLimitHits24h > 0 ? "text-destructive" : ""}`}>
+              {rateLimitHits24h}
+            </div>
+          </div>
+          <div className="rounded-lg border border-border p-4 bg-card">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs text-muted-foreground">Avg Requests/Min (24h)</span>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="text-2xl font-bold">{avgRpm}</div>
+          </div>
+        </div>
+
+        {hourlyRateData.length > 0 && (
+          <div className="rounded-lg border border-border p-4 bg-card">
+            <h3 className="text-sm font-medium mb-4">Requests vs Rate-Limited (24h by Hour)</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={hourlyRateData}>
+                <XAxis dataKey="hour" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
+                <Bar dataKey="requests" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} name="Successful" stackId="a" />
+                <Bar dataKey="limited" fill="hsl(var(--destructive))" radius={[3, 3, 0, 0]} name="Rate Limited" stackId="a" />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" />Successful</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-destructive" />Rate Limited</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Charts */}

@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.pipelines-manage]
 verify_jwt = false
+
+[functions.status-public]
+verify_jwt = false
