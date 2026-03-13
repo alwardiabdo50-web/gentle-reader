@@ -1,6 +1,6 @@
 import {
   Zap, Key, BarChart3, History, CreditCard, Globe, Settings, LogOut,
-  BookOpen, ChevronsUpDown, Shield, Webhook, Calendar, GitBranch, Users,
+  BookOpen, ChevronsUpDown, Shield, Webhook, Calendar, GitBranch, Users, LayoutDashboard,
 } from "lucide-react";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useCredits } from "@/hooks/useCredits";
@@ -21,7 +21,8 @@ import {
 
 
 const mainItems = [
-  { title: "Playground", url: "/", icon: Zap },
+  { title: "Overview", url: "/", icon: LayoutDashboard },
+  { title: "Playground", url: "/playground", icon: Zap },
   { title: "API Keys", url: "/api-keys", icon: Key },
   { title: "Usage", url: "/usage", icon: BarChart3 },
   { title: "Job History", url: "/jobs", icon: History },

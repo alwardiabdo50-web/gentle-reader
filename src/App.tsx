@@ -11,6 +11,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import PlaygroundPage from "@/pages/PlaygroundPage";
+import OverviewPage from "@/pages/OverviewPage";
 import ApiKeysPage from "@/pages/ApiKeysPage";
 import UsagePage from "@/pages/UsagePage";
 import JobsPage from "@/pages/JobsPage";
@@ -77,7 +78,8 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardLayout>
                     <Routes>
-                      <Route path="/" element={<PlaygroundPage />} />
+                      <Route path="/" element={<OverviewPage />} />
+                      <Route path="/playground" element={<PlaygroundPage />} />
                       <Route path="/api-keys" element={<ApiKeysPage />} />
                       <Route path="/usage" element={<UsagePage />} />
                       <Route path="/jobs" element={<JobsPage />} />
