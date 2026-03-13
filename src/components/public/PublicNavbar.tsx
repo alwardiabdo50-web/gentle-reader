@@ -66,8 +66,14 @@ export function PublicNavbar() {
             </a>
           ))}
           <div className="flex gap-3 pt-2">
-            <Button variant="ghost" size="sm" asChild><Link to="/auth">Log in</Link></Button>
-            <Button size="sm" asChild><Link to="/auth">Get Started</Link></Button>
+            {session ? (
+              <Button size="sm" asChild><Link to="/" onClick={() => setMobileOpen(false)}>Dashboard</Link></Button>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild><Link to="/auth" onClick={() => setMobileOpen(false)}>Log in</Link></Button>
+                <Button size="sm" asChild><Link to="/auth" onClick={() => setMobileOpen(false)}>Get Started</Link></Button>
+              </>
+            )}
           </div>
         </div>
       )}
