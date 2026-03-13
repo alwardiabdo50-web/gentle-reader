@@ -186,7 +186,7 @@ function PricingTeaser() {
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 tracking-[-0.02em]">Simple, transparent pricing</h2>
           <p className="text-muted-foreground text-lg">Start free. Scale as you grow. No surprises.</p>
         </div>
-        <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
           {plans.map((plan) => (
             <div key={plan.name} className={`rounded-xl border p-6 flex flex-col transition-all duration-150 ${plan.highlighted ? "border-primary bg-card" : "border-border bg-card"}`}>
               <h3 className="font-semibold text-foreground text-lg">{plan.name}</h3>
