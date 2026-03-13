@@ -29,7 +29,7 @@ const plans = [
 
 export default function BillingPage() {
   const credits = useCredits();
-  const { user } = useAuth();
+  const { user, activeOrg } = useAuth();
   const [loading, setLoading] = useState(true);
   const [currentPlan, setCurrentPlan] = useState("free");
   const [creditsRemaining, setCreditsRemaining] = useState(0);
@@ -57,7 +57,17 @@ export default function BillingPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      // Load profile data
+      if (activeOrg) {
+        // Use org-level data
+        setCurrentPlan(activeOrg.plan);
+        setCreditsRemaining(activeOrg.monthly_credits + activeOrg.extra_credits - activeOrg.credits_used);
+        setPeriodEnd(null);
+        // Still check Stripe for org subscription
+        await checkSubscription();
+        setLoading(false);
+        return;
+      }
+      // Load personal profile data
       const { data } = await supabase
         .from("profiles")
         .select("plan, monthly_credits, extra_credits, credits_used, current_period_end")
@@ -68,11 +78,10 @@ export default function BillingPage() {
         setCreditsRemaining(data.monthly_credits + data.extra_credits - data.credits_used);
         setPeriodEnd(data.current_period_end);
       }
-      // Also check Stripe subscription status
       await checkSubscription();
       setLoading(false);
     })();
-  }, [user, checkSubscription]);
+  }, [user, activeOrg, checkSubscription]);
 
   // Auto-refresh subscription status every 60s
   useEffect(() => {
@@ -152,7 +161,9 @@ export default function BillingPage() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage your plan and payment method.</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {activeOrg ? `Managing billing for ${activeOrg.name}` : "Manage your plan and payment method."}
+        </p>
       </div>
 
       <div className="rounded-lg border border-primary/30 p-5 surface-1 glow-primary">

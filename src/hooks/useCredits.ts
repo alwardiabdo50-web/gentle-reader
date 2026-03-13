@@ -9,23 +9,48 @@ export interface CreditInfo {
   creditsRemaining: number;
   percentUsed: number;
   loading: boolean;
+  isOrg: boolean;
+  orgName: string | null;
 }
 
 export function useCredits(): CreditInfo {
-  const { user } = useAuth();
+  const { user, activeOrg } = useAuth();
   const [state, setState] = useState<Omit<CreditInfo, "loading">>({
     plan: "free",
     creditsUsed: 0,
     creditsTotal: 500,
     creditsRemaining: 500,
     percentUsed: 0,
+    isOrg: false,
+    orgName: null,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
 
-    const fetchProfile = async () => {
+    const fetchCredits = async () => {
+      setLoading(true);
+
+      if (activeOrg) {
+        // Use org-level credits
+        const total = activeOrg.monthly_credits + activeOrg.extra_credits;
+        const remaining = Math.max(0, total - activeOrg.credits_used);
+        const pct = total > 0 ? (activeOrg.credits_used / total) * 100 : 0;
+        setState({
+          plan: activeOrg.plan,
+          creditsUsed: activeOrg.credits_used,
+          creditsTotal: total,
+          creditsRemaining: remaining,
+          percentUsed: pct,
+          isOrg: true,
+          orgName: activeOrg.name,
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Personal credits from profile
       const { data } = await supabase
         .from("profiles")
         .select("plan, monthly_credits, extra_credits, credits_used")
@@ -42,37 +67,76 @@ export function useCredits(): CreditInfo {
           creditsTotal: total,
           creditsRemaining: remaining,
           percentUsed: pct,
+          isOrg: false,
+          orgName: null,
         });
       }
       setLoading(false);
     };
 
-    fetchProfile();
+    fetchCredits();
 
-    // Realtime subscription
+    // Realtime subscription for personal profile updates
+    if (!activeOrg) {
+      const channel = supabase
+        .channel("credits-hook")
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "profiles" },
+          (payload) => {
+            const u = payload.new as Record<string, unknown>;
+            if ((u.user_id as string) !== user.id) return;
+
+            const monthlyCredits = (u.monthly_credits as number) ?? 500;
+            const extraCredits = (u.extra_credits as number) ?? 0;
+            const creditsUsed = (u.credits_used as number) ?? 0;
+            const total = monthlyCredits + extraCredits;
+            const remaining = Math.max(0, total - creditsUsed);
+            const pct = total > 0 ? (creditsUsed / total) * 100 : 0;
+
+            setState({
+              plan: (u.plan as string) ?? "free",
+              creditsUsed,
+              creditsTotal: total,
+              creditsRemaining: remaining,
+              percentUsed: pct,
+              isOrg: false,
+              orgName: null,
+            });
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+
+    // Realtime for org updates
     const channel = supabase
-      .channel("credits-hook")
+      .channel("org-credits-hook")
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles" },
+        { event: "UPDATE", schema: "public", table: "organizations" },
         (payload) => {
-          const u = payload.new as Record<string, unknown>;
-          const userId = u.user_id as string;
-          if (userId !== user.id) return;
+          const o = payload.new as Record<string, unknown>;
+          if ((o.id as string) !== activeOrg.id) return;
 
-          const monthlyCredits = (u.monthly_credits as number) ?? 500;
-          const extraCredits = (u.extra_credits as number) ?? 0;
-          const creditsUsed = (u.credits_used as number) ?? 0;
+          const monthlyCredits = (o.monthly_credits as number) ?? 500;
+          const extraCredits = (o.extra_credits as number) ?? 0;
+          const creditsUsed = (o.credits_used as number) ?? 0;
           const total = monthlyCredits + extraCredits;
           const remaining = Math.max(0, total - creditsUsed);
           const pct = total > 0 ? (creditsUsed / total) * 100 : 0;
 
           setState({
-            plan: (u.plan as string) ?? "free",
+            plan: (o.plan as string) ?? "free",
             creditsUsed,
             creditsTotal: total,
             creditsRemaining: remaining,
             percentUsed: pct,
+            isOrg: true,
+            orgName: (o.name as string) ?? activeOrg.name,
           });
         }
       )
@@ -81,7 +145,7 @@ export function useCredits(): CreditInfo {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, activeOrg]);
 
   return { ...state, loading };
 }
