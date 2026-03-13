@@ -11,6 +11,16 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -34,9 +44,10 @@ export default function ApiKeysPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
 
   const isOrgOwner = activeOrg?.role === "owner";
-  const canCreateKeys = !activeOrg || isOrgOwner;
+  const canManageKeys = !activeOrg || isOrgOwner;
 
   const fetchKeys = async () => {
     let query = supabase
@@ -64,10 +75,8 @@ export default function ApiKeysPage() {
     if (!newKeyName.trim() || !user) return;
     setCreating(true);
     try {
-      // Generate a random token
       const rawToken = `nc_live_${crypto.randomUUID().replace(/-/g, "").slice(0, 24)}`;
       const prefix = rawToken.slice(0, 13);
-      // Simple hash for demo - in production use server-side hashing
       const encoder = new TextEncoder();
       const data = encoder.encode(rawToken);
       const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -93,13 +102,17 @@ export default function ApiKeysPage() {
     }
   };
 
-  const handleRevoke = async (id: string) => {
+  const handleDelete = async (id: string) => {
     const { error } = await supabase
       .from("api_keys")
-      .update({ is_active: false })
+      .delete()
       .eq("id", id);
     if (error) toast.error(error.message);
-    else fetchKeys();
+    else {
+      toast.success("API key deleted");
+      fetchKeys();
+    }
+    setDeletingKeyId(null);
   };
 
   const handleCopyToken = () => {
@@ -138,7 +151,7 @@ export default function ApiKeysPage() {
             )}
           </p>
         </div>
-        {canCreateKeys && (
+        {canManageKeys && (
           <Dialog
             open={dialogOpen}
             onOpenChange={(open) => {
@@ -154,55 +167,55 @@ export default function ApiKeysPage() {
                 <Plus className="h-4 w-4" /> New Key
               </Button>
             </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{createdToken ? "Key Created" : "Create API Key"}</DialogTitle>
-            </DialogHeader>
-            {!createdToken ? (
-              <div className="space-y-4 py-2">
-                <div>
-                  <Label htmlFor="key-name" className="text-xs text-muted-foreground">Key name</Label>
-                  <Input
-                    id="key-name"
-                    placeholder="e.g. Production Key"
-                    value={newKeyName}
-                    onChange={(e) => setNewKeyName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                  />
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{createdToken ? "Key Created" : "Create API Key"}</DialogTitle>
+              </DialogHeader>
+              {!createdToken ? (
+                <div className="space-y-4 py-2">
+                  <div>
+                    <Label htmlFor="key-name" className="text-xs text-muted-foreground">Key name</Label>
+                    <Input
+                      id="key-name"
+                      placeholder="e.g. Production Key"
+                      value={newKeyName}
+                      onChange={(e) => setNewKeyName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={handleCreate} disabled={!newKeyName.trim() || creating}>
+                      {creating && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+                      Create Key
+                    </Button>
+                  </DialogFooter>
                 </div>
-                <DialogFooter>
-                  <Button onClick={handleCreate} disabled={!newKeyName.trim() || creating}>
-                    {creating && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-                    Create Key
-                  </Button>
-                </DialogFooter>
-              </div>
-            ) : (
-              <div className="space-y-4 py-2">
-                <div className="flex items-start gap-2 p-3 rounded-lg border border-warning/20 bg-warning/10">
-                  <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-                  <p className="text-xs text-warning">Copy this token now. It won't be shown again.</p>
+              ) : (
+                <div className="space-y-4 py-2">
+                  <div className="flex items-start gap-2 p-3 rounded-lg border border-warning/20 bg-warning/10">
+                    <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                    <p className="text-xs text-warning">Copy this token now. It won't be shown again.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs font-mono bg-sidebar p-2.5 rounded border border-border break-all">
+                      {createdToken}
+                    </code>
+                    <Button variant="ghost" size="sm" onClick={handleCopyToken}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {copied && (
+                    <p className="text-xs text-primary flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" /> Copied
+                    </p>
+                  )}
+                  <DialogFooter>
+                    <Button variant="secondary" onClick={() => setDialogOpen(false)}>Done</Button>
+                  </DialogFooter>
                 </div>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 text-xs font-mono bg-sidebar p-2.5 rounded border border-border break-all">
-                    {createdToken}
-                  </code>
-                  <Button variant="ghost" size="sm" onClick={handleCopyToken}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-                {copied && (
-                  <p className="text-xs text-primary flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" /> Copied
-                  </p>
-                )}
-                <DialogFooter>
-                  <Button variant="secondary" onClick={() => setDialogOpen(false)}>Done</Button>
-                </DialogFooter>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+              )}
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
@@ -214,14 +227,13 @@ export default function ApiKeysPage() {
               <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Prefix</th>
               <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Last Used</th>
               <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Created</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Status</th>
               <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground"></th>
             </tr>
           </thead>
           <tbody>
             {keys.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">
                   No API keys yet. Create one to get started.
                 </td>
               </tr>
@@ -237,25 +249,15 @@ export default function ApiKeysPage() {
                     {k.last_used_at ? formatDate(k.last_used_at) : "Never"}
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{formatDate(k.created_at)}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${
-                      k.is_active
-                        ? "border-primary/30 text-primary bg-primary/10"
-                        : "border-destructive/30 text-destructive bg-destructive/10"
-                    }`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${k.is_active ? "bg-primary" : "bg-destructive"}`} />
-                      {k.is_active ? "Active" : "Revoked"}
-                    </span>
-                  </td>
                   <td className="px-4 py-3 text-right">
-                    {k.is_active && canCreateKeys && (
+                    {canManageKeys && (
                       <Button
                         variant="ghost"
                         size="sm"
                         className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 text-xs"
-                        onClick={() => handleRevoke(k.id)}
+                        onClick={() => setDeletingKeyId(k.id)}
                       >
-                        <Trash2 className="h-3 w-3 mr-1" /> Revoke
+                        <Trash2 className="h-3 w-3 mr-1" /> Delete
                       </Button>
                     )}
                   </td>
@@ -265,6 +267,26 @@ export default function ApiKeysPage() {
           </tbody>
         </table>
       </div>
+
+      <AlertDialog open={!!deletingKeyId} onOpenChange={(open) => !open && setDeletingKeyId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete API Key?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this API key? This action cannot be undone. Any applications using this key will stop working immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deletingKeyId && handleDelete(deletingKeyId)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
