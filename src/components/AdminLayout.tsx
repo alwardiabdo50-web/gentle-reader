@@ -77,7 +77,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>
               <NavLink
-                to="/"
+                to="/app"
                 className="flex items-center justify-center px-3 py-[7px] rounded-lg text-[13px] text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
                 onClick={onNavigate}
               >
