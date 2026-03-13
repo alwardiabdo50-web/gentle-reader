@@ -104,10 +104,10 @@ export default function AdminContactsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Mail className="h-5 w-5 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Contact Submissions</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Contact Submissions</h1>
           <span className="text-sm text-muted-foreground ml-2">({total} total)</span>
         </div>
         <div className="flex items-center gap-2">
@@ -143,6 +143,7 @@ export default function AdminContactsPage() {
           ) : contacts.length === 0 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">No contact submissions found.</p>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -219,10 +220,11 @@ export default function AdminContactsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-4">
               <span className="text-xs text-muted-foreground">
                 Page {page} of {totalPages}
               </span>

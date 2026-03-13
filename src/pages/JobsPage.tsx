@@ -175,13 +175,13 @@ export default function JobsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Job History</h1>
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight">Job History</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Browse and inspect past scrape, crawl, map, extract, and pipeline jobs.
         </p>
       </div>
 
-      <div className="flex gap-3 items-center">
+      <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -213,7 +213,7 @@ export default function JobsPage() {
         </div>
       ) : (
         <>
-          <div className="rounded-lg border border-border overflow-hidden">
+          <div className="rounded-lg border border-border overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-sidebar">
@@ -274,7 +274,7 @@ export default function JobsPage() {
             </table>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{totalCount} total jobs</span>
               <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>

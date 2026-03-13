@@ -86,7 +86,7 @@ export default function OverviewPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Overview</h1>
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">Overview</h1>
         <p className="text-sm text-muted-foreground mt-1">Your dashboard at a glance</p>
       </div>
 
@@ -137,7 +137,7 @@ export default function OverviewPage() {
             <p className="text-sm text-muted-foreground">No jobs yet. Head to the <Link to="/playground" className="text-primary underline">Playground</Link> to run your first scrape.</p>
           </Card>
         ) : (
-          <div className="rounded-lg border border-border overflow-hidden">
+          <div className="rounded-lg border border-border overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/50 text-muted-foreground text-[11px] uppercase tracking-wide">

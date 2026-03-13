@@ -24,7 +24,7 @@ export default function AdminOverviewPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-[36px] font-bold text-foreground tracking-[-0.03em]">Admin Overview</h1>
+      <h1 className="text-2xl md:text-[36px] font-bold text-foreground tracking-[-0.03em]">Admin Overview</h1>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((s, i) => (
@@ -32,7 +32,7 @@ export default function AdminOverviewPage() {
             <div className="text-[11px] font-medium uppercase tracking-[0.07em] text-muted-foreground mb-2">
               {s.label}
             </div>
-            <div className="text-[28px] font-bold text-foreground tracking-[-0.03em]">{s.value}</div>
+            <div className="text-xl md:text-[28px] font-bold text-foreground tracking-[-0.03em]">{s.value}</div>
           </div>
         ))}
       </div>

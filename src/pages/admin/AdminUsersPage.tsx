@@ -29,7 +29,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Users</h1>
+      <h1 className="text-xl md:text-2xl font-bold text-foreground">Users</h1>
 
       <form onSubmit={handleSearch} className="flex gap-2 max-w-md">
         <div className="relative flex-1">
@@ -85,7 +85,7 @@ export default function AdminUsersPage() {
             </Table>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <span className="text-xs text-muted-foreground">
               {data?.total ?? 0} total users
             </span>
