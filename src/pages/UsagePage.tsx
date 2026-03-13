@@ -184,12 +184,12 @@ export default function UsagePage() {
     }
   }
 
-  const rpmLimit = RPM_LIMITS[plan] || 20;
+  const rpmLimit = RPM_LIMITS[credits.plan] || 20;
   const rpmPercent = Math.min(100, (recentRequestCount / rpmLimit) * 100);
   const avgRpm = totalRequests24h > 0 ? Math.round(totalRequests24h / 24 / 60 * 100) / 100 : 0;
 
   const statCards = [
-    { label: "Credits Used", value: stats.creditsUsed.toLocaleString(), icon: Zap },
+    { label: "Credits Used", value: credits.creditsUsed.toLocaleString(), icon: Zap },
     { label: "Scrape Jobs", value: stats.scrapeJobs.toLocaleString(), icon: BarChart3 },
     { label: "Crawl Jobs", value: stats.crawlJobs.toLocaleString(), icon: Globe },
     { label: "Success Rate", value: stats.scrapeJobs + stats.crawlJobs > 0 ? `${stats.successRate}%` : "—", icon: TrendingUp },
