@@ -82,15 +82,20 @@ export function useCredits(): CreditInfo {
 
     fetchCredits();
 
-    // Realtime subscription for personal profile updates
-    if (!activeOrg) {
-      const channel = supabase
-        .channel("credits-hook")
-        .on(
-          "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "profiles" },
-          (payload) => {
-            const u = payload.new as Record<string, unknown>;
+    // Realtime: always listen to profiles table since credits are always on profiles
+    // For org context, the owner's profile gets updated, so we re-fetch via RPC
+    const channel = supabase
+      .channel("credits-hook")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles" },
+        (payload) => {
+          const u = payload.new as Record<string, unknown>;
+
+          if (activeOrg) {
+            // Owner's profile changed — re-fetch via RPC to get updated credits
+            fetchCredits();
+          } else {
             if ((u.user_id as string) !== user.id) return;
 
             const monthlyCredits = (u.monthly_credits as number) ?? 500;
@@ -110,40 +115,6 @@ export function useCredits(): CreditInfo {
               orgName: null,
             });
           }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-
-    // Realtime for org updates
-    const channel = supabase
-      .channel("org-credits-hook")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "organizations" },
-        (payload) => {
-          const o = payload.new as Record<string, unknown>;
-          if ((o.id as string) !== activeOrg.id) return;
-
-          const monthlyCredits = (o.monthly_credits as number) ?? 500;
-          const extraCredits = (o.extra_credits as number) ?? 0;
-          const creditsUsed = (o.credits_used as number) ?? 0;
-          const total = monthlyCredits + extraCredits;
-          const remaining = Math.max(0, total - creditsUsed);
-          const pct = total > 0 ? (creditsUsed / total) * 100 : 0;
-
-          setState({
-            plan: (o.plan as string) ?? "free",
-            creditsUsed,
-            creditsTotal: total,
-            creditsRemaining: remaining,
-            percentUsed: pct,
-            isOrg: true,
-            orgName: (o.name as string) ?? activeOrg.name,
-          });
         }
       )
       .subscribe();
