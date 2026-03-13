@@ -184,7 +184,7 @@ export default function ApiKeysPage() {
                   <p className="text-xs text-warning">Copy this token now. It won't be shown again.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 text-xs font-mono bg-muted p-2.5 rounded border border-border break-all">
+                  <code className="flex-1 text-xs font-mono bg-sidebar p-2.5 rounded border border-border break-all">
                     {createdToken}
                   </code>
                   <Button variant="ghost" size="sm" onClick={handleCopyToken}>
