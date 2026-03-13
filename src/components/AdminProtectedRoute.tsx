@@ -15,7 +15,7 @@ export function AdminProtectedRoute({ children }: { children: React.ReactNode })
   }
 
   if (!user) return <Navigate to="/auth" replace />;
-  if (!isAdmin) return <Navigate to="/" replace />;
+  if (!isAdmin) return <Navigate to="/app" replace />;
 
   return <>{children}</>;
 }

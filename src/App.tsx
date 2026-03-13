@@ -48,7 +48,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             {/* Public pages */}
-            <Route path="/home" element={<PublicLayout><HomePage /></PublicLayout>} />
+            <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
             <Route path="/pricing" element={<PublicLayout><PricingPage /></PublicLayout>} />
             <Route path="/status" element={<PublicLayout><StatusPage /></PublicLayout>} />
             <Route path="/docs" element={<PublicLayout><PublicDocsPage /></PublicLayout>} />
@@ -76,7 +76,7 @@ const App = () => (
 
             {/* Authenticated dashboard */}
             <Route
-              path="/*"
+              path="/app/*"
               element={
                 <ProtectedRoute>
                   <DashboardLayout>

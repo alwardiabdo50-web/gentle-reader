@@ -66,13 +66,13 @@ export default function OverviewPage() {
 
   const statCards = stats
     ? [
-        { label: "Credits Remaining", value: credits.creditsRemaining.toLocaleString(), icon: BarChart3, href: "/usage" },
-        { label: "Active API Keys", value: stats.activeApiKeys, icon: Key, href: "/api-keys" },
-        { label: "Scrapes (7d)", value: stats.scrapeJobs7d, icon: Zap, href: "/jobs" },
-        { label: "Crawls (7d)", value: stats.crawlJobs7d, icon: ExternalLink, href: "/jobs" },
-        { label: "Extractions (7d)", value: stats.extractJobs7d, icon: History, href: "/jobs" },
-        { label: "Active Webhooks", value: stats.activeWebhooks, icon: Webhook, href: "/webhooks" },
-        { label: "Active Schedules", value: stats.activeSchedules, icon: Calendar, href: "/schedules" },
+        { label: "Credits Remaining", value: credits.creditsRemaining.toLocaleString(), icon: BarChart3, href: "/app/usage" },
+        { label: "Active API Keys", value: stats.activeApiKeys, icon: Key, href: "/app/api-keys" },
+        { label: "Scrapes (7d)", value: stats.scrapeJobs7d, icon: Zap, href: "/app/jobs" },
+        { label: "Crawls (7d)", value: stats.crawlJobs7d, icon: ExternalLink, href: "/app/jobs" },
+        { label: "Extractions (7d)", value: stats.extractJobs7d, icon: History, href: "/app/jobs" },
+        { label: "Active Webhooks", value: stats.activeWebhooks, icon: Webhook, href: "/app/webhooks" },
+        { label: "Active Schedules", value: stats.activeSchedules, icon: Calendar, href: "/app/schedules" },
       ]
     : [];
 
@@ -115,13 +115,13 @@ export default function OverviewPage() {
       {/* Quick actions */}
       <div className="flex flex-wrap gap-3">
         <Button asChild variant="outline" size="sm">
-          <Link to="/playground"><Zap className="h-4 w-4 mr-1.5" />Playground</Link>
+          <Link to="/app/playground"><Zap className="h-4 w-4 mr-1.5" />Playground</Link>
         </Button>
         <Button asChild variant="outline" size="sm">
-          <Link to="/api-keys"><Key className="h-4 w-4 mr-1.5" />API Keys</Link>
+          <Link to="/app/api-keys"><Key className="h-4 w-4 mr-1.5" />API Keys</Link>
         </Button>
         <Button asChild variant="outline" size="sm">
-          <Link to="/docs"><BookOpen className="h-4 w-4 mr-1.5" />Docs</Link>
+          <Link to="/app/docs"><BookOpen className="h-4 w-4 mr-1.5" />Docs</Link>
         </Button>
       </div>
 
@@ -134,7 +134,7 @@ export default function OverviewPage() {
           </div>
         ) : recentJobs.length === 0 ? (
           <Card>
-            <p className="text-sm text-muted-foreground">No jobs yet. Head to the <Link to="/playground" className="text-primary underline">Playground</Link> to run your first scrape.</p>
+            <p className="text-sm text-muted-foreground">No jobs yet. Head to the <Link to="/app/playground" className="text-primary underline">Playground</Link> to run your first scrape.</p>
           </Card>
         ) : (
           <div className="rounded-lg border border-border overflow-x-auto">
