@@ -34,6 +34,7 @@ export function PublicNavbar() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
           <Button variant="ghost" size="sm" asChild>
             <Link to="/auth">Log in</Link>
           </Button>

@@ -139,6 +139,10 @@ export function AppSidebar() {
           </div>
         )}
 
+        <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
+          <ThemeToggle />
+        </div>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className={`flex w-full items-center gap-2 rounded-lg p-2 text-left hover:bg-accent transition-colors duration-150 outline-none ${collapsed ? "justify-center" : ""}`}>
