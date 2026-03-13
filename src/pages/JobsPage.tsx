@@ -16,7 +16,7 @@ interface Job {
   title: string | null;
 }
 
-const ITEMS_PER_PAGE = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
 
 const statusStyles: Record<string, string> = {
   completed: "border-primary/30 text-primary bg-primary/10",
