@@ -150,7 +150,7 @@ export default function ApiKeysPage() {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="gap-1.5 glow-primary">
+              <Button className="gap-1.5">
                 <Plus className="h-4 w-4" /> New Key
               </Button>
             </DialogTrigger>
