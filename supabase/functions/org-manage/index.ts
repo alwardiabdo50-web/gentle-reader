@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
 };
 
 Deno.serve(async (req) => {
@@ -12,14 +13,16 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const authHeader = req.headers.get("authorization") ?? "";
 
   // Auth: get user from JWT
-  const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+  const userClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { authorization: authHeader } },
   });
   const { data: { user }, error: authError } = await userClient.auth.getUser();
   if (authError || !user) {
+    console.error("Auth failed:", authError?.message, "header present:", !!authHeader);
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -28,7 +31,14 @@ Deno.serve(async (req) => {
   const admin = createClient(supabaseUrl, serviceKey);
 
   try {
-    if (req.method === "GET") {
+    // Support both HTTP methods and action-based routing
+    let body: any = {};
+    if (req.method === "POST" || req.method === "PATCH" || req.method === "DELETE") {
+      try { body = await req.json(); } catch { body = {}; }
+    }
+    const action = body.action || req.method;
+
+    if (action === "GET" || action === "list") {
       // List user's orgs
       const { data, error } = await admin
         .from("org_members")
@@ -50,8 +60,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (req.method === "POST") {
-      const body = await req.json();
+    if (action === "POST" || action === "create") {
       const name = body.name?.trim();
       if (!name) {
         return new Response(JSON.stringify({ error: "Name is required" }), {
@@ -78,8 +87,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (req.method === "PATCH") {
-      const body = await req.json();
+    if (action === "PATCH" || action === "update") {
       const { org_id, name } = body;
       if (!org_id || !name?.trim()) {
         return new Response(JSON.stringify({ error: "org_id and name required" }), {
@@ -87,7 +95,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check ownership
       const { data: isOwner } = await admin.rpc("is_org_owner", { _user_id: user.id, _org_id: org_id });
       if (!isOwner) {
         return new Response(JSON.stringify({ error: "Only owners can update org" }), {
@@ -103,8 +110,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (req.method === "DELETE") {
-      const body = await req.json();
+    if (action === "DELETE" || action === "delete") {
       const { org_id } = body;
 
       const { data: isOwner } = await admin.rpc("is_org_owner", { _user_id: user.id, _org_id: org_id });
@@ -122,8 +128,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ error: "Unknown action" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
     console.error("org-manage error:", err);

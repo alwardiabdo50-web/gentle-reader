@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,8 +25,7 @@ export function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
     setCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke("org-manage", {
-        method: "POST",
-        body: { name: newName.trim() },
+        body: { action: "create", name: newName.trim() },
       });
       if (error) throw error;
       toast.success("Organization created");
@@ -89,6 +88,7 @@ export function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create Organization</DialogTitle>
+            <DialogDescription>Create a new team to share API keys and billing.</DialogDescription>
           </DialogHeader>
           <div className="py-2">
             <Input
