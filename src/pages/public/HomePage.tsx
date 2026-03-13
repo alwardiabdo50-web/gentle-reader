@@ -210,7 +210,8 @@ function PricingTeaser() {
           ))}
         </div>
         <p className="text-center text-sm text-muted-foreground mt-8">
-          Need more?{" "}<Link to="/pricing" className="text-primary hover:underline">View full pricing</Link>
+          Need more? <strong>Scale</strong> ($399/mo) and <strong>Enterprise</strong> plans available.{" "}
+          <Link to="/pricing" className="text-primary hover:underline">View full pricing →</Link>
         </p>
       </div>
     </section>
