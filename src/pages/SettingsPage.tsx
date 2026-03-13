@@ -103,7 +103,7 @@ export default function SettingsPage() {
             { label: "Job failures", desc: "Receive alerts on failed jobs" },
             { label: "Product updates", desc: "Hear about new features" },
           ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between rounded-lg border border-border p-3 surface-1">
+            <div key={item.label} className="flex items-center justify-between rounded-lg border border-border p-3 bg-card">
               <div>
                 <div className="text-sm font-medium">{item.label}</div>
                 <div className="text-xs text-muted-foreground">{item.desc}</div>

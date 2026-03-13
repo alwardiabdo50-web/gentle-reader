@@ -150,7 +150,7 @@ export default function ApiKeysPage() {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="gap-1.5 glow-primary">
+              <Button className="gap-1.5">
                 <Plus className="h-4 w-4" /> New Key
               </Button>
             </DialogTrigger>
@@ -179,12 +179,12 @@ export default function ApiKeysPage() {
               </div>
             ) : (
               <div className="space-y-4 py-2">
-                <div className="flex items-start gap-2 p-3 rounded-lg border border-nebula-warning/30 bg-nebula-warning/5">
-                  <AlertCircle className="h-4 w-4 text-nebula-warning shrink-0 mt-0.5" />
-                  <p className="text-xs text-nebula-warning">Copy this token now. It won't be shown again.</p>
+                <div className="flex items-start gap-2 p-3 rounded-lg border border-warning/20 bg-warning/10">
+                  <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                  <p className="text-xs text-warning">Copy this token now. It won't be shown again.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 text-xs font-mono bg-muted p-2.5 rounded border border-border break-all">
+                  <code className="flex-1 text-xs font-mono bg-sidebar p-2.5 rounded border border-border break-all">
                     {createdToken}
                   </code>
                   <Button variant="ghost" size="sm" onClick={handleCopyToken}>
@@ -209,7 +209,7 @@ export default function ApiKeysPage() {
       <div className="rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border surface-2">
+            <tr className="border-b border-border bg-sidebar">
               <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Name</th>
               <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Prefix</th>
               <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Last Used</th>
@@ -227,7 +227,7 @@ export default function ApiKeysPage() {
               </tr>
             ) : (
               keys.map((k) => (
-                <tr key={k.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                <tr key={k.id} className="border-b border-border last:border-0 hover:bg-card-hover transition-colors">
                   <td className="px-4 py-3 font-medium flex items-center gap-2">
                     <Key className="h-3.5 w-3.5 text-muted-foreground" />
                     {k.name}

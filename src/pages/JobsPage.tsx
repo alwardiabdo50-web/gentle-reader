@@ -18,15 +18,15 @@ interface Job {
 const statusStyles: Record<string, string> = {
   completed: "border-primary/30 text-primary bg-primary/10",
   failed: "border-destructive/30 text-destructive bg-destructive/10",
-  running: "border-nebula-cyan/30 text-nebula-cyan bg-nebula-cyan/10",
+  running: "border-info/30 text-info bg-info/10",
   queued: "border-muted-foreground/30 text-muted-foreground bg-muted",
 };
 
 const typeColors: Record<string, string> = {
   scrape: "bg-primary/15 text-primary border-primary/20",
   batch: "bg-primary/15 text-primary border-primary/20",
-  crawl: "bg-nebula-cyan/15 text-nebula-cyan border-nebula-cyan/20",
-  extract: "bg-nebula-warning/15 text-nebula-warning border-nebula-warning/20",
+  crawl: "bg-info/15 text-info border-info/20",
+  extract: "bg-warning/15 text-warning border-warning/20",
   map: "bg-secondary text-secondary-foreground border-border",
   pipeline: "bg-accent/15 text-accent-foreground border-accent/20",
 };
@@ -173,7 +173,7 @@ export default function JobsPage() {
         <div className="rounded-lg border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border surface-2">
+              <tr className="border-b border-border bg-sidebar">
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Job ID</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Type</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">URL</th>
@@ -192,7 +192,7 @@ export default function JobsPage() {
                 </tr>
               ) : (
                 jobs.map((j) => (
-                  <tr key={j.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr key={j.id} className="border-b border-border last:border-0 hover:bg-card-hover transition-colors">
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{j.id.slice(0, 8)}</td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded border capitalize ${typeColors[j.mode] ?? typeColors.scrape}`}>
@@ -215,7 +215,7 @@ export default function JobsPage() {
                         <span className={`h-1.5 w-1.5 rounded-full ${
                           j.status === "completed" ? "bg-primary" :
                           j.status === "failed" ? "bg-destructive" :
-                          j.status === "running" ? "bg-nebula-cyan animate-pulse" :
+                          j.status === "running" ? "bg-info animate-pulse" :
                           "bg-muted-foreground"
                         }`} />
                         {j.status}

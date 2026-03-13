@@ -99,8 +99,8 @@ export default function PricingPage() {
               key={plan.name}
               className={`rounded-xl border p-6 flex flex-col ${
                 plan.highlighted
-                  ? "border-primary glow-primary bg-background"
-                  : "border-border surface-1"
+                  ? "border-primary bg-card"
+                  : "border-border bg-card"
               }`}
             >
               {plan.highlighted && (
@@ -117,7 +117,7 @@ export default function PricingPage() {
               </p>
               <Button
                 variant={plan.highlighted ? "default" : "outline"}
-                className={`w-full ${plan.highlighted ? "glow-primary" : ""}`}
+                className="w-full"
                 asChild
               >
                 <Link to="/auth">{plan.cta}</Link>
@@ -134,7 +134,7 @@ export default function PricingPage() {
           <div className="rounded-xl border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="surface-2">
+                <tr className="bg-sidebar">
                   <th className="text-left px-5 py-3 text-muted-foreground font-medium">Feature</th>
                   {plans.map((p) => (
                     <th key={p.name} className="text-center px-5 py-3 text-foreground font-semibold">

@@ -144,7 +144,7 @@ export default function BillingPage() {
         </p>
       </div>
 
-      <div className="rounded-lg border border-primary/30 p-5 surface-1 glow-primary">
+      <div className="rounded-lg border border-primary/30 p-5 bg-card">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -167,7 +167,7 @@ export default function BillingPage() {
 
       {/* Credit Usage Progress */}
       {!credits.loading && (
-        <div className="rounded-lg border border-border p-5 surface-1">
+        <div className="rounded-lg border border-border p-5 bg-card">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-sm font-medium">Credit Usage</h3>
@@ -201,7 +201,7 @@ export default function BillingPage() {
             <div
               key={plan.name}
               className={`rounded-lg border p-5 flex flex-col ${
-                isCurrent ? "border-primary/40 surface-1 glow-primary" : "border-border surface-1"
+                isCurrent ? "border-primary/40 bg-card" : "border-border bg-card"
               }`}
             >
               <div className="flex items-center justify-between mb-3">
