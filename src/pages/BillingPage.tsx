@@ -31,8 +31,6 @@ export default function BillingPage() {
   const credits = useCredits();
   const { user, activeOrg } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [currentPlan, setCurrentPlan] = useState("free");
-  const [creditsRemaining, setCreditsRemaining] = useState(0);
   const [periodEnd, setPeriodEnd] = useState<string | null>(null);
   const [switching, setSwitching] = useState(false);
   const [confirmPlan, setConfirmPlan] = useState<typeof plans[0] | null>(null);
@@ -43,7 +41,7 @@ export default function BillingPage() {
     try {
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (!error && data) {
-        setCurrentPlan(data.plan || "free");
+        // Plan is now sourced from useCredits hook
         setHasStripeSubscription(data.subscribed || false);
         if (data.subscription_end) {
           setPeriodEnd(data.subscription_end);
@@ -57,27 +55,6 @@ export default function BillingPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      if (activeOrg) {
-        // Use org-level data
-        setCurrentPlan(activeOrg.plan);
-        setCreditsRemaining(activeOrg.monthly_credits + activeOrg.extra_credits - activeOrg.credits_used);
-        setPeriodEnd(null);
-        // Still check Stripe for org subscription
-        await checkSubscription();
-        setLoading(false);
-        return;
-      }
-      // Load personal profile data
-      const { data } = await supabase
-        .from("profiles")
-        .select("plan, monthly_credits, extra_credits, credits_used, current_period_end")
-        .eq("user_id", user.id)
-        .single();
-      if (data) {
-        setCurrentPlan(data.plan);
-        setCreditsRemaining(data.monthly_credits + data.extra_credits - data.credits_used);
-        setPeriodEnd(data.current_period_end);
-      }
       await checkSubscription();
       setLoading(false);
     })();
@@ -144,6 +121,7 @@ export default function BillingPage() {
     }
   };
 
+  const currentPlan = credits.plan;
   const currentPlanData = plans.find((p) => p.name === currentPlan) ?? plans[0];
   const formattedEnd = periodEnd
     ? new Date(periodEnd).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
@@ -175,7 +153,7 @@ export default function BillingPage() {
             </div>
             <div className="text-2xl font-bold">{currentPlanData.label} — {currentPlanData.price}/mo</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Next billing date: {formattedEnd} · {creditsRemaining.toLocaleString()} credits remaining
+              Next billing date: {formattedEnd} · {credits.creditsRemaining.toLocaleString()} credits remaining
             </p>
           </div>
           {hasStripeSubscription && (

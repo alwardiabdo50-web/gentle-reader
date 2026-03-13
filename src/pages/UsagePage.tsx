@@ -4,6 +4,7 @@ import { BarChart3, TrendingUp, Zap, Globe, Loader2, ArrowDownRight, ArrowUpRigh
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCredits } from "@/hooks/useCredits";
 
 interface DailyUsage {
   day: string;
@@ -43,13 +44,12 @@ const RPM_LIMITS: Record<string, number> = {
 
 export default function UsagePage() {
   const { user, activeOrg } = useAuth();
+  const credits = useCredits();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ creditsUsed: 0, scrapeJobs: 0, crawlJobs: 0, successRate: 0 });
+  const [stats, setStats] = useState({ scrapeJobs: 0, crawlJobs: 0, successRate: 0 });
   const [dailyUsage, setDailyUsage] = useState<DailyUsage[]>([]);
   const [creditTrend, setCreditTrend] = useState<CreditTrend[]>([]);
-  const [totalCredits, setTotalCredits] = useState(0);
   const [ledgerEntries, setLedgerEntries] = useState<LedgerRow[]>([]);
-  const [plan, setPlan] = useState("free");
 
   // Rate limit state
   const [hourlyRateData, setHourlyRateData] = useState<HourlyRateData[]>([]);
@@ -113,25 +113,6 @@ export default function UsagePage() {
   async function fetchUsageData() {
     setLoading(true);
     try {
-      let creditsUsed = 0;
-      let total = 500;
-      let currentPlan = "free";
-
-      if (activeOrg) {
-        // Org-level credits
-        total = activeOrg.monthly_credits + activeOrg.extra_credits;
-        creditsUsed = activeOrg.credits_used;
-        currentPlan = activeOrg.plan;
-      } else {
-        const { data: profile } = await supabase.from("profiles").select("credits_used, monthly_credits, extra_credits, plan").eq("user_id", user!.id).single();
-        total = (profile?.monthly_credits ?? 500) + (profile?.extra_credits ?? 0);
-        creditsUsed = profile?.credits_used ?? 0;
-        currentPlan = profile?.plan ?? "free";
-      }
-
-      setTotalCredits(total);
-      setPlan(currentPlan);
-
       // Jobs are always user-scoped (RLS)
       const [jobsRes, ledgerRes] = await Promise.all([
         supabase.from("scrape_jobs").select("id, mode, status, credits_used, created_at").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1000),
@@ -147,7 +128,6 @@ export default function UsagePage() {
       const rate = jobs.length > 0 ? (successCount / jobs.length) * 100 : 0;
 
       setStats({
-        creditsUsed,
         scrapeJobs: scrapeCount,
         crawlJobs: crawlCount,
         successRate: Math.round(rate * 10) / 10,
@@ -189,11 +169,11 @@ export default function UsagePage() {
         }
         const trend: CreditTrend[] = Array.from(trendMap.entries()).map(([date, remaining]) => ({ date, remaining }));
         if (trend.length === 0) {
-          trend.push({ date: "Today", remaining: total - creditsUsed });
+          trend.push({ date: "Today", remaining: credits.creditsRemaining });
         }
         setCreditTrend(trend);
       } else {
-        setCreditTrend([{ date: "Today", remaining: total - creditsUsed }]);
+        setCreditTrend([{ date: "Today", remaining: credits.creditsRemaining }]);
       }
 
       setLedgerEntries(ledger.slice(0, 20));
@@ -204,12 +184,12 @@ export default function UsagePage() {
     }
   }
 
-  const rpmLimit = RPM_LIMITS[plan] || 20;
+  const rpmLimit = RPM_LIMITS[credits.plan] || 20;
   const rpmPercent = Math.min(100, (recentRequestCount / rpmLimit) * 100);
   const avgRpm = totalRequests24h > 0 ? Math.round(totalRequests24h / 24 / 60 * 100) / 100 : 0;
 
   const statCards = [
-    { label: "Credits Used", value: stats.creditsUsed.toLocaleString(), icon: Zap },
+    { label: "Credits Used", value: credits.creditsUsed.toLocaleString(), icon: Zap },
     { label: "Scrape Jobs", value: stats.scrapeJobs.toLocaleString(), icon: BarChart3 },
     { label: "Crawl Jobs", value: stats.crawlJobs.toLocaleString(), icon: Globe },
     { label: "Success Rate", value: stats.scrapeJobs + stats.crawlJobs > 0 ? `${stats.successRate}%` : "—", icon: TrendingUp },
@@ -244,7 +224,7 @@ export default function UsagePage() {
             </div>
             <div className="text-2xl font-bold">{s.value}</div>
             {s.label === "Credits Used" && (
-              <div className="text-xs text-muted-foreground mt-1">of {totalCredits.toLocaleString()} total</div>
+              <div className="text-xs text-muted-foreground mt-1">of {credits.creditsTotal.toLocaleString()} total</div>
             )}
           </div>
         ))}
@@ -270,7 +250,7 @@ export default function UsagePage() {
               <Gauge className="h-4 w-4 text-muted-foreground" />
             </div>
             <div className="text-2xl font-bold">{rpmLimit}</div>
-            <div className="text-xs text-muted-foreground mt-1 capitalize">{plan} plan</div>
+            <div className="text-xs text-muted-foreground mt-1 capitalize">{credits.plan} plan</div>
           </div>
           <div className="rounded-lg border border-border p-4 bg-card">
             <div className="flex items-center justify-between mb-3">
