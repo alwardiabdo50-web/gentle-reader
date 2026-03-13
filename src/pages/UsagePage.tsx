@@ -4,6 +4,7 @@ import { BarChart3, TrendingUp, Zap, Globe, Loader2, ArrowDownRight, ArrowUpRigh
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCredits } from "@/hooks/useCredits";
 
 interface DailyUsage {
   day: string;
