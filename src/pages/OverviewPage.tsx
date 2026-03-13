@@ -115,13 +115,13 @@ export default function OverviewPage() {
       {/* Quick actions */}
       <div className="flex flex-wrap gap-3">
         <Button asChild variant="outline" size="sm">
-          <Link to="/playground"><Zap className="h-4 w-4 mr-1.5" />Playground</Link>
+          <Link to="/app/playground"><Zap className="h-4 w-4 mr-1.5" />Playground</Link>
         </Button>
         <Button asChild variant="outline" size="sm">
-          <Link to="/api-keys"><Key className="h-4 w-4 mr-1.5" />API Keys</Link>
+          <Link to="/app/api-keys"><Key className="h-4 w-4 mr-1.5" />API Keys</Link>
         </Button>
         <Button asChild variant="outline" size="sm">
-          <Link to="/docs"><BookOpen className="h-4 w-4 mr-1.5" />Docs</Link>
+          <Link to="/app/docs"><BookOpen className="h-4 w-4 mr-1.5" />Docs</Link>
         </Button>
       </div>
 
