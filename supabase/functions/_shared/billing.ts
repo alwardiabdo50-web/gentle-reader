@@ -26,13 +26,40 @@ export interface UserCredits {
   used_this_cycle: number;
   remaining: number;
   rpm: number;
+  orgId: string | null;
 }
 
 /**
  * Calculate the authenticated user's current credit situation.
+ * If orgId is provided, uses org credits instead of user credits.
  */
-export async function getUserCredits(userId: string): Promise<UserCredits> {
+export async function getUserCredits(userId: string, orgId?: string | null): Promise<UserCredits> {
   const admin = getAdmin();
+
+  if (orgId) {
+    const { data: org } = await admin
+      .from("organizations")
+      .select("plan, monthly_credits, extra_credits, credits_used, current_period_start, current_period_end")
+      .eq("id", orgId)
+      .single();
+
+    const plan = org?.plan ?? "free";
+    const config = getPlanConfig(plan);
+    const monthly = org?.monthly_credits ?? config.monthly_credits;
+    const extra = org?.extra_credits ?? 0;
+    const used = org?.credits_used ?? 0;
+    const remaining = Math.max(0, monthly + extra - used);
+
+    return {
+      plan,
+      included_monthly: monthly,
+      extra,
+      used_this_cycle: used,
+      remaining,
+      rpm: config.rpm,
+      orgId,
+    };
+  }
 
   const { data: profile } = await admin
     .from("profiles")
@@ -54,14 +81,15 @@ export async function getUserCredits(userId: string): Promise<UserCredits> {
     used_this_cycle: used,
     remaining,
     rpm: config.rpm,
+    orgId: null,
   };
 }
 
 /**
  * Check if a user has enough credits. Returns null if OK, or an error object.
  */
-export async function checkQuota(userId: string, cost: number = 1): Promise<{ code: string; message: string } | null> {
-  const credits = await getUserCredits(userId);
+export async function checkQuota(userId: string, cost: number = 1, orgId?: string | null): Promise<{ code: string; message: string } | null> {
+  const credits = await getUserCredits(userId, orgId);
   if (credits.remaining < cost) {
     return {
       code: "INSUFFICIENT_CREDITS",
@@ -76,8 +104,8 @@ export async function checkQuota(userId: string, cost: number = 1): Promise<{ co
  * Queries the usage_ledger for entries in the last 60 seconds.
  * Returns null if OK, or an error object if rate limit exceeded.
  */
-export async function checkRateLimit(userId: string): Promise<{ code: string; message: string } | null> {
-  const credits = await getUserCredits(userId);
+export async function checkRateLimit(userId: string, orgId?: string | null): Promise<{ code: string; message: string } | null> {
+  const credits = await getUserCredits(userId, orgId);
   const rpm = credits.rpm;
 
   const admin = getAdmin();
@@ -115,15 +143,17 @@ export interface LedgerEntry {
   source_type?: string;  // scrape, crawl, extract, system
   balance_after: number;
   metadata_json?: Record<string, unknown>;
+  org_id?: string | null;
 }
 
 /**
  * Record a ledger entry and update the user's credits_used counter.
+ * If org_id is provided, updates org credits_used instead of profile.
  */
 export async function recordLedgerEntry(entry: LedgerEntry): Promise<{ id: string }> {
   const admin = getAdmin();
 
-  console.log(`Ledger: attempting insert user=${entry.user_id} action=${entry.action} credits=${entry.credits} job_id=${entry.job_id ?? "null"} source_type=${entry.source_type}`);
+  console.log(`Ledger: attempting insert user=${entry.user_id} action=${entry.action} credits=${entry.credits} job_id=${entry.job_id ?? "null"} source_type=${entry.source_type} org_id=${entry.org_id ?? "null"}`);
 
   const { data, error } = await admin
     .from("usage_ledger")
@@ -145,23 +175,45 @@ export async function recordLedgerEntry(entry: LedgerEntry): Promise<{ id: strin
     throw new Error(`Billing failed: ${error?.message ?? "no data returned"}`);
   }
 
-  // Update credits_used on profile (increment by absolute consumed amount)
+  // Update credits_used on profile or org (increment by absolute consumed amount)
   if (entry.credits < 0) {
     const absAmount = Math.abs(entry.credits);
-    const { data: profile } = await admin
-      .from("profiles")
-      .select("credits_used")
-      .eq("user_id", entry.user_id)
-      .single();
 
-    if (profile) {
-      const { error: updateError } = await admin
+    if (entry.org_id) {
+      // Update org credits
+      const { data: org } = await admin
+        .from("organizations")
+        .select("credits_used")
+        .eq("id", entry.org_id)
+        .single();
+
+      if (org) {
+        const { error: updateError } = await admin
+          .from("organizations")
+          .update({ credits_used: org.credits_used + absAmount })
+          .eq("id", entry.org_id);
+
+        if (updateError) {
+          console.error("BILLING ERROR: Failed to update org credits_used:", JSON.stringify(updateError));
+        }
+      }
+    } else {
+      // Update profile credits
+      const { data: profile } = await admin
         .from("profiles")
-        .update({ credits_used: profile.credits_used + absAmount })
-        .eq("user_id", entry.user_id);
+        .select("credits_used")
+        .eq("user_id", entry.user_id)
+        .single();
 
-      if (updateError) {
-        console.error("BILLING ERROR: Failed to update profile credits_used:", JSON.stringify(updateError));
+      if (profile) {
+        const { error: updateError } = await admin
+          .from("profiles")
+          .update({ credits_used: profile.credits_used + absAmount })
+          .eq("user_id", entry.user_id);
+
+        if (updateError) {
+          console.error("BILLING ERROR: Failed to update profile credits_used:", JSON.stringify(updateError));
+        }
       }
     }
   }

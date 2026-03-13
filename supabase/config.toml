@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.status-public]
 verify_jwt = false
+
+[functions.org-manage]
+verify_jwt = false
+
+[functions.org-members-manage]
+verify_jwt = false

@@ -5,6 +5,7 @@ export interface AuthContext {
   apiKeyId: string;
   apiKeyName: string;
   plan: string;
+  orgId: string | null;
 }
 
 /**
@@ -48,7 +49,7 @@ export async function validateApiKey(rawKey: string): Promise<{ ok: true; ctx: A
   // Look up the key by prefix and hash
   const { data: apiKey, error } = await admin
     .from("api_keys")
-    .select("id, name, user_id, is_active, key_hash")
+    .select("id, name, user_id, is_active, key_hash, org_id")
     .eq("key_prefix", prefix)
     .single();
 
@@ -75,12 +76,25 @@ export async function validateApiKey(rawKey: string): Promise<{ ok: true; ctx: A
     .eq("id", apiKey.id)
     .then(() => {});
 
-  // Get user profile for plan info
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("plan")
-    .eq("user_id", apiKey.user_id)
-    .single();
+  let plan = "free";
+
+  // If key belongs to an org, use org plan
+  if (apiKey.org_id) {
+    const { data: org } = await admin
+      .from("organizations")
+      .select("plan")
+      .eq("id", apiKey.org_id)
+      .single();
+    plan = org?.plan ?? "free";
+  } else {
+    // Get user profile for plan info
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("plan")
+      .eq("user_id", apiKey.user_id)
+      .single();
+    plan = profile?.plan ?? "free";
+  }
 
   return {
     ok: true,
@@ -88,7 +102,8 @@ export async function validateApiKey(rawKey: string): Promise<{ ok: true; ctx: A
       userId: apiKey.user_id,
       apiKeyId: apiKey.id,
       apiKeyName: apiKey.name,
-      plan: profile?.plan ?? "free",
+      plan,
+      orgId: apiKey.org_id ?? null,
     },
   };
 }
@@ -116,5 +131,6 @@ export function authenticateServiceRole(req: Request, body: Record<string, unkno
     apiKeyId: "scheduled",
     apiKeyName: "Scheduled Job",
     plan: "scheduled",
+    orgId: null,
   };
 }

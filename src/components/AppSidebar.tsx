@@ -14,6 +14,7 @@ import {
   Webhook,
   Calendar,
   GitBranch,
+  Users,
 } from "lucide-react";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useCredits } from "@/hooks/useCredits";
@@ -22,6 +23,7 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { OrgSwitcher } from "@/components/OrgSwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +59,7 @@ const mainItems = [
 
 const settingsItems = [
   { title: "Billing", url: "/billing", icon: CreditCard },
+  { title: "Team", url: "/settings/team", icon: Users },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
@@ -83,7 +86,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 space-y-2">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
             <Globe className="h-4 w-4 text-primary-foreground" />
@@ -97,6 +100,7 @@ export function AppSidebar() {
             </div>
           )}
         </div>
+        <OrgSwitcher collapsed={collapsed} />
       </SidebarHeader>
 
       <SidebarContent>
