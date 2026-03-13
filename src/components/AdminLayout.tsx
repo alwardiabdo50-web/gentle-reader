@@ -6,6 +6,7 @@ import {
   Users,
   Briefcase,
   CreditCard,
+  Mail,
   ArrowLeft,
   Shield,
 } from "lucide-react";
@@ -14,6 +15,7 @@ const adminNav = [
   { title: "Overview", url: "/admin", icon: LayoutDashboard },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Jobs", url: "/admin/jobs", icon: Briefcase },
+  { title: "Contacts", url: "/admin/contacts", icon: Mail },
   { title: "Billing", url: "/admin/billing", icon: CreditCard },
 ];
 

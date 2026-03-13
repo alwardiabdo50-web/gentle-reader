@@ -60,3 +60,10 @@ export function useAdminBilling() {
     queryFn: () => fetchAdminData("billing"),
   });
 }
+
+export function useAdminContacts(page = 1) {
+  return useQuery({
+    queryKey: ["admin", "contacts", page],
+    queryFn: () => fetchAdminData("contacts", { page: String(page) }),
+  });
+}
