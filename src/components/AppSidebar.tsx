@@ -63,13 +63,14 @@ export function AppSidebar() {
             <Globe className="h-4 w-4 text-primary-foreground" />
           </div>
           {!collapsed && (
-            <div className="flex flex-col">
+            <div className="flex flex-col flex-1">
               <span className="text-sm font-semibold text-foreground tracking-tight">
                 Nebula Crawl
               </span>
               <span className="text-[10px] text-muted-foreground">v1.0.0</span>
             </div>
           )}
+          <ThemeToggle />
         </div>
         <OrgSwitcher collapsed={collapsed} />
       </SidebarHeader>
