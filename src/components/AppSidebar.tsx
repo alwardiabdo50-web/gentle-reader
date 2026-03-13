@@ -21,21 +21,21 @@ import {
 
 
 const mainItems = [
-  { title: "Overview", url: "/", icon: LayoutDashboard },
-  { title: "Playground", url: "/playground", icon: Zap },
-  { title: "API Keys", url: "/api-keys", icon: Key },
-  { title: "Usage", url: "/usage", icon: BarChart3 },
-  { title: "Job History", url: "/jobs", icon: History },
-  { title: "Webhooks", url: "/webhooks", icon: Webhook },
-  { title: "Schedules", url: "/schedules", icon: Calendar },
-  { title: "Pipelines", url: "/pipelines", icon: GitBranch },
-  { title: "Docs", url: "/docs", icon: BookOpen },
+  { title: "Overview", url: "/app", icon: LayoutDashboard },
+  { title: "Playground", url: "/app/playground", icon: Zap },
+  { title: "API Keys", url: "/app/api-keys", icon: Key },
+  { title: "Usage", url: "/app/usage", icon: BarChart3 },
+  { title: "Job History", url: "/app/jobs", icon: History },
+  { title: "Webhooks", url: "/app/webhooks", icon: Webhook },
+  { title: "Schedules", url: "/app/schedules", icon: Calendar },
+  { title: "Pipelines", url: "/app/pipelines", icon: GitBranch },
+  { title: "Docs", url: "/app/docs", icon: BookOpen },
 ];
 
 const settingsItems = [
-  { title: "Billing", url: "/billing", icon: CreditCard },
-  { title: "Team", url: "/settings/team", icon: Users },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Billing", url: "/app/billing", icon: CreditCard },
+  { title: "Team", url: "/app/settings/team", icon: Users },
+  { title: "Settings", url: "/app/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
