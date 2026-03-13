@@ -66,13 +66,13 @@ export default function OverviewPage() {
 
   const statCards = stats
     ? [
-        { label: "Credits Remaining", value: credits.creditsRemaining.toLocaleString(), icon: BarChart3, href: "/usage" },
-        { label: "Active API Keys", value: stats.activeApiKeys, icon: Key, href: "/api-keys" },
-        { label: "Scrapes (7d)", value: stats.scrapeJobs7d, icon: Zap, href: "/jobs" },
-        { label: "Crawls (7d)", value: stats.crawlJobs7d, icon: ExternalLink, href: "/jobs" },
-        { label: "Extractions (7d)", value: stats.extractJobs7d, icon: History, href: "/jobs" },
-        { label: "Active Webhooks", value: stats.activeWebhooks, icon: Webhook, href: "/webhooks" },
-        { label: "Active Schedules", value: stats.activeSchedules, icon: Calendar, href: "/schedules" },
+        { label: "Credits Remaining", value: credits.creditsRemaining.toLocaleString(), icon: BarChart3, href: "/app/usage" },
+        { label: "Active API Keys", value: stats.activeApiKeys, icon: Key, href: "/app/api-keys" },
+        { label: "Scrapes (7d)", value: stats.scrapeJobs7d, icon: Zap, href: "/app/jobs" },
+        { label: "Crawls (7d)", value: stats.crawlJobs7d, icon: ExternalLink, href: "/app/jobs" },
+        { label: "Extractions (7d)", value: stats.extractJobs7d, icon: History, href: "/app/jobs" },
+        { label: "Active Webhooks", value: stats.activeWebhooks, icon: Webhook, href: "/app/webhooks" },
+        { label: "Active Schedules", value: stats.activeSchedules, icon: Calendar, href: "/app/schedules" },
       ]
     : [];
 
