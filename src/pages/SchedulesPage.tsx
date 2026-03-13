@@ -21,6 +21,8 @@ export default function SchedulesPage() {
   const [selectedSchedule, setSelectedSchedule] = useState<string | null>(null);
   const [form, setForm] = useState<ScheduleFormState>(defaultFormState);
   const [editForm, setEditForm] = useState<ScheduleFormState>(defaultFormState);
+  const [runsPage, setRunsPage] = useState(1);
+  const RUNS_PER_PAGE = 20;
 
   const { data: schedules = [], isLoading } = useQuery<ScheduleData[]>({
     queryKey: ["schedules"],
