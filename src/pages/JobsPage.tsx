@@ -192,7 +192,7 @@ export default function JobsPage() {
                 </tr>
               ) : (
                 jobs.map((j) => (
-                  <tr key={j.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr key={j.id} className="border-b border-border last:border-0 hover:bg-card-hover transition-colors">
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{j.id.slice(0, 8)}</td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded border capitalize ${typeColors[j.mode] ?? typeColors.scrape}`}>
