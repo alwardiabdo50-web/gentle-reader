@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAdminContacts, useAdminContactActions } from "@/hooks/useAdminData";
+import { useAdminContacts, useAdminContactActions, fetchAdminContactsExport } from "@/hooks/useAdminData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight, Mail, MoreHorizontal, Eye, Archive, Trash2, MailOpen, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Mail, MoreHorizontal, Eye, Archive, Trash2, MailOpen, RotateCcw, Download } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -17,11 +17,48 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
   archived: { label: "Archived", variant: "outline" },
 };
 
+function buildCsv(contacts: any[]): string {
+  const headers = ["Date", "Name", "Email", "Company", "Volume", "Status", "Message"];
+  const rows = contacts.map((c) => [
+    new Date(c.created_at).toLocaleDateString(),
+    `"${(c.name || "").replace(/"/g, '""')}"`,
+    c.email,
+    `"${(c.company || "").replace(/"/g, '""')}"`,
+    c.volume || "",
+    c.status,
+    `"${(c.message || "").replace(/"/g, '""')}"`,
+  ].join(","));
+  return [headers.join(","), ...rows].join("\n");
+}
+
+function downloadCsv(csv: string, filename: string) {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function getPageNumbers(current: number, total: number): (number | "ellipsis")[] {
+  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "ellipsis")[] = [1];
+  if (current > 3) pages.push("ellipsis");
+  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+    pages.push(i);
+  }
+  if (current < total - 2) pages.push("ellipsis");
+  pages.push(total);
+  return pages;
+}
+
 export default function AdminContactsPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const { data, isLoading } = useAdminContacts(page, statusFilter);
   const { updateStatus, deleteContact } = useAdminContactActions();
@@ -49,6 +86,22 @@ export default function AdminContactsPage() {
     });
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const data = await fetchAdminContactsExport(statusFilter);
+      const csv = buildCsv(data.contacts ?? []);
+      downloadCsv(csv, `contacts-${statusFilter}-${new Date().toISOString().slice(0, 10)}.csv`);
+      toast.success("CSV exported");
+    } catch (err: any) {
+      toast.error(err.message || "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const pageNumbers = getPageNumbers(page, totalPages);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -57,17 +110,23 @@ export default function AdminContactsPage() {
           <h1 className="text-2xl font-bold text-foreground">Contact Submissions</h1>
           <span className="text-sm text-muted-foreground ml-2">({total} total)</span>
         </div>
-        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Filter status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="new">New</SelectItem>
-            <SelectItem value="read">Read</SelectItem>
-            <SelectItem value="archived">Archived</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
+            <Download className="h-4 w-4 mr-1.5" />
+            {exporting ? "Exporting…" : "Export CSV"}
+          </Button>
+          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Filter status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="new">New</SelectItem>
+              <SelectItem value="read">Read</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Card>
@@ -171,6 +230,21 @@ export default function AdminContactsPage() {
                 <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
+                {pageNumbers.map((p, i) =>
+                  p === "ellipsis" ? (
+                    <span key={`e-${i}`} className="flex items-center px-1 text-muted-foreground text-xs">…</span>
+                  ) : (
+                    <Button
+                      key={p}
+                      variant={p === page ? "default" : "outline"}
+                      size="sm"
+                      className="min-w-[32px]"
+                      onClick={() => setPage(p)}
+                    >
+                      {p}
+                    </Button>
+                  )
+                )}
                 <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
