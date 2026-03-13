@@ -18,7 +18,7 @@ import {
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
-import { ThemeToggle } from "@/components/ThemeToggle";
+
 
 const mainItems = [
   { title: "Playground", url: "/", icon: Zap },
@@ -70,13 +70,7 @@ export function AppSidebar() {
               <span className="text-[10px] text-muted-foreground">v1.0.0</span>
             </div>
           )}
-          {!collapsed && <ThemeToggle />}
         </div>
-        {collapsed && (
-          <div className="flex justify-center">
-            <ThemeToggle />
-          </div>
-        )}
         <OrgSwitcher collapsed={collapsed} />
       </SidebarHeader>
 
