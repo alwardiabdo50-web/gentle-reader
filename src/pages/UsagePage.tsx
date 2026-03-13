@@ -42,7 +42,7 @@ const RPM_LIMITS: Record<string, number> = {
 };
 
 export default function UsagePage() {
-  const { user } = useAuth();
+  const { user, activeOrg } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ creditsUsed: 0, scrapeJobs: 0, crawlJobs: 0, successRate: 0 });
   const [dailyUsage, setDailyUsage] = useState<DailyUsage[]>([]);
@@ -61,7 +61,7 @@ export default function UsagePage() {
     if (!user) return;
     fetchUsageData();
     fetchRateLimitData();
-  }, [user]);
+  }, [user, activeOrg]);
 
   async function fetchRateLimitData() {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
