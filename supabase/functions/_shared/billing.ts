@@ -37,17 +37,29 @@ export async function getUserCredits(userId: string, orgId?: string | null): Pro
   const admin = getAdmin();
 
   if (orgId) {
+    // Shared credits model: org members use the org owner's personal credits
     const { data: org } = await admin
       .from("organizations")
-      .select("plan, monthly_credits, extra_credits, credits_used, current_period_start, current_period_end")
+      .select("owner_id")
       .eq("id", orgId)
       .single();
 
-    const plan = org?.plan ?? "free";
+    if (!org) {
+      // Fallback to personal credits if org not found
+      return getUserCredits(userId);
+    }
+
+    const { data: ownerProfile } = await admin
+      .from("profiles")
+      .select("plan, monthly_credits, extra_credits, credits_used, current_period_start, current_period_end")
+      .eq("user_id", org.owner_id)
+      .single();
+
+    const plan = ownerProfile?.plan ?? "free";
     const config = getPlanConfig(plan);
-    const monthly = org?.monthly_credits ?? config.monthly_credits;
-    const extra = org?.extra_credits ?? 0;
-    const used = org?.credits_used ?? 0;
+    const monthly = ownerProfile?.monthly_credits ?? config.monthly_credits;
+    const extra = ownerProfile?.extra_credits ?? 0;
+    const used = ownerProfile?.credits_used ?? 0;
     const remaining = Math.max(0, monthly + extra - used);
 
     return {
