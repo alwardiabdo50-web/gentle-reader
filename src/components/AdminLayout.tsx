@@ -1,5 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   LayoutDashboard,
   Users,
@@ -55,11 +56,16 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto px-8 py-10">
-        <div className="max-w-[1200px] mx-auto">
-          {children}
-        </div>
-      </main>
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-12 flex items-center justify-end border-b border-border px-4 shrink-0 bg-sidebar">
+          <ThemeToggle />
+        </header>
+        <main className="flex-1 overflow-auto px-8 py-10">
+          <div className="max-w-[1200px] mx-auto">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
