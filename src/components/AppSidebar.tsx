@@ -18,6 +18,7 @@ import {
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const mainItems = [
   { title: "Playground", url: "/", icon: Zap },
@@ -137,6 +138,10 @@ export function AppSidebar() {
             </div>
           </div>
         )}
+
+        <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
+          <ThemeToggle />
+        </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

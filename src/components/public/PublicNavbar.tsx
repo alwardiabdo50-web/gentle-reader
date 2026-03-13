@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Globe, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -33,6 +34,7 @@ export function PublicNavbar() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
           <Button variant="ghost" size="sm" asChild>
             <Link to="/auth">Log in</Link>
           </Button>
