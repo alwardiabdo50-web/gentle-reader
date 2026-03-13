@@ -250,7 +250,7 @@ export default function UsagePage() {
               <Gauge className="h-4 w-4 text-muted-foreground" />
             </div>
             <div className="text-2xl font-bold">{rpmLimit}</div>
-            <div className="text-xs text-muted-foreground mt-1 capitalize">{plan} plan</div>
+            <div className="text-xs text-muted-foreground mt-1 capitalize">{credits.plan} plan</div>
           </div>
           <div className="rounded-lg border border-border p-4 bg-card">
             <div className="flex items-center justify-between mb-3">

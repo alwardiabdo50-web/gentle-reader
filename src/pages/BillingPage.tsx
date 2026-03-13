@@ -153,7 +153,7 @@ export default function BillingPage() {
             </div>
             <div className="text-2xl font-bold">{currentPlanData.label} — {currentPlanData.price}/mo</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Next billing date: {formattedEnd} · {creditsRemaining.toLocaleString()} credits remaining
+              Next billing date: {formattedEnd} · {credits.creditsRemaining.toLocaleString()} credits remaining
             </p>
           </div>
           {hasStripeSubscription && (
