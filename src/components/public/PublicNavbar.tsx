@@ -41,7 +41,7 @@ export function PublicNavbar() {
           <ThemeToggle />
           {session ? (
             <Button size="sm" asChild>
-              <Link to="/">Dashboard</Link>
+              <Link to="/app">Dashboard</Link>
             </Button>
           ) : (
             <>
