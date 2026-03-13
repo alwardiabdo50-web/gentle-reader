@@ -143,6 +143,7 @@ export default function AdminContactsPage() {
           ) : contacts.length === 0 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">No contact submissions found.</p>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
