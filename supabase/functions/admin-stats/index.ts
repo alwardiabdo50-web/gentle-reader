@@ -292,12 +292,19 @@ Deno.serve(async (req) => {
       const page = parseInt(url.searchParams.get("page") || "1");
       const limit = 20;
       const offset = (page - 1) * limit;
+      const statusFilter = url.searchParams.get("status") || "all";
 
-      const { data: contacts, count } = await admin
+      let query = admin
         .from("contact_requests")
         .select("*", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1);
+
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
+
+      const { data: contacts, count } = await query;
 
       result = { contacts: contacts ?? [], total: count ?? 0, page, limit };
     } else if (action === "billing") {
