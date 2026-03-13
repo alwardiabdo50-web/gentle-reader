@@ -11,6 +11,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import PlaygroundPage from "@/pages/PlaygroundPage";
+import OverviewPage from "@/pages/OverviewPage";
 import ApiKeysPage from "@/pages/ApiKeysPage";
 import UsagePage from "@/pages/UsagePage";
 import JobsPage from "@/pages/JobsPage";
