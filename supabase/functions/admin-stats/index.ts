@@ -53,7 +53,48 @@ Deno.serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const action = url.searchParams.get("action") || "overview";
+    const action = url.searchParams.get("action") || (req.method === "POST" ? null : "overview");
+
+    // Handle POST actions (mutations)
+    if (req.method === "POST") {
+      const body = await req.json();
+      const postAction = body.action;
+
+      if (postAction === "contact-update") {
+        const { contactId, status: newStatus } = body;
+        if (!contactId || !["new", "read", "archived"].includes(newStatus)) {
+          return new Response(JSON.stringify({ error: "contactId and valid status required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await admin.from("contact_requests").update({ status: newStatus }).eq("id", contactId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (postAction === "contact-delete") {
+        const { contactId } = body;
+        if (!contactId) {
+          return new Response(JSON.stringify({ error: "contactId required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await admin.from("contact_requests").delete().eq("id", contactId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ error: "Unknown action" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     let result: Record<string, unknown> = {};
 
