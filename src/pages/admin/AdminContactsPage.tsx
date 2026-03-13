@@ -1,27 +1,73 @@
 import { useState } from "react";
-import { useAdminContacts } from "@/hooks/useAdminData";
+import { useAdminContacts, useAdminContactActions } from "@/hooks/useAdminData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Mail } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ChevronLeft, ChevronRight, Mail, MoreHorizontal, Eye, Archive, Trash2, MailOpen, RotateCcw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+
+const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "warning" | "success" | "destructive" | "outline" | "info" }> = {
+  new: { label: "New", variant: "default" },
+  read: { label: "Read", variant: "secondary" },
+  archived: { label: "Archived", variant: "outline" },
+};
 
 export default function AdminContactsPage() {
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const { data, isLoading } = useAdminContacts(page);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const { data, isLoading } = useAdminContacts(page, statusFilter);
+  const { updateStatus, deleteContact } = useAdminContactActions();
 
   const contacts = data?.contacts ?? [];
   const total = data?.total ?? 0;
   const limit = data?.limit ?? 20;
   const totalPages = Math.ceil(total / limit);
 
+  const handleStatusChange = (contactId: string, status: string) => {
+    updateStatus.mutate({ contactId, status }, {
+      onSuccess: () => toast.success(`Contact marked as ${status}`),
+      onError: (err) => toast.error(err.message),
+    });
+  };
+
+  const handleDelete = () => {
+    if (!deleteId) return;
+    deleteContact.mutate(deleteId, {
+      onSuccess: () => {
+        toast.success("Contact deleted");
+        setDeleteId(null);
+      },
+      onError: (err) => toast.error(err.message),
+    });
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Mail className="h-5 w-5 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">Contact Submissions</h1>
-        <span className="text-sm text-muted-foreground ml-2">({total} total)</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Mail className="h-5 w-5 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">Contact Submissions</h1>
+          <span className="text-sm text-muted-foreground ml-2">({total} total)</span>
+        </div>
+        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Filter status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="new">New</SelectItem>
+            <SelectItem value="read">Read</SelectItem>
+            <SelectItem value="archived">Archived</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
@@ -36,27 +82,34 @@ export default function AdminContactsPage() {
               ))}
             </div>
           ) : contacts.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">No contact submissions yet.</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">No contact submissions found.</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Status</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Volume</TableHead>
                   <TableHead>Message</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead className="w-[50px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {contacts.map((c: any) => (
                   <TableRow
                     key={c.id}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className={`cursor-pointer hover:bg-muted/50 ${c.status === "new" ? "bg-primary/[0.02]" : ""}`}
                     onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
                   >
-                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell>
+                      <Badge variant={statusConfig[c.status]?.variant ?? "secondary"}>
+                        {statusConfig[c.status]?.label ?? c.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className={c.status === "new" ? "font-semibold text-foreground" : "font-medium"}>{c.name}</TableCell>
                     <TableCell>{c.email}</TableCell>
                     <TableCell>{c.company || "—"}</TableCell>
                     <TableCell>{c.volume || "—"}</TableCell>
@@ -67,6 +120,41 @@ export default function AdminContactsPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
                       {new Date(c.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {c.status !== "read" && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(c.id, "read")}>
+                              <Eye className="h-4 w-4 mr-2" /> Mark as Read
+                            </DropdownMenuItem>
+                          )}
+                          {c.status !== "new" && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(c.id, "new")}>
+                              <RotateCcw className="h-4 w-4 mr-2" /> Mark as New
+                            </DropdownMenuItem>
+                          )}
+                          {c.status !== "archived" && (
+                            <DropdownMenuItem onClick={() => handleStatusChange(c.id, "archived")}>
+                              <Archive className="h-4 w-4 mr-2" /> Archive
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem asChild>
+                            <a href={`mailto:${c.email}?subject=Re: Your inquiry`}>
+                              <MailOpen className="h-4 w-4 mr-2" /> Send Email
+                            </a>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteId(c.id)}>
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -91,6 +179,23 @@ export default function AdminContactsPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete contact submission?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The contact submission will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
