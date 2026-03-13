@@ -19,7 +19,6 @@ export default function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Already logged in — redirect to dashboard
   if (!authLoading && session) {
     return <Navigate to="/" replace />;
   }
@@ -34,12 +33,8 @@ export default function AuthPage() {
         toast.success("Welcome back!");
       } else {
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: fullName },
-            emailRedirectTo: window.location.origin,
-          },
+          email, password,
+          options: { data: { full_name: fullName }, emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
         toast.success("Check your email to confirm your account!");
@@ -54,9 +49,7 @@ export default function AuthPage() {
   const handleGoogleSignIn = async () => {
     setSubmitting(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
+      const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
       if (result.error) throw result.error;
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
@@ -67,15 +60,14 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm space-y-6">
-        {/* Logo */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2.5 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
               <Globe className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold tracking-tight">Nebula Crawl</span>
           </div>
-          <h1 className="text-lg font-semibold">
+          <h1 className="text-base font-semibold text-foreground">
             {isLogin ? "Welcome back" : "Create your account"}
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -83,13 +75,7 @@ export default function AuthPage() {
           </p>
         </div>
 
-        {/* Google */}
-        <Button
-          variant="secondary"
-          className="w-full gap-2"
-          onClick={handleGoogleSignIn}
-          disabled={submitting}
-        >
+        <Button variant="secondary" className="w-full gap-2" onClick={handleGoogleSignIn} disabled={submitting}>
           <svg className="h-4 w-4" viewBox="0 0 24 24">
             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
             <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -100,54 +86,26 @@ export default function AuthPage() {
         </Button>
 
         <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-background px-2 text-muted-foreground">or</span>
-          </div>
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+          <div className="relative flex justify-center text-xs"><span className="bg-background px-2 text-muted-foreground">or</span></div>
         </div>
 
-        {/* Email form */}
         <form onSubmit={handleEmailAuth} className="space-y-4">
           {!isLogin && (
             <div>
               <Label htmlFor="name" className="text-xs text-muted-foreground">Full name</Label>
-              <Input
-                id="name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="John Developer"
-                className="mt-1"
-              />
+              <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Developer" className="mt-1" />
             </div>
           )}
           <div>
             <Label htmlFor="email" className="text-xs text-muted-foreground">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="mt-1"
-              required
-            />
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="mt-1" required />
           </div>
           <div>
             <Label htmlFor="password" className="text-xs text-muted-foreground">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="mt-1"
-              required
-              minLength={6}
-            />
+            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="mt-1" required minLength={6} />
           </div>
-          <Button type="submit" className="w-full glow-primary gap-2" disabled={submitting}>
+          <Button type="submit" className="w-full gap-2" disabled={submitting}>
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             <Mail className="h-4 w-4" />
             {isLogin ? "Sign in" : "Create account"}
@@ -156,10 +114,7 @@ export default function AuthPage() {
 
         <p className="text-center text-xs text-muted-foreground">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-primary hover:underline"
-          >
+          <button onClick={() => setIsLogin(!isLogin)} className="text-primary hover:underline">
             {isLogin ? "Sign up" : "Sign in"}
           </button>
         </p>

@@ -17,21 +17,21 @@ export function CodeBlock({ code, language = "bash", title }: CodeBlockProps) {
   };
 
   return (
-    <div className="rounded-xl border border-border overflow-hidden surface-2">
+    <div className="rounded-xl border border-border overflow-hidden bg-sidebar">
       {title && (
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border surface-3">
+        <div className="flex items-center justify-between px-5 py-2.5 border-b border-border">
           <span className="text-xs font-mono text-muted-foreground">{title}</span>
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-150"
           >
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? "Copied" : "Copy"}
           </button>
         </div>
       )}
-      <pre className="p-4 overflow-x-auto text-sm leading-relaxed">
-        <code className="font-mono text-foreground/90">{code}</code>
+      <pre className="p-5 overflow-x-auto text-[13px] leading-relaxed">
+        <code className="font-mono text-foreground">{code}</code>
       </pre>
     </div>
   );

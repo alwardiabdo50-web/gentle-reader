@@ -1,7 +1,6 @@
 import { useAdminOverview } from "@/hooks/useAdminData";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Key, Zap, Bug, Coins } from "lucide-react";
+import { Users, Key, Zap, Bug, Coins, CheckCircle2 } from "lucide-react";
 
 export default function AdminOverviewPage() {
   const { data, isLoading } = useAdminOverview();
@@ -13,7 +12,7 @@ export default function AdminOverviewPage() {
   if (!data) return null;
 
   const stats = [
-    { label: "Total Users", value: data.totalUsers, icon: Users },
+    { label: "Total Users", value: data.totalUsers, icon: Users, accent: true },
     { label: "Active API Keys", value: data.activeKeys, icon: Key },
     { label: "Scrape Jobs (30d)", value: data.scrapeCount, icon: Zap },
     { label: "Crawl Jobs (30d)", value: data.crawlCount, icon: Zap },
@@ -24,48 +23,45 @@ export default function AdminOverviewPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Admin Overview</h1>
+    <div className="space-y-8">
+      <h1 className="text-[36px] font-bold text-foreground tracking-[-0.03em]">Admin Overview</h1>
 
-      {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <Card key={s.label} className="bg-card border-border">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                <s.icon className="h-3.5 w-3.5" />
-                {s.label}
-              </div>
-              <div className="text-xl font-bold text-foreground">{s.value}</div>
-            </CardContent>
-          </Card>
+        {stats.map((s, i) => (
+          <div key={s.label} className={`rounded-xl border border-border bg-card p-5 ${i === 0 ? "border-l-2 border-l-primary" : ""}`}>
+            <div className="text-[11px] font-medium uppercase tracking-[0.07em] text-muted-foreground mb-2">
+              {s.label}
+            </div>
+            <div className="text-[28px] font-bold text-foreground tracking-[-0.03em]">{s.value}</div>
+          </div>
         ))}
       </div>
 
-      {/* Plan distribution */}
-      <Card className="bg-card border-border">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">Plan Distribution</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-3 flex-wrap">
+      <div className="rounded-xl border border-border bg-card">
+        <div className="p-5 border-b border-border">
+          <h2 className="text-sm font-semibold text-foreground">Plan Distribution</h2>
+        </div>
+        <div className="p-5">
+          <div className="flex gap-2 flex-wrap">
             {Object.entries(data.planDistribution || {}).map(([plan, count]) => (
-              <Badge key={plan} variant="secondary" className="text-xs px-3 py-1">
+              <Badge key={plan} variant="secondary" className="text-xs px-3 py-1 capitalize">
                 {plan}: {count as number}
               </Badge>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Recent failures */}
-      <Card className="bg-card border-border">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">Recent Failures</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="rounded-xl border border-border bg-card">
+        <div className="p-5 border-b border-border">
+          <h2 className="text-sm font-semibold text-foreground">Recent Failures</h2>
+        </div>
+        <div className="p-5">
           {data.recentFailures?.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No recent failures 🎉</p>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CheckCircle2 className="h-4 w-4 text-success" />
+              All systems healthy
+            </div>
           ) : (
             <div className="space-y-2">
               {data.recentFailures?.map((f: Record<string, string>) => (
@@ -79,8 +75,8 @@ export default function AdminOverviewPage() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
