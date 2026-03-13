@@ -192,21 +192,29 @@ export async function recordLedgerEntry(entry: LedgerEntry): Promise<{ id: strin
     const absAmount = Math.abs(entry.credits);
 
     if (entry.org_id) {
-      // Update org credits
+      // Shared credits model: deduct from the org owner's personal credits
       const { data: org } = await admin
         .from("organizations")
-        .select("credits_used")
+        .select("owner_id")
         .eq("id", entry.org_id)
         .single();
 
       if (org) {
-        const { error: updateError } = await admin
-          .from("organizations")
-          .update({ credits_used: org.credits_used + absAmount })
-          .eq("id", entry.org_id);
+        const { data: ownerProfile } = await admin
+          .from("profiles")
+          .select("credits_used")
+          .eq("user_id", org.owner_id)
+          .single();
 
-        if (updateError) {
-          console.error("BILLING ERROR: Failed to update org credits_used:", JSON.stringify(updateError));
+        if (ownerProfile) {
+          const { error: updateError } = await admin
+            .from("profiles")
+            .update({ credits_used: ownerProfile.credits_used + absAmount })
+            .eq("user_id", org.owner_id);
+
+          if (updateError) {
+            console.error("BILLING ERROR: Failed to update org owner credits_used:", JSON.stringify(updateError));
+          }
         }
       }
     } else {
