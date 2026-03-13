@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 Deno.serve(async (req) => {
@@ -13,9 +13,10 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
   const authHeader = req.headers.get("authorization") ?? "";
-  const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+  const userClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { authorization: authHeader } },
   });
   const { data: { user }, error: authError } = await userClient.auth.getUser();
@@ -28,18 +29,18 @@ Deno.serve(async (req) => {
   const admin = createClient(supabaseUrl, serviceKey);
 
   try {
-    const url = new URL(req.url);
-    const action = url.searchParams.get("action");
+    let body: any = {};
+    try { body = await req.json(); } catch { body = {}; }
+    const action = body.action || "list";
 
-    if (req.method === "GET") {
-      const orgId = url.searchParams.get("org_id");
+    if (action === "list") {
+      const orgId = body.org_id;
       if (!orgId) {
         return new Response(JSON.stringify({ error: "org_id required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Check membership
       const { data: isMember } = await admin.rpc("is_org_member", { _user_id: user.id, _org_id: orgId });
       if (!isMember) {
         return new Response(JSON.stringify({ error: "Not a member" }), {
@@ -47,7 +48,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Get members
       const { data: members, error } = await admin
         .from("org_members")
         .select("id, user_id, role, joined_at, created_at")
@@ -55,7 +55,6 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: true });
       if (error) throw error;
 
-      // Get user emails for each member
       const memberDetails = [];
       for (const m of members || []) {
         const { data: profile } = await admin
@@ -73,7 +72,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Get pending invitations
       const { data: invitations } = await admin
         .from("org_invitations")
         .select("id, email, role, created_at, expires_at, accepted_at")
@@ -86,57 +84,51 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (req.method === "POST") {
-      const body = await req.json();
+    if (action === "accept") {
+      const { invitation_id } = body;
+      const { data: inv, error: invError } = await admin
+        .from("org_invitations")
+        .select("id, org_id, email, role, accepted_at, expires_at")
+        .eq("id", invitation_id)
+        .single();
 
-      // Accept invitation
-      if (action === "accept") {
-        const { invitation_id } = body;
-        const { data: inv, error: invError } = await admin
-          .from("org_invitations")
-          .select("id, org_id, email, role, accepted_at, expires_at")
-          .eq("id", invitation_id)
-          .single();
-
-        if (invError || !inv) {
-          return new Response(JSON.stringify({ error: "Invitation not found" }), {
-            status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        if (inv.accepted_at) {
-          return new Response(JSON.stringify({ error: "Already accepted" }), {
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        if (inv.email !== user.email) {
-          return new Response(JSON.stringify({ error: "Email mismatch" }), {
-            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        if (new Date(inv.expires_at) < new Date()) {
-          return new Response(JSON.stringify({ error: "Invitation expired" }), {
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        // Add member
-        const { error: memberErr } = await admin
-          .from("org_members")
-          .insert({ org_id: inv.org_id, user_id: user.id, role: inv.role, invited_by: user.id });
-        if (memberErr) throw memberErr;
-
-        // Mark invitation accepted
-        await admin.from("org_invitations").update({ accepted_at: new Date().toISOString() }).eq("id", invitation_id);
-
-        return new Response(JSON.stringify({ success: true, org_id: inv.org_id }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+      if (invError || !inv) {
+        return new Response(JSON.stringify({ error: "Invitation not found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Invite member
+      if (inv.accepted_at) {
+        return new Response(JSON.stringify({ error: "Already accepted" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (inv.email !== user.email) {
+        return new Response(JSON.stringify({ error: "Email mismatch" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (new Date(inv.expires_at) < new Date()) {
+        return new Response(JSON.stringify({ error: "Invitation expired" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: memberErr } = await admin
+        .from("org_members")
+        .insert({ org_id: inv.org_id, user_id: user.id, role: inv.role, invited_by: user.id });
+      if (memberErr) throw memberErr;
+
+      await admin.from("org_invitations").update({ accepted_at: new Date().toISOString() }).eq("id", invitation_id);
+
+      return new Response(JSON.stringify({ success: true, org_id: inv.org_id }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "invite") {
       const { org_id, email, role } = body;
       if (!org_id || !email || !role) {
         return new Response(JSON.stringify({ error: "org_id, email, and role required" }), {
@@ -151,7 +143,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check if already a member
       const { data: existingMembers } = await admin
         .from("org_members")
         .select("id, user_id")
@@ -178,8 +169,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (req.method === "PATCH") {
-      const body = await req.json();
+    if (action === "change_role") {
       const { org_id, member_id, role } = body;
 
       const { data: isOwner } = await admin.rpc("is_org_owner", { _user_id: user.id, _org_id: org_id });
@@ -197,8 +187,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (req.method === "DELETE") {
-      const body = await req.json();
+    if (action === "remove") {
       const { org_id, member_id, invitation_id } = body;
 
       const { data: isOwner } = await admin.rpc("is_org_owner", { _user_id: user.id, _org_id: org_id });
@@ -211,7 +200,6 @@ Deno.serve(async (req) => {
       if (invitation_id) {
         await admin.from("org_invitations").delete().eq("id", invitation_id);
       } else if (member_id) {
-        // Don't allow removing self if owner
         const { data: member } = await admin.from("org_members").select("user_id, role").eq("id", member_id).single();
         if (member?.role === "owner" && member?.user_id === user.id) {
           return new Response(JSON.stringify({ error: "Cannot remove yourself as owner" }), {
@@ -226,8 +214,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ error: "Unknown action" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
     console.error("org-members-manage error:", err);
