@@ -75,7 +75,7 @@ export default function StatusPage() {
 
   const statusConfig = {
     operational: { icon: CheckCircle2, label: "All Systems Operational", color: "text-primary", bg: "bg-primary/10 border-primary/30" },
-    degraded: { icon: AlertTriangle, label: "Degraded Performance", color: "text-[hsl(var(--nebula-warning))]", bg: "bg-[hsl(var(--nebula-warning))]/10 border-[hsl(var(--nebula-warning))]/30" },
+    degraded: { icon: AlertTriangle, label: "Degraded Performance", color: "text-warning", bg: "bg-warning/10 border-warning/20" },
     outage: { icon: XCircle, label: "Service Disruption", color: "text-destructive", bg: "bg-destructive/10 border-destructive/30" },
   };
 
