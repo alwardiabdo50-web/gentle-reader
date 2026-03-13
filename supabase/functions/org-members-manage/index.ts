@@ -15,17 +15,28 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-  const authHeader = req.headers.get("authorization") ?? "";
-  const userClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { authorization: authHeader } },
-  });
-  const { data: { user }, error: authError } = await userClient.auth.getUser();
-  if (authError || !user) {
+  const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization") ?? "";
+  if (!authHeader.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
+  const token = authHeader.replace("Bearer ", "");
+  const authClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
+  const userId = claimsData?.claims?.sub;
+  const userEmail = claimsData?.claims?.email as string | undefined;
+
+  if (claimsError || !userId) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const user = { id: userId, email: userEmail ?? null };
   const admin = createClient(supabaseUrl, serviceKey);
 
   try {
