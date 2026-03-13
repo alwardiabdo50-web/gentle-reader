@@ -179,9 +179,9 @@ export default function ApiKeysPage() {
               </div>
             ) : (
               <div className="space-y-4 py-2">
-                <div className="flex items-start gap-2 p-3 rounded-lg border border-nebula-warning/30 bg-nebula-warning/5">
-                  <AlertCircle className="h-4 w-4 text-nebula-warning shrink-0 mt-0.5" />
-                  <p className="text-xs text-nebula-warning">Copy this token now. It won't be shown again.</p>
+                <div className="flex items-start gap-2 p-3 rounded-lg border border-warning/20 bg-warning/10">
+                  <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                  <p className="text-xs text-warning">Copy this token now. It won't be shown again.</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 text-xs font-mono bg-muted p-2.5 rounded border border-border break-all">
