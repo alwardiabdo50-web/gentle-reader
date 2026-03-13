@@ -158,9 +158,9 @@ export default function JobsPage() {
       setLoading(false);
     };
     fetchJobs();
-  }, [filter, search, page]);
+  }, [filter, search, page, pageSize]);
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const formatTime = (iso: string) =>
     new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
