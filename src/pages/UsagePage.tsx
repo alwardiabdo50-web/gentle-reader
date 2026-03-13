@@ -189,7 +189,7 @@ export default function UsagePage() {
         }
         const trend: CreditTrend[] = Array.from(trendMap.entries()).map(([date, remaining]) => ({ date, remaining }));
         if (trend.length === 0) {
-          trend.push({ date: "Today", remaining: total - (profile?.credits_used ?? 0) });
+          trend.push({ date: "Today", remaining: total - creditsUsed });
         }
         setCreditTrend(trend);
       } else {
