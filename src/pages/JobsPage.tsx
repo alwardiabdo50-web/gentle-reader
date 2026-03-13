@@ -71,7 +71,7 @@ export default function JobsPage() {
         if (filter !== "all") {
           scrapeQuery = scrapeQuery.range(from, to);
         } else {
-          scrapeQuery = scrapeQuery.limit(ITEMS_PER_PAGE * 3);
+          scrapeQuery = scrapeQuery.limit(pageSize * 3);
         }
 
         const { data, count } = await scrapeQuery;
