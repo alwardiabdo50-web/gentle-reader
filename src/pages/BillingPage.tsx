@@ -167,7 +167,7 @@ export default function BillingPage() {
 
       {/* Credit Usage Progress */}
       {!credits.loading && (
-        <div className="rounded-lg border border-border p-5 surface-1">
+        <div className="rounded-lg border border-border p-5 bg-card">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-sm font-medium">Credit Usage</h3>
