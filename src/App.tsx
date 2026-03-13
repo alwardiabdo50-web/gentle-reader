@@ -31,6 +31,7 @@ import AdminUsersPage from "@/pages/admin/AdminUsersPage";
 import AdminUserDetailPage from "@/pages/admin/AdminUserDetailPage";
 import AdminJobsPage from "@/pages/admin/AdminJobsPage";
 import AdminBillingPage from "@/pages/admin/AdminBillingPage";
+import PublicDocsPage from "@/pages/public/PublicDocsPage";
 
 const queryClient = new QueryClient();
 
