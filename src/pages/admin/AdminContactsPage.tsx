@@ -220,6 +220,7 @@ export default function AdminContactsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
 
           {totalPages > 1 && (
