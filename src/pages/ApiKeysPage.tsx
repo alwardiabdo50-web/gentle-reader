@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Key, Plus, Copy, Trash2, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Key, Plus, Copy, Trash2, CheckCircle2, AlertCircle, Loader2, Building2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,10 +22,11 @@ interface ApiKey {
   last_used_at: string | null;
   is_active: boolean;
   created_at: string;
+  org_id: string | null;
 }
 
 export default function ApiKeysPage() {
-  const { user } = useAuth();
+  const { user, activeOrg } = useAuth();
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [newKeyName, setNewKeyName] = useState("");
@@ -34,11 +35,22 @@ export default function ApiKeysPage() {
   const [copied, setCopied] = useState(false);
   const [creating, setCreating] = useState(false);
 
+  const isOrgOwner = activeOrg?.role === "owner";
+  const canCreateKeys = !activeOrg || isOrgOwner;
+
   const fetchKeys = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from("api_keys")
-      .select("id, name, key_prefix, last_used_at, is_active, created_at")
+      .select("id, name, key_prefix, last_used_at, is_active, created_at, org_id")
       .order("created_at", { ascending: false });
+
+    if (activeOrg) {
+      query = query.eq("org_id", activeOrg.id);
+    } else {
+      query = query.is("org_id", null);
+    }
+
+    const { data, error } = await query;
     if (data) setKeys(data);
     if (error) toast.error(error.message);
     setLoading(false);
@@ -46,7 +58,7 @@ export default function ApiKeysPage() {
 
   useEffect(() => {
     fetchKeys();
-  }, []);
+  }, [activeOrg]);
 
   const handleCreate = async () => {
     if (!newKeyName.trim() || !user) return;
@@ -67,6 +79,7 @@ export default function ApiKeysPage() {
         name: newKeyName,
         key_prefix: prefix,
         key_hash: hashHex,
+        org_id: activeOrg?.id ?? null,
       });
 
       if (error) throw error;
@@ -114,24 +127,33 @@ export default function ApiKeysPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">API Keys</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your API keys. Tokens are shown only once at creation.
+            {activeOrg ? (
+              <span className="flex items-center gap-1">
+                <Building2 className="h-3.5 w-3.5" />
+                Shared keys for <span className="font-medium text-foreground">{activeOrg.name}</span>
+                {!isOrgOwner && " (read-only)"}
+              </span>
+            ) : (
+              "Manage your API keys. Tokens are shown only once at creation."
+            )}
           </p>
         </div>
-        <Dialog
-          open={dialogOpen}
-          onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) {
-              setCreatedToken(null);
-              setNewKeyName("");
-            }
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button className="gap-1.5 glow-primary">
-              <Plus className="h-4 w-4" /> New Key
-            </Button>
-          </DialogTrigger>
+        {canCreateKeys && (
+          <Dialog
+            open={dialogOpen}
+            onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) {
+                setCreatedToken(null);
+                setNewKeyName("");
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button className="gap-1.5 glow-primary">
+                <Plus className="h-4 w-4" /> New Key
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{createdToken ? "Key Created" : "Create API Key"}</DialogTitle>
@@ -181,6 +203,7 @@ export default function ApiKeysPage() {
             )}
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="rounded-lg border border-border overflow-hidden">
@@ -225,7 +248,7 @@ export default function ApiKeysPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {k.is_active && (
+                    {k.is_active && canCreateKeys && (
                       <Button
                         variant="ghost"
                         size="sm"
