@@ -14,6 +14,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -56,25 +57,11 @@ export default function TeamPage() {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("org-members-manage", {
-        method: "GET",
-        headers: {},
-        body: undefined,
+        body: { action: "list", org_id: activeOrg.id },
       });
-      // Use query params approach - invoke with GET doesn't support query params well,
-      // so we'll use fetch directly
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/org-members-manage?org_id=${activeOrg.id}`,
-        {
-          headers: {
-            authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-        }
-      );
-      const result = await res.json();
-      if (result.error) throw new Error(result.error);
-      setMembers(result.members || []);
-      setInvitations(result.invitations || []);
+      if (error) throw error;
+      setMembers(data?.members || []);
+      setInvitations(data?.invitations || []);
     } catch (err: any) {
       toast.error(err.message || "Failed to load team");
     } finally {
@@ -90,11 +77,11 @@ export default function TeamPage() {
     if (!inviteEmail.trim() || !activeOrg) return;
     setInviting(true);
     try {
-      const { error } = await supabase.functions.invoke("org-members-manage", {
-        method: "POST",
-        body: { org_id: activeOrg.id, email: inviteEmail.trim(), role: inviteRole },
+      const { data, error } = await supabase.functions.invoke("org-members-manage", {
+        body: { action: "invite", org_id: activeOrg.id, email: inviteEmail.trim(), role: inviteRole },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success(`Invitation sent to ${inviteEmail}`);
       setInviteOpen(false);
       setInviteEmail("");
@@ -110,11 +97,11 @@ export default function TeamPage() {
   const handleRemoveMember = async (memberId: string) => {
     if (!activeOrg) return;
     try {
-      const { error } = await supabase.functions.invoke("org-members-manage", {
-        method: "DELETE",
-        body: { org_id: activeOrg.id, member_id: memberId },
+      const { data, error } = await supabase.functions.invoke("org-members-manage", {
+        body: { action: "remove", org_id: activeOrg.id, member_id: memberId },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success("Member removed");
       fetchMembers();
     } catch (err: any) {
@@ -125,11 +112,11 @@ export default function TeamPage() {
   const handleCancelInvitation = async (invitationId: string) => {
     if (!activeOrg) return;
     try {
-      const { error } = await supabase.functions.invoke("org-members-manage", {
-        method: "DELETE",
-        body: { org_id: activeOrg.id, invitation_id: invitationId },
+      const { data, error } = await supabase.functions.invoke("org-members-manage", {
+        body: { action: "remove", org_id: activeOrg.id, invitation_id: invitationId },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success("Invitation cancelled");
       fetchMembers();
     } catch (err: any) {
@@ -140,11 +127,11 @@ export default function TeamPage() {
   const handleChangeRole = async (memberId: string, newRole: string) => {
     if (!activeOrg) return;
     try {
-      const { error } = await supabase.functions.invoke("org-members-manage", {
-        method: "PATCH",
-        body: { org_id: activeOrg.id, member_id: memberId, role: newRole },
+      const { data, error } = await supabase.functions.invoke("org-members-manage", {
+        body: { action: "change_role", org_id: activeOrg.id, member_id: memberId, role: newRole },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success("Role updated");
       fetchMembers();
     } catch (err: any) {
@@ -301,6 +288,7 @@ export default function TeamPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Invite Team Member</DialogTitle>
+            <DialogDescription>Send an invitation to join {activeOrg.name}.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
