@@ -195,7 +195,7 @@ export default function BillingPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {plans.map((plan) => {
           const isCurrent = plan.name === currentPlan;
           const isDowngrade = plans.indexOf(plan) < plans.findIndex((p) => p.name === currentPlan);

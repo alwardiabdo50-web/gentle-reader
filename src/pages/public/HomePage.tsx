@@ -172,9 +172,10 @@ function UseCasesSection() {
 }
 
 const plans = [
-  { name: "Free", price: "$0", credits: "500 credits/mo", features: ["Scrape, Crawl, Map", "Markdown & HTML output", "Community support"], cta: "Get Started", highlighted: false },
-  { name: "Starter", price: "$29", credits: "10,000 credits/mo", features: ["Everything in Free", "AI Extraction", "JavaScript rendering", "Priority support"], cta: "Start Free Trial", highlighted: true },
-  { name: "Growth", price: "$99", credits: "50,000 credits/mo", features: ["Everything in Starter", "Higher rate limits", "Webhook notifications", "Dedicated support"], cta: "Start Free Trial", highlighted: false },
+  { name: "Free", price: "$0", credits: "500 credits/mo", features: ["5 req/min", "Playground access", "Community support"], cta: "Get Started", highlighted: false },
+  { name: "Hobby", price: "$9", credits: "3,000 credits/mo", features: ["20 req/min", "Full API access", "Email support"], cta: "Start Free", highlighted: false },
+  { name: "Standard", price: "$49", credits: "25,000 credits/mo", features: ["100 req/min", "AI extraction", "Priority support"], cta: "Start Free", highlighted: true },
+  { name: "Growth", price: "$199", credits: "150,000 credits/mo", features: ["500 req/min", "Dedicated support", "25 API keys"], cta: "Start Free", highlighted: false },
 ];
 
 function PricingTeaser() {
@@ -185,7 +186,7 @@ function PricingTeaser() {
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 tracking-[-0.02em]">Simple, transparent pricing</h2>
           <p className="text-muted-foreground text-lg">Start free. Scale as you grow. No surprises.</p>
         </div>
-        <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
           {plans.map((plan) => (
             <div key={plan.name} className={`rounded-xl border p-6 flex flex-col transition-all duration-150 ${plan.highlighted ? "border-primary bg-card" : "border-border bg-card"}`}>
               <h3 className="font-semibold text-foreground text-lg">{plan.name}</h3>
@@ -209,7 +210,8 @@ function PricingTeaser() {
           ))}
         </div>
         <p className="text-center text-sm text-muted-foreground mt-8">
-          Need more?{" "}<Link to="/pricing" className="text-primary hover:underline">View full pricing</Link>
+          Need more? <strong>Scale</strong> ($399/mo) and <strong>Enterprise</strong> plans available.{" "}
+          <Link to="/pricing" className="text-primary hover:underline">View full pricing →</Link>
         </p>
       </div>
     </section>
