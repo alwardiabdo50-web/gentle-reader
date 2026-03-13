@@ -71,11 +71,6 @@ export function useAdminContacts(page = 1, status = "all") {
 export async function fetchAdminContactsExport(status = "all") {
   return fetchAdminData("contacts-export", { status });
 }
-  return useQuery({
-    queryKey: ["admin", "contacts", page, status],
-    queryFn: () => fetchAdminData("contacts", { page: String(page), status }),
-  });
-}
 
 async function postAdminAction(body: Record<string, string>) {
   const session = (await supabase.auth.getSession()).data.session;
