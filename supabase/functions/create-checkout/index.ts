@@ -8,13 +8,17 @@ const corsHeaders = {
 };
 
 const PLAN_PRICES: Record<string, { price_id: string; product_id: string }> = {
-  starter: {
+  hobby: {
     price_id: "price_1T8rVAF7VmTA91ISjCoQzkq4",
     product_id: "prod_U75gHF5XUrUy2E",
   },
-  pro: {
+  standard: {
     price_id: "price_1T8rVWF7VmTA91ISyNNxcsg6",
     product_id: "prod_U75gA8gdsRsNaJ",
+  },
+  growth: {
+    price_id: "price_1T8rWYF7VmTA91ISUTSoy23Z",
+    product_id: "prod_U75h0OkYXcc0mu",
   },
   scale: {
     price_id: "price_1T8rWYF7VmTA91ISUTSoy23Z",

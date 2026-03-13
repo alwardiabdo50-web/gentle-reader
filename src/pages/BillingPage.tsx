@@ -15,16 +15,18 @@ import {
 } from "@/components/ui/dialog";
 
 const PLAN_PRICES: Record<string, { price_id: string; product_id: string }> = {
-  starter: { price_id: "price_1T8rVAF7VmTA91ISjCoQzkq4", product_id: "prod_U75gHF5XUrUy2E" },
-  pro:     { price_id: "price_1T8rVWF7VmTA91ISyNNxcsg6", product_id: "prod_U75gA8gdsRsNaJ" },
-  scale:   { price_id: "price_1T8rWYF7VmTA91ISUTSoy23Z", product_id: "prod_U75h0OkYXcc0mu" },
+  hobby:    { price_id: "price_1T8rVAF7VmTA91ISjCoQzkq4", product_id: "prod_U75gHF5XUrUy2E" },
+  standard: { price_id: "price_1T8rVWF7VmTA91ISyNNxcsg6", product_id: "prod_U75gA8gdsRsNaJ" },
+  growth:   { price_id: "price_1T8rWYF7VmTA91ISUTSoy23Z", product_id: "prod_U75h0OkYXcc0mu" },
+  scale:    { price_id: "price_1T8rWYF7VmTA91ISUTSoy23Z", product_id: "prod_U75h0OkYXcc0mu" },
 };
 
 const plans = [
   { name: "free", label: "Free", price: "$0", credits: 500, features: ["500 credits/month", "5 req/min", "Community support", "Playground access"] },
-  { name: "starter", label: "Starter", price: "$29", credits: 10000, features: ["10,000 credits/month", "60 req/min", "Email support", "Full API access", "Crawl up to 100 pages"] },
-  { name: "pro", label: "Pro", price: "$99", credits: 50000, features: ["50,000 credits/month", "200 req/min", "Priority support", "AI extraction", "Crawl up to 1,000 pages", "Screenshot capture"] },
-  { name: "scale", label: "Scale", price: "$349", credits: 250000, features: ["250,000 credits/month", "1,000 req/min", "Dedicated support", "Custom extraction models", "Unlimited crawl depth", "SLA guarantee"] },
+  { name: "hobby", label: "Hobby", price: "$9", credits: 3000, features: ["3,000 credits/month", "20 req/min", "Email support", "Full API access"] },
+  { name: "standard", label: "Standard", price: "$49", credits: 25000, features: ["25,000 credits/month", "100 req/min", "Priority support", "AI extraction", "10 API keys"] },
+  { name: "growth", label: "Growth", price: "$199", credits: 150000, features: ["150,000 credits/month", "500 req/min", "Dedicated support", "AI extraction", "25 API keys"] },
+  { name: "scale", label: "Scale", price: "$399", credits: 500000, features: ["500,000 credits/month", "1,000 req/min", "Dedicated account manager", "Unlimited crawl depth", "SLA guarantee"] },
 ];
 
 export default function BillingPage() {
