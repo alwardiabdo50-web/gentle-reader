@@ -127,7 +127,15 @@ export default function ApiKeysPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">API Keys</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your API keys. Tokens are shown only once at creation.
+            {activeOrg ? (
+              <span className="flex items-center gap-1">
+                <Building2 className="h-3.5 w-3.5" />
+                Shared keys for <span className="font-medium text-foreground">{activeOrg.name}</span>
+                {!isOrgOwner && " (read-only)"}
+              </span>
+            ) : (
+              "Manage your API keys. Tokens are shown only once at creation."
+            )}
           </p>
         </div>
         <Dialog
