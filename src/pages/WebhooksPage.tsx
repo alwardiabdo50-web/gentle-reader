@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Copy, Eye, EyeOff, Globe, Webhook, RefreshCw } from "lucide-react";
+import { Plus, Trash2, Copy, Eye, EyeOff, Globe, Webhook, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 
 const EVENT_OPTIONS = [
