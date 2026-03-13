@@ -113,25 +113,6 @@ export default function UsagePage() {
   async function fetchUsageData() {
     setLoading(true);
     try {
-      let creditsUsed = 0;
-      let total = 500;
-      let currentPlan = "free";
-
-      if (activeOrg) {
-        // Org-level credits
-        total = activeOrg.monthly_credits + activeOrg.extra_credits;
-        creditsUsed = activeOrg.credits_used;
-        currentPlan = activeOrg.plan;
-      } else {
-        const { data: profile } = await supabase.from("profiles").select("credits_used, monthly_credits, extra_credits, plan").eq("user_id", user!.id).single();
-        total = (profile?.monthly_credits ?? 500) + (profile?.extra_credits ?? 0);
-        creditsUsed = profile?.credits_used ?? 0;
-        currentPlan = profile?.plan ?? "free";
-      }
-
-      setTotalCredits(total);
-      setPlan(currentPlan);
-
       // Jobs are always user-scoped (RLS)
       const [jobsRes, ledgerRes] = await Promise.all([
         supabase.from("scrape_jobs").select("id, mode, status, credits_used, created_at").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1000),
