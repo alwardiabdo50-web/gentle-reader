@@ -82,6 +82,8 @@ export default function WebhooksPage() {
   const [newDesc, setNewDesc] = useState("");
   const [newEvents, setNewEvents] = useState<string[]>(["job.completed", "job.failed"]);
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
+  const [deliveryPage, setDeliveryPage] = useState(1);
+  const DELIVERIES_PER_PAGE = 20;
 
   // Fetch webhooks
   const { data: webhooks = [], isLoading } = useQuery<WebhookData[]>({
