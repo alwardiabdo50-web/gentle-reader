@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,43 +7,117 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database, GitBranch } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database, GitBranch, History, Save, Share2, ChevronDown, ChevronRight, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import type { ScrapeResponse } from "@/lib/api/scrape";
 
 type Mode = "scrape" | "batch" | "crawl" | "map" | "extract" | "pipeline";
 
+interface HistoryEntry {
+  mode: Mode;
+  url: string;
+  params: Record<string, unknown>;
+  timestamp: number;
+  title?: string;
+}
+
+interface Preset {
+  id: string;
+  name: string;
+  mode: string;
+  config_json: Record<string, unknown>;
+  created_at: string;
+}
+
+function getHistory(): HistoryEntry[] {
+  try {
+    return JSON.parse(localStorage.getItem("playground_history") || "[]");
+  } catch { return []; }
+}
+
+function addHistory(entry: HistoryEntry) {
+  const history = getHistory();
+  history.unshift(entry);
+  localStorage.setItem("playground_history", JSON.stringify(history.slice(0, 50)));
+}
+
+function computeDiff(oldText: string, newText: string) {
+  const oldLines = oldText.split("\n");
+  const newLines = newText.split("\n");
+  const result: { type: "same" | "added" | "removed"; text: string }[] = [];
+
+  let oi = 0, ni = 0;
+  while (oi < oldLines.length || ni < newLines.length) {
+    if (oi < oldLines.length && ni < newLines.length && oldLines[oi] === newLines[ni]) {
+      result.push({ type: "same", text: oldLines[oi] });
+      oi++; ni++;
+    } else if (ni < newLines.length && (oi >= oldLines.length || !oldLines.slice(oi, oi + 5).includes(newLines[ni]))) {
+      result.push({ type: "added", text: newLines[ni] });
+      ni++;
+    } else if (oi < oldLines.length) {
+      result.push({ type: "removed", text: oldLines[oi] });
+      oi++;
+    }
+  }
+  return result;
+}
+
 export default function PlaygroundPage() {
-  const [mode, setMode] = useState<Mode>("scrape");
-  const [url, setUrl] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
+  const [mode, setMode] = useState<Mode>((searchParams.get("mode") as Mode) || "scrape");
+  const [url, setUrl] = useState(searchParams.get("url") || "");
   const [batchUrls, setBatchUrls] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [resultTab, setResultTab] = useState("markdown");
-  const [renderJs, setRenderJs] = useState(true);
-  const [mainContent, setMainContent] = useState(true);
+  const [renderJs, setRenderJs] = useState(searchParams.get("renderJs") !== "false");
+  const [mainContent, setMainContent] = useState(searchParams.get("mainContent") !== "false");
   const [copied, setCopied] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [batchSelectedIdx, setBatchSelectedIdx] = useState(0);
-  const [cacheTtl, setCacheTtl] = useState("3600");
+  const [cacheTtl, setCacheTtl] = useState(searchParams.get("cacheTtl") || "3600");
 
   // Crawl options
-  const [maxPages, setMaxPages] = useState("50");
-  const [maxDepth, setMaxDepth] = useState("3");
+  const [maxPages, setMaxPages] = useState(searchParams.get("maxPages") || "50");
+  const [maxDepth, setMaxDepth] = useState(searchParams.get("maxDepth") || "3");
 
   // Map options
-  const [maxUrls, setMaxUrls] = useState("500");
+  const [maxUrls, setMaxUrls] = useState(searchParams.get("maxUrls") || "500");
 
   // Extract options
-  const [extractPrompt, setExtractPrompt] = useState("");
-  const [extractSchema, setExtractSchema] = useState("");
-  const [extractModel, setExtractModel] = useState("google/gemini-3-flash-preview");
+  const [extractPrompt, setExtractPrompt] = useState(searchParams.get("extractPrompt") || "");
+  const [extractSchema, setExtractSchema] = useState(searchParams.get("extractSchema") || "");
+  const [extractModel, setExtractModel] = useState(searchParams.get("extractModel") || "google/gemini-3-flash-preview");
 
   // Pipeline options
-  const [pipelinePrompt, setPipelinePrompt] = useState("");
-  const [pipelineSchema, setPipelineSchema] = useState("");
-  const [pipelineTransformPrompt, setPipelineTransformPrompt] = useState("");
-  const [pipelineModel, setPipelineModel] = useState("google/gemini-3-flash-preview");
+  const [pipelinePrompt, setPipelinePrompt] = useState(searchParams.get("pipelinePrompt") || "");
+  const [pipelineSchema, setPipelineSchema] = useState(searchParams.get("pipelineSchema") || "");
+  const [pipelineTransformPrompt, setPipelineTransformPrompt] = useState(searchParams.get("pipelineTransformPrompt") || "");
+  const [pipelineModel, setPipelineModel] = useState(searchParams.get("pipelineModel") || "google/gemini-3-flash-preview");
+
+  // History & presets
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[]>(getHistory());
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [presetName, setPresetName] = useState("");
+  const [savePresetOpen, setSavePresetOpen] = useState(false);
+
+  // Diff
+  const [previousMarkdown, setPreviousMarkdown] = useState<string | null>(null);
+  const [previousUrl, setPreviousUrl] = useState<string | null>(null);
+
+  // Fetch presets
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("playground_presets").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => {
+      if (data) setPresets(data as unknown as Preset[]);
+    });
+  }, [user]);
 
   // Fetch (or create) a playground API key on mount
   useEffect(() => {
@@ -77,6 +152,90 @@ export default function PlaygroundPage() {
       }
     })();
   }, []);
+
+  const getCurrentConfig = useCallback(() => ({
+    url, renderJs, mainContent, cacheTtl, maxPages, maxDepth, maxUrls,
+    extractPrompt, extractSchema, extractModel,
+    pipelinePrompt, pipelineSchema, pipelineTransformPrompt, pipelineModel,
+  }), [url, renderJs, mainContent, cacheTtl, maxPages, maxDepth, maxUrls, extractPrompt, extractSchema, extractModel, pipelinePrompt, pipelineSchema, pipelineTransformPrompt, pipelineModel]);
+
+  const restoreConfig = (config: Record<string, unknown>) => {
+    if (config.url) setUrl(config.url as string);
+    if (config.renderJs !== undefined) setRenderJs(config.renderJs as boolean);
+    if (config.mainContent !== undefined) setMainContent(config.mainContent as boolean);
+    if (config.cacheTtl) setCacheTtl(config.cacheTtl as string);
+    if (config.maxPages) setMaxPages(config.maxPages as string);
+    if (config.maxDepth) setMaxDepth(config.maxDepth as string);
+    if (config.maxUrls) setMaxUrls(config.maxUrls as string);
+    if (config.extractPrompt !== undefined) setExtractPrompt(config.extractPrompt as string);
+    if (config.extractSchema !== undefined) setExtractSchema(config.extractSchema as string);
+    if (config.extractModel) setExtractModel(config.extractModel as string);
+    if (config.pipelinePrompt !== undefined) setPipelinePrompt(config.pipelinePrompt as string);
+    if (config.pipelineSchema !== undefined) setPipelineSchema(config.pipelineSchema as string);
+    if (config.pipelineTransformPrompt !== undefined) setPipelineTransformPrompt(config.pipelineTransformPrompt as string);
+    if (config.pipelineModel) setPipelineModel(config.pipelineModel as string);
+  };
+
+  const handleShare = () => {
+    const params = new URLSearchParams();
+    params.set("mode", mode);
+    if (url) params.set("url", url);
+    if (!renderJs) params.set("renderJs", "false");
+    if (!mainContent) params.set("mainContent", "false");
+    if (cacheTtl !== "3600") params.set("cacheTtl", cacheTtl);
+    if (mode === "crawl") { params.set("maxPages", maxPages); params.set("maxDepth", maxDepth); }
+    if (mode === "map") params.set("maxUrls", maxUrls);
+    if (mode === "extract") {
+      if (extractPrompt) params.set("extractPrompt", extractPrompt);
+      if (extractSchema) params.set("extractSchema", extractSchema);
+      if (extractModel !== "google/gemini-3-flash-preview") params.set("extractModel", extractModel);
+    }
+    if (mode === "pipeline") {
+      if (pipelinePrompt) params.set("pipelinePrompt", pipelinePrompt);
+      if (pipelineSchema) params.set("pipelineSchema", pipelineSchema);
+      if (pipelineTransformPrompt) params.set("pipelineTransformPrompt", pipelineTransformPrompt);
+      if (pipelineModel !== "google/gemini-3-flash-preview") params.set("pipelineModel", pipelineModel);
+    }
+    const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    navigator.clipboard.writeText(shareUrl);
+    toast.success("Share link copied to clipboard");
+  };
+
+  const handleSavePreset = async () => {
+    if (!presetName.trim() || !user) return;
+    const config = getCurrentConfig();
+    const { data, error } = await supabase.from("playground_presets").insert({
+      user_id: user.id,
+      name: presetName.trim(),
+      mode,
+      config_json: config,
+    }).select().single();
+    if (!error && data) {
+      setPresets(prev => [data as unknown as Preset, ...prev]);
+      setPresetName("");
+      setSavePresetOpen(false);
+      toast.success("Preset saved");
+    }
+  };
+
+  const handleDeletePreset = async (id: string) => {
+    await supabase.from("playground_presets").delete().eq("id", id);
+    setPresets(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handleLoadPreset = (preset: Preset) => {
+    setMode(preset.mode as Mode);
+    restoreConfig(preset.config_json);
+    setResult(null);
+    toast.success(`Loaded preset: ${preset.name}`);
+  };
+
+  const handleRestoreHistory = (entry: HistoryEntry) => {
+    setMode(entry.mode);
+    restoreConfig(entry.params);
+    setResult(null);
+    setHistoryOpen(false);
+  };
 
   const parseBatchUrls = (): string[] => {
     return batchUrls.
@@ -201,6 +360,14 @@ export default function PlaygroundPage() {
       if (error) {
         setResult({ success: false, error: { code: "NETWORK_ERROR", message: error.message } });
       } else {
+        // Store previous markdown for diff (scrape mode only)
+        if (mode === "scrape" && result?.data?.markdown && previousUrl === url) {
+          setPreviousMarkdown(result.data.markdown);
+        } else if (mode === "scrape") {
+          setPreviousMarkdown(result?.data?.markdown || null);
+        }
+        setPreviousUrl(url);
+
         setResult(data);
         if (mode === "batch") setResultTab("markdown");
         else if (mode === "map") setResultTab("json");
@@ -208,6 +375,19 @@ export default function PlaygroundPage() {
         else if (mode === "crawl") setResultTab("json");
         else if (mode === "pipeline") setResultTab("pipeline");
         else setResultTab("markdown");
+
+        // Save to history
+        if (data?.success !== false) {
+          const entry: HistoryEntry = {
+            mode,
+            url: mode === "batch" ? parseBatchUrls().join(", ") : url,
+            params: getCurrentConfig(),
+            timestamp: Date.now(),
+            title: data?.data?.title,
+          };
+          addHistory(entry);
+          setHistory(getHistory());
+        }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -237,14 +417,152 @@ export default function PlaygroundPage() {
   const batchItem = isBatchResult ? d[batchSelectedIdx] : null;
   const batchError = isBatchResult && result?.errors ? result.errors[batchSelectedIdx] : null;
 
+  const diffLines = mode === "scrape" && previousMarkdown && d?.markdown && previousUrl === url
+    ? computeDiff(previousMarkdown, d.markdown)
+    : null;
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Playground</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Test scrape, batch scrape, crawl, map, and extract endpoints interactively.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Playground</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Test scrape, batch scrape, crawl, map, and extract endpoints interactively.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Presets dropdown */}
+          {presets.length > 0 && (
+            <Select onValueChange={(id) => {
+              const p = presets.find(pr => pr.id === id);
+              if (p) handleLoadPreset(p);
+            }}>
+              <SelectTrigger className="w-40 h-8 text-xs">
+                <SelectValue placeholder="Load preset..." />
+              </SelectTrigger>
+              <SelectContent>
+                {presets.map(p => (
+                  <SelectItem key={p.id} value={p.id}>
+                    <span className="flex items-center gap-2">
+                      <span className="capitalize text-muted-foreground">{p.mode}</span>
+                      <span>{p.name}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <Dialog open={savePresetOpen} onOpenChange={setSavePresetOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                <Save className="h-3.5 w-3.5" /> Save Preset
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Save Preset</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 pt-2">
+                <Input
+                  placeholder="Preset name..."
+                  value={presetName}
+                  onChange={e => setPresetName(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleSavePreset()}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setSavePresetOpen(false)}>Cancel</Button>
+                  <Button size="sm" onClick={handleSavePreset} disabled={!presetName.trim()}>Save</Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleShare}>
+            <Share2 className="h-3.5 w-3.5" /> Share
+          </Button>
+
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setHistoryOpen(!historyOpen)}>
+            <History className="h-3.5 w-3.5" /> History
+          </Button>
+        </div>
       </div>
+
+      {/* History panel */}
+      {historyOpen && (
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium flex items-center gap-2">
+              <History className="h-4 w-4 text-muted-foreground" /> Recent Runs
+            </h3>
+            <Button variant="ghost" size="sm" onClick={() => setHistoryOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          {history.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No history yet. Run a request to see it here.</p>
+          ) : (
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {history.map((entry, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleRestoreHistory(entry)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded text-left hover:bg-accent transition-colors"
+                >
+                  <span className="text-xs font-medium capitalize text-primary shrink-0 w-14">{entry.mode}</span>
+                  <span className="text-xs font-mono text-foreground truncate flex-1">{entry.url}</span>
+                  {entry.title && <span className="text-xs text-muted-foreground truncate max-w-32">{entry.title}</span>}
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {new Date(entry.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+          {history.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-destructive mt-2"
+              onClick={() => { localStorage.removeItem("playground_history"); setHistory([]); }}
+            >
+              <Trash2 className="h-3 w-3 mr-1" /> Clear history
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Preset management */}
+      {presets.length > 0 && (
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1">
+              <ChevronRight className="h-3 w-3" /> Manage {presets.length} preset{presets.length !== 1 ? "s" : ""}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-2">
+            <div className="rounded-lg border border-border bg-card divide-y divide-border">
+              {presets.map(p => (
+                <div key={p.id} className="flex items-center justify-between px-4 py-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium capitalize text-primary">{p.mode}</span>
+                    <span className="text-sm">{p.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(p.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" className="text-xs" onClick={() => handleLoadPreset(p)}>Load</Button>
+                    <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => handleDeletePreset(p.id)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
 
       {/* Mode selector */}
       <div className="flex gap-2 flex-wrap">
@@ -255,7 +573,6 @@ export default function PlaygroundPage() {
           size="sm"
           onClick={() => {setMode(m);setResult(null);}}
           className="gap-1.5 capitalize">
-          
             {modeIcons[m]}
             {m === "batch" ? "Batch Scrape" : m}
           </Button>
@@ -275,7 +592,6 @@ export default function PlaygroundPage() {
             value={batchUrls}
             onChange={(e) => setBatchUrls(e.target.value)}
             className="font-mono text-sm min-h-[120px]" />
-          
             <div className="flex items-center justify-between mt-2">
               <span className="text-xs text-muted-foreground">
                 {parseBatchUrls().length} URL{parseBatchUrls().length !== 1 ? "s" : ""} entered
@@ -286,7 +602,6 @@ export default function PlaygroundPage() {
               </Button>
             </div>
           </div> :
-
         <div className="flex gap-3">
             <div className="flex-1">
               <Label htmlFor="url" className="text-xs text-muted-foreground mb-1.5 block">
@@ -299,7 +614,6 @@ export default function PlaygroundPage() {
               onChange={(e) => setUrl(e.target.value)}
               className="font-mono text-sm"
               onKeyDown={(e) => e.key === "Enter" && handleRun()} />
-            
             </div>
             <div className="flex items-end">
               <Button onClick={handleRun} disabled={loading || !url || !apiKey} className="gap-2">
@@ -395,7 +709,6 @@ export default function PlaygroundPage() {
               value={extractPrompt}
               onChange={(e) => setExtractPrompt(e.target.value)}
               className="text-xs" />
-            
             </div>
             <div>
               <Label className="text-xs text-muted-foreground block mb-1.5">JSON Schema (optional)</Label>
@@ -404,7 +717,6 @@ export default function PlaygroundPage() {
               value={extractSchema}
               onChange={(e) => setExtractSchema(e.target.value)}
               className="text-xs font-mono min-h-[60px]" />
-            
             </div>
             <div className="flex items-center gap-2">
               <Label className="text-xs text-muted-foreground">Model</Label>
@@ -481,7 +793,6 @@ export default function PlaygroundPage() {
       {/* Batch Results */}
       {isBatchResult &&
       <div className="rounded-lg border border-border bg-card overflow-hidden">
-          {/* Batch summary header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -504,7 +815,6 @@ export default function PlaygroundPage() {
             </Button>
           </div>
 
-          {/* URL selector row */}
           <div className="px-4 py-2 border-b border-border bg-muted/30 flex gap-2 flex-wrap">
             {(d as any[]).map((item, idx) => {
             const err = result.errors?.[idx];
@@ -520,14 +830,11 @@ export default function PlaygroundPage() {
                 "bg-card border border-border text-foreground hover:bg-accent" :
                 "bg-destructive/10 border border-destructive/30 text-destructive hover:bg-destructive/20"}`
                 }>
-                
                   {isSuccess ? item.title?.slice(0, 30) || item.url?.slice(0, 30) || `URL ${idx + 1}` : err?.url?.slice(0, 30) || `URL ${idx + 1} ✗`}
                 </button>);
-
           })}
           </div>
 
-          {/* Selected item content */}
           {batchItem ?
         <>
               <div className="px-4 py-2 border-b border-border flex items-center gap-3">
@@ -598,7 +905,6 @@ export default function PlaygroundPage() {
             </div> :
         null}
 
-          {/* Footer */}
           <div className="px-4 py-3 border-t border-border flex gap-6 text-xs text-muted-foreground">
             <span>Total: {result.meta?.total}</span>
             <span>Completed: {result.meta?.completed}</span>
@@ -630,7 +936,6 @@ export default function PlaygroundPage() {
           </div>
 
           <div className="p-4 space-y-3">
-            {/* Scrape */}
             <div className="rounded border border-border p-3">
               <p className="text-xs font-medium text-muted-foreground mb-1">Stage 1: Scrape</p>
               <p className="text-xs text-foreground">{d.stages?.scrape?.title}</p>
@@ -639,7 +944,6 @@ export default function PlaygroundPage() {
               )}
             </div>
 
-            {/* Extract */}
             <div className="rounded border border-border p-3">
               <p className="text-xs font-medium text-muted-foreground mb-1">Stage 2: Extract</p>
               <pre className="text-xs font-mono text-secondary-foreground whitespace-pre-wrap max-h-48 overflow-y-auto">
@@ -655,7 +959,6 @@ export default function PlaygroundPage() {
               )}
             </div>
 
-            {/* Transform */}
             {d.stages?.transform && (
               <div className="rounded border border-border p-3">
                 <p className="text-xs font-medium text-muted-foreground mb-1">Stage 3: Transform</p>
@@ -665,7 +968,6 @@ export default function PlaygroundPage() {
               </div>
             )}
 
-            {/* Final output */}
             <div className="rounded border border-primary/30 bg-primary/5 p-3">
               <p className="text-xs font-medium text-primary mb-1">Final Output</p>
               <pre className="text-xs font-mono text-secondary-foreground whitespace-pre-wrap max-h-64 overflow-y-auto">
@@ -736,6 +1038,9 @@ export default function PlaygroundPage() {
                 {mode === "scrape" && d.metadata !== undefined &&
               <TabsTrigger value="metadata" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Metadata</TabsTrigger>
               }
+                {mode === "scrape" && diffLines &&
+              <TabsTrigger value="diff" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Diff</TabsTrigger>
+              }
                 {mode === "extract" && d.extracted &&
               <TabsTrigger value="extracted" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Extracted</TabsTrigger>
               }
@@ -759,6 +1064,27 @@ export default function PlaygroundPage() {
             {mode === "scrape" && d.metadata !== undefined &&
           <TabsContent value="metadata" className="p-4 m-0">
                 <pre className="font-mono text-xs text-secondary-foreground whitespace-pre-wrap">{JSON.stringify(d.metadata, null, 2)}</pre>
+              </TabsContent>
+          }
+            {mode === "scrape" && diffLines &&
+          <TabsContent value="diff" className="p-4 m-0 max-h-[500px] overflow-y-auto">
+                <div className="font-mono text-xs leading-relaxed">
+                  {diffLines.map((line, i) => (
+                    <div
+                      key={i}
+                      className={`px-2 py-0.5 ${
+                        line.type === "added" ? "bg-primary/15 text-primary" :
+                        line.type === "removed" ? "bg-destructive/15 text-destructive" :
+                        "text-secondary-foreground"
+                      }`}
+                    >
+                      <span className="select-none text-muted-foreground mr-2">
+                        {line.type === "added" ? "+" : line.type === "removed" ? "-" : " "}
+                      </span>
+                      {line.text}
+                    </div>
+                  ))}
+                </div>
               </TabsContent>
           }
             {mode === "extract" && d.extracted &&
@@ -803,5 +1129,4 @@ export default function PlaygroundPage() {
         </div>
       }
     </div>);
-
 }
