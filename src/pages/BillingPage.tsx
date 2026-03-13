@@ -31,8 +31,6 @@ export default function BillingPage() {
   const credits = useCredits();
   const { user, activeOrg } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [currentPlan, setCurrentPlan] = useState("free");
-  const [creditsRemaining, setCreditsRemaining] = useState(0);
   const [periodEnd, setPeriodEnd] = useState<string | null>(null);
   const [switching, setSwitching] = useState(false);
   const [confirmPlan, setConfirmPlan] = useState<typeof plans[0] | null>(null);
