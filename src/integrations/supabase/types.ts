@@ -61,6 +61,36 @@ export type Database = {
           },
         ]
       }
+      contact_requests: {
+        Row: {
+          company: string | null
+          created_at: string | null
+          email: string
+          id: string
+          message: string | null
+          name: string
+          volume: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          message?: string | null
+          name: string
+          volume?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string
+          volume?: string | null
+        }
+        Relationships: []
+      }
       crawl_jobs: {
         Row: {
           api_key_id: string | null
