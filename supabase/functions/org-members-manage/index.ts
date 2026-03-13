@@ -156,6 +156,9 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    if (action === "accept") {
       const { invitation_id } = body;
       const { data: inv, error: invError } = await admin
         .from("org_invitations")
