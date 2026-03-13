@@ -134,7 +134,7 @@ export default function OverviewPage() {
           </div>
         ) : recentJobs.length === 0 ? (
           <Card>
-            <p className="text-sm text-muted-foreground">No jobs yet. Head to the <Link to="/playground" className="text-primary underline">Playground</Link> to run your first scrape.</p>
+            <p className="text-sm text-muted-foreground">No jobs yet. Head to the <Link to="/app/playground" className="text-primary underline">Playground</Link> to run your first scrape.</p>
           </Card>
         ) : (
           <div className="rounded-lg border border-border overflow-x-auto">

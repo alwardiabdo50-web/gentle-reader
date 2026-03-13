@@ -35,7 +35,7 @@ export default function PublicDocsPage() {
         )}
         {session && (
           <Button size="sm" variant="outline" className="mt-3" asChild>
-            <Link to="/api-keys">Manage your API keys</Link>
+            <Link to="/app/api-keys">Manage your API keys</Link>
           </Button>
         )}
       </div>

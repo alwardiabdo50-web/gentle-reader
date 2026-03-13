@@ -76,7 +76,7 @@ const App = () => (
 
             {/* Authenticated dashboard */}
             <Route
-              path="/*"
+              path="/app/*"
               element={
                 <ProtectedRoute>
                   <DashboardLayout>

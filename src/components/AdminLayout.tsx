@@ -90,7 +90,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
           </Tooltip>
         ) : (
           <NavLink
-            to="/"
+            to="/app"
             className="flex items-center gap-2 px-3 py-[7px] rounded-lg text-[13px] text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
             onClick={onNavigate}
           >

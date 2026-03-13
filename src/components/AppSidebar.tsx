@@ -162,12 +162,12 @@ export function AppSidebar() {
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <NavLink to="/settings" className="cursor-pointer">
+              <NavLink to="/app/settings" className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" /> Account Settings
               </NavLink>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <NavLink to="/billing" className="cursor-pointer">
+              <NavLink to="/app/billing" className="cursor-pointer">
                 <CreditCard className="mr-2 h-4 w-4" /> Manage Subscriptions
               </NavLink>
             </DropdownMenuItem>

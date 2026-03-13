@@ -20,7 +20,7 @@ export default function AuthPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!authLoading && session) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   const handleEmailAuth = async (e: React.FormEvent) => {
