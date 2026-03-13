@@ -37,12 +37,20 @@ export function PublicNavbar() {
 
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/auth">Log in</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link to="/auth">Get Started Free</Link>
-          </Button>
+          {session ? (
+            <Button size="sm" asChild>
+              <Link to="/">Dashboard</Link>
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/auth">Log in</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to="/auth">Get Started Free</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <button className="md:hidden text-muted-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
