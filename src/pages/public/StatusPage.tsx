@@ -114,7 +114,7 @@ export default function StatusPage() {
                   {isHealthy ? (
                     <CheckCircle2 className="h-4 w-4 text-primary" />
                   ) : isDegraded ? (
-                    <AlertTriangle className="h-4 w-4 text-[hsl(var(--nebula-warning))]" />
+                    <AlertTriangle className="h-4 w-4 text-warning" />
                   ) : (
                     <XCircle className="h-4 w-4 text-destructive" />
                   )}
