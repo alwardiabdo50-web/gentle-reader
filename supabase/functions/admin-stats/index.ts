@@ -247,6 +247,18 @@ Deno.serve(async (req) => {
         const { data, count } = await query;
         result = { jobs: data ?? [], total: count ?? 0, page, limit, jobType: type };
       }
+    } else if (action === "contacts") {
+      const page = parseInt(url.searchParams.get("page") || "1");
+      const limit = 20;
+      const offset = (page - 1) * limit;
+
+      const { data: contacts, count } = await admin
+        .from("contact_requests")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      result = { contacts: contacts ?? [], total: count ?? 0, page, limit };
     } else if (action === "billing") {
       const { data: subs } = await admin
         .from("subscriptions")
