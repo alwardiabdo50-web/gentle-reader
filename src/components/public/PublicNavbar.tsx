@@ -10,6 +10,7 @@ const navLinks = [
   { label: "Pricing", href: "/pricing" },
   { label: "Docs", href: "/docs" },
   { label: "Status", href: "/status" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export function PublicNavbar() {
