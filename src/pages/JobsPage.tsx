@@ -52,8 +52,8 @@ export default function JobsPage() {
       setLoading(true);
       const allJobs: Job[] = [];
       let total = 0;
-      const from = (page - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
 
       // For multi-table queries, we fetch per-table with limits
       // When filtering to a specific type, we can do proper server-side pagination
