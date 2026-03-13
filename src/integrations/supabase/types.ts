@@ -23,6 +23,7 @@ export type Database = {
           key_prefix: string
           last_used_at: string | null
           name: string
+          org_id: string | null
           updated_at: string
           user_id: string
         }
@@ -34,6 +35,7 @@ export type Database = {
           key_prefix: string
           last_used_at?: string | null
           name: string
+          org_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -45,10 +47,19 @@ export type Database = {
           key_prefix?: string
           last_used_at?: string | null
           name?: string
+          org_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       crawl_jobs: {
         Row: {
@@ -319,6 +330,127 @@ export type Database = {
           },
         ]
       }
+      org_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          org_id: string
+          role: Database["public"]["Enums"]["org_role"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          org_id: string
+          role?: Database["public"]["Enums"]["org_role"]
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          org_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_invitations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_members: {
+        Row: {
+          created_at: string
+          id: string
+          invited_by: string | null
+          joined_at: string | null
+          org_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          joined_at?: string | null
+          org_id: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          joined_at?: string | null
+          org_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          credits_used: number
+          current_period_end: string | null
+          current_period_start: string | null
+          extra_credits: number
+          id: string
+          monthly_credits: number
+          name: string
+          owner_id: string
+          plan: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits_used?: number
+          current_period_end?: string | null
+          current_period_start?: string | null
+          extra_credits?: number
+          id?: string
+          monthly_credits?: number
+          name: string
+          owner_id: string
+          plan?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits_used?: number
+          current_period_end?: string | null
+          current_period_start?: string | null
+          extra_credits?: number
+          id?: string
+          monthly_credits?: number
+          name?: string
+          owner_id?: string
+          plan?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pipeline_runs: {
         Row: {
           api_key_id: string | null
@@ -467,6 +599,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_org_id: string | null
           avatar_url: string | null
           created_at: string
           credits_used: number
@@ -481,6 +614,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          active_org_id?: string | null
           avatar_url?: string | null
           created_at?: string
           credits_used?: number
@@ -495,6 +629,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          active_org_id?: string | null
           avatar_url?: string | null
           created_at?: string
           credits_used?: number
@@ -508,7 +643,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_org_id_fkey"
+            columns: ["active_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rate_limit_log: {
         Row: {
@@ -786,6 +929,7 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string | null
           id: string
+          org_id: string | null
           price_id: string | null
           product_id: string | null
           provider: string
@@ -801,6 +945,7 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          org_id?: string | null
           price_id?: string | null
           product_id?: string | null
           provider?: string
@@ -816,6 +961,7 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          org_id?: string | null
           price_id?: string | null
           product_id?: string | null
           provider?: string
@@ -825,7 +971,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       usage_ledger: {
         Row: {
@@ -1040,6 +1194,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_org_role: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: string
+      }
       get_user_by_stripe_customer: {
         Args: { stripe_customer_id: string }
         Returns: {
@@ -1053,9 +1211,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_org_member: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_org_owner: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      org_role: "owner" | "member" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1184,6 +1351,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      org_role: ["owner", "member", "viewer"],
     },
   },
 } as const
