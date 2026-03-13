@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Trash2, Clock, Play, RefreshCw, Calendar, GitCompare, ArrowRight, Pencil } from "lucide-react";
+import { Plus, Trash2, Clock, Play, RefreshCw, Calendar, GitCompare, ArrowRight, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import ScheduleFormFields, { defaultFormState, PRESETS, type ScheduleFormState } from "@/components/schedules/ScheduleFormFields";
 import { invokeSchedulesApi, cronLabel, presetFromCron, type ScheduleData, type RunData } from "@/components/schedules/scheduleHelpers";
