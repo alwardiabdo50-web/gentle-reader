@@ -27,9 +27,9 @@ export default function AdminJobsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Jobs</h1>
+      <h1 className="text-xl md:text-2xl font-bold text-foreground">Jobs</h1>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <Select value={type} onValueChange={(v) => { setType(v); setPage(1); }}>
           <SelectTrigger className="w-36"><SelectValue placeholder="Type" /></SelectTrigger>
           <SelectContent>
