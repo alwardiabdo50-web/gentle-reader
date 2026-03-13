@@ -3,6 +3,7 @@ import { Globe, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -12,6 +13,7 @@ const navLinks = [
 
 export function PublicNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { session } = useAuth();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -35,12 +37,20 @@ export function PublicNavbar() {
 
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/auth">Log in</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link to="/auth">Get Started Free</Link>
-          </Button>
+          {session ? (
+            <Button size="sm" asChild>
+              <Link to="/">Dashboard</Link>
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/auth">Log in</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to="/auth">Get Started Free</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <button className="md:hidden text-muted-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
@@ -56,8 +66,14 @@ export function PublicNavbar() {
             </a>
           ))}
           <div className="flex gap-3 pt-2">
-            <Button variant="ghost" size="sm" asChild><Link to="/auth">Log in</Link></Button>
-            <Button size="sm" asChild><Link to="/auth">Get Started</Link></Button>
+            {session ? (
+              <Button size="sm" asChild><Link to="/" onClick={() => setMobileOpen(false)}>Dashboard</Link></Button>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild><Link to="/auth" onClick={() => setMobileOpen(false)}>Log in</Link></Button>
+                <Button size="sm" asChild><Link to="/auth" onClick={() => setMobileOpen(false)}>Get Started</Link></Button>
+              </>
+            )}
           </div>
         </div>
       )}
