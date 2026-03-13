@@ -12,7 +12,10 @@ import {
   ArrowLeft,
   Shield,
   Menu,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const adminNav = [
   { title: "Overview", url: "/admin", icon: LayoutDashboard },
@@ -22,41 +25,79 @@ const adminNav = [
   { title: "Billing", url: "/admin/billing", icon: CreditCard },
 ];
 
-function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   return (
     <>
       <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-sm text-foreground tracking-tight">Admin Console</span>
+        <div className="flex items-center gap-2 justify-center">
+          <Shield className="h-5 w-5 text-primary shrink-0" />
+          {!collapsed && (
+            <span className="font-semibold text-sm text-foreground tracking-tight">Admin Console</span>
+          )}
         </div>
       </div>
 
       <nav className="flex-1 p-3 space-y-0.5">
-        {adminNav.map((item) => (
-          <NavLink
-            key={item.url}
-            to={item.url}
-            end={item.url === "/admin"}
-            className="flex items-center gap-2.5 px-3 py-[7px] rounded-lg text-[13px] text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
-            activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-            onClick={onNavigate}
-          >
-            <item.icon className="h-4 w-4" />
-            <span>{item.title}</span>
-          </NavLink>
-        ))}
+        {adminNav.map((item) =>
+          collapsed ? (
+            <Tooltip key={item.url} delayDuration={0}>
+              <TooltipTrigger asChild>
+                <NavLink
+                  to={item.url}
+                  end={item.url === "/admin"}
+                  className="flex items-center justify-center px-3 py-[7px] rounded-lg text-[13px] text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
+                  activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  onClick={onNavigate}
+                >
+                  <item.icon className="h-4 w-4" />
+                </NavLink>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                {item.title}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <NavLink
+              key={item.url}
+              to={item.url}
+              end={item.url === "/admin"}
+              className="flex items-center gap-2.5 px-3 py-[7px] rounded-lg text-[13px] text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
+              activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+              onClick={onNavigate}
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.title}</span>
+            </NavLink>
+          )
+        )}
       </nav>
 
       <div className="p-3 border-t border-border">
-        <NavLink
-          to="/"
-          className="flex items-center gap-2 px-3 py-[7px] rounded-lg text-[13px] text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
-          onClick={onNavigate}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Dashboard</span>
-        </NavLink>
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <NavLink
+                to="/"
+                className="flex items-center justify-center px-3 py-[7px] rounded-lg text-[13px] text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
+                onClick={onNavigate}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </NavLink>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>
+              Back to Dashboard
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <NavLink
+            to="/"
+            className="flex items-center gap-2 px-3 py-[7px] rounded-lg text-[13px] text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
+            onClick={onNavigate}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Dashboard</span>
+          </NavLink>
+        )}
       </div>
     </>
   );
@@ -64,12 +105,27 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div className="min-h-screen flex bg-background">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-60 shrink-0 border-r border-border flex-col bg-sidebar">
-        <SidebarNav />
+      <aside
+        className={`hidden md:flex shrink-0 border-r border-border flex-col bg-sidebar transition-[width] duration-200 ${
+          collapsed ? "w-[52px]" : "w-60"
+        }`}
+      >
+        <SidebarNav collapsed={collapsed} />
+        <div className="p-2 border-t border-border flex justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-sidebar-foreground hover:text-foreground"
+            onClick={() => setCollapsed((c) => !c)}
+          >
+            {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </Button>
+        </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
