@@ -227,7 +227,7 @@ export default function ApiKeysPage() {
               </tr>
             ) : (
               keys.map((k) => (
-                <tr key={k.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                <tr key={k.id} className="border-b border-border last:border-0 hover:bg-card-hover transition-colors">
                   <td className="px-4 py-3 font-medium flex items-center gap-2">
                     <Key className="h-3.5 w-3.5 text-muted-foreground" />
                     {k.name}

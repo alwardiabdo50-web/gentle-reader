@@ -134,7 +134,7 @@ export default function PricingPage() {
           <div className="rounded-xl border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="surface-2">
+                <tr className="bg-sidebar">
                   <th className="text-left px-5 py-3 text-muted-foreground font-medium">Feature</th>
                   {plans.map((p) => (
                     <th key={p.name} className="text-center px-5 py-3 text-foreground font-semibold">

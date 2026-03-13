@@ -215,7 +215,7 @@ export default function JobsPage() {
                         <span className={`h-1.5 w-1.5 rounded-full ${
                           j.status === "completed" ? "bg-primary" :
                           j.status === "failed" ? "bg-destructive" :
-                          j.status === "running" ? "bg-nebula-cyan animate-pulse" :
+                          j.status === "running" ? "bg-info animate-pulse" :
                           "bg-muted-foreground"
                         }`} />
                         {j.status}

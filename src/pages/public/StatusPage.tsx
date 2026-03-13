@@ -122,7 +122,7 @@ export default function StatusPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Uptime</span>
-                    <span className={`font-medium ${isHealthy ? "text-primary" : isDegraded ? "text-[hsl(var(--nebula-warning))]" : "text-destructive"}`}>
+                    <span className={`font-medium ${isHealthy ? "text-primary" : isDegraded ? "text-warning" : "text-destructive"}`}>
                       {ep.uptime_pct.toFixed(2)}%
                     </span>
                   </div>

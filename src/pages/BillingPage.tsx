@@ -201,7 +201,7 @@ export default function BillingPage() {
             <div
               key={plan.name}
               className={`rounded-lg border p-5 flex flex-col ${
-                isCurrent ? "border-primary/40 surface-1 glow-primary" : "border-border surface-1"
+                isCurrent ? "border-primary/40 bg-card" : "border-border bg-card"
               }`}
             >
               <div className="flex items-center justify-between mb-3">
