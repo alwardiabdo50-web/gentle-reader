@@ -169,11 +169,11 @@ export default function UsagePage() {
         }
         const trend: CreditTrend[] = Array.from(trendMap.entries()).map(([date, remaining]) => ({ date, remaining }));
         if (trend.length === 0) {
-          trend.push({ date: "Today", remaining: total - creditsUsed });
+          trend.push({ date: "Today", remaining: credits.creditsRemaining });
         }
         setCreditTrend(trend);
       } else {
-        setCreditTrend([{ date: "Today", remaining: total - creditsUsed }]);
+        setCreditTrend([{ date: "Today", remaining: credits.creditsRemaining }]);
       }
 
       setLedgerEntries(ledger.slice(0, 20));
