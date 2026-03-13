@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, ExternalLink, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, ExternalLink, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Job {
@@ -14,6 +15,8 @@ interface Job {
   created_at: string;
   title: string | null;
 }
+
+const ITEMS_PER_PAGE = 20;
 
 const statusStyles: Record<string, string> = {
   completed: "border-primary/30 text-primary bg-primary/10",
@@ -36,38 +39,60 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter, search]);
 
   useEffect(() => {
     const fetchJobs = async () => {
       setLoading(true);
       const allJobs: Job[] = [];
+      let total = 0;
+      const from = (page - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
 
-      // Fetch scrape_jobs (unless filtering to extract/pipeline only)
-      if (filter === "all" || filter === "scrape" || filter === "batch" || filter === "crawl" || filter === "map") {
+      // For multi-table queries, we fetch per-table with limits
+      // When filtering to a specific type, we can do proper server-side pagination
+      // When "all", we fetch a window from each and merge
+
+      if (filter === "all" || ["scrape", "batch", "crawl", "map"].includes(filter)) {
         let scrapeQuery = supabase
           .from("scrape_jobs")
-          .select("id, mode, url, status, credits_used, duration_ms, created_at, title")
-          .order("created_at", { ascending: false })
-          .limit(50);
+          .select("id, mode, url, status, credits_used, duration_ms, created_at, title", { count: "exact" })
+          .order("created_at", { ascending: false });
 
         if (filter !== "all") scrapeQuery = scrapeQuery.eq("mode", filter);
         if (search) scrapeQuery = scrapeQuery.ilike("url", `%${search}%`);
 
-        const { data } = await scrapeQuery;
+        if (filter !== "all") {
+          scrapeQuery = scrapeQuery.range(from, to);
+        } else {
+          scrapeQuery = scrapeQuery.limit(ITEMS_PER_PAGE * 3);
+        }
+
+        const { data, count } = await scrapeQuery;
         if (data) allJobs.push(...data);
+        if (filter !== "all" && count !== null) total = count;
       }
 
-      // Fetch extraction_jobs
       if (filter === "all" || filter === "extract") {
         let extractQuery = supabase
           .from("extraction_jobs")
-          .select("id, status, credits_used, created_at, source_url, started_at, finished_at")
-          .order("created_at", { ascending: false })
-          .limit(50);
+          .select("id, status, credits_used, created_at, source_url, started_at, finished_at", { count: "exact" })
+          .order("created_at", { ascending: false });
 
         if (search) extractQuery = extractQuery.ilike("source_url", `%${search}%`);
 
-        const { data } = await extractQuery;
+        if (filter === "extract") {
+          extractQuery = extractQuery.range(from, to);
+        } else {
+          extractQuery = extractQuery.limit(ITEMS_PER_PAGE * 3);
+        }
+
+        const { data, count } = await extractQuery;
         if (data) {
           allJobs.push(...data.map((e) => ({
             id: e.id,
@@ -82,19 +107,24 @@ export default function JobsPage() {
             title: null,
           })));
         }
+        if (filter === "extract" && count !== null) total = count;
       }
 
-      // Fetch pipeline_runs
       if (filter === "all" || filter === "pipeline") {
         let pipelineQuery = supabase
           .from("pipeline_runs")
-          .select("id, status, credits_used, created_at, source_url, started_at, finished_at")
-          .order("created_at", { ascending: false })
-          .limit(50);
+          .select("id, status, credits_used, created_at, source_url, started_at, finished_at", { count: "exact" })
+          .order("created_at", { ascending: false });
 
         if (search) pipelineQuery = pipelineQuery.ilike("source_url", `%${search}%`);
 
-        const { data } = await pipelineQuery;
+        if (filter === "pipeline") {
+          pipelineQuery = pipelineQuery.range(from, to);
+        } else {
+          pipelineQuery = pipelineQuery.limit(ITEMS_PER_PAGE * 3);
+        }
+
+        const { data, count } = await pipelineQuery;
         if (data) {
           allJobs.push(...data.map((p) => ({
             id: p.id,
@@ -109,16 +139,27 @@ export default function JobsPage() {
             title: null,
           })));
         }
+        if (filter === "pipeline" && count !== null) total = count;
       }
 
-      // Sort all jobs by created_at descending
-      allJobs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      if (filter === "all") {
+        // For "all" mode, sort merged results and paginate client-side
+        allJobs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setTotalCount(allJobs.length);
+        setJobs(allJobs.slice(from, from + ITEMS_PER_PAGE));
+      } else {
+        setTotalCount(total);
+        // Already paginated server-side
+        allJobs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setJobs(allJobs);
+      }
 
-      setJobs(allJobs.slice(0, 50));
       setLoading(false);
     };
     fetchJobs();
-  }, [filter, search]);
+  }, [filter, search, page]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
 
   const formatTime = (iso: string) =>
     new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
@@ -170,66 +211,85 @@ export default function JobsPage() {
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="rounded-lg border border-border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-sidebar">
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Job ID</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Type</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">URL</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Credits</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Duration</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                    No jobs yet. Run a scrape from the Playground to get started.
-                  </td>
+        <>
+          <div className="rounded-lg border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-sidebar">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Job ID</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Type</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">URL</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Credits</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Duration</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Time</th>
                 </tr>
-              ) : (
-                jobs.map((j) => (
-                  <tr key={j.id} className="border-b border-border last:border-0 hover:bg-card-hover transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{j.id.slice(0, 8)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded border capitalize ${typeColors[j.mode] ?? typeColors.scrape}`}>
-                        {j.mode}
-                      </span>
+              </thead>
+              <tbody>
+                {jobs.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                      No jobs yet. Run a scrape from the Playground to get started.
                     </td>
-                    <td className="px-4 py-3">
-                      <a
-                        href={j.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 max-w-[300px] hover:text-primary transition-colors"
-                      >
-                        <span className="truncate font-mono text-xs">{j.url}</span>
-                        <ExternalLink className="h-3 w-3 shrink-0" />
-                      </a>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border capitalize ${statusStyles[j.status] ?? statusStyles.queued}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${
-                          j.status === "completed" ? "bg-primary" :
-                          j.status === "failed" ? "bg-destructive" :
-                          j.status === "running" ? "bg-info animate-pulse" :
-                          "bg-muted-foreground"
-                        }`} />
-                        {j.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{j.credits_used}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{formatDuration(j.duration_ms)}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{formatTime(j.created_at)}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  jobs.map((j) => (
+                    <tr key={j.id} className="border-b border-border last:border-0 hover:bg-card-hover transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{j.id.slice(0, 8)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-0.5 rounded border capitalize ${typeColors[j.mode] ?? typeColors.scrape}`}>
+                          {j.mode}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <a
+                          href={j.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 max-w-[300px] hover:text-primary transition-colors"
+                        >
+                          <span className="truncate font-mono text-xs">{j.url}</span>
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                        </a>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border capitalize ${statusStyles[j.status] ?? statusStyles.queued}`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${
+                            j.status === "completed" ? "bg-primary" :
+                            j.status === "failed" ? "bg-destructive" :
+                            j.status === "running" ? "bg-info animate-pulse" :
+                            "bg-muted-foreground"
+                          }`} />
+                          {j.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{j.credits_used}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{formatDuration(j.duration_ms)}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{formatTime(j.created_at)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              {totalCount} total jobs
+            </span>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Page {page} of {totalPages}
+              </span>
+              <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
