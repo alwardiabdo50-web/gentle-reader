@@ -40,6 +40,7 @@ export default function JobsPage() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
