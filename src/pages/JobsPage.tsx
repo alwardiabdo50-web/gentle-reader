@@ -147,7 +147,7 @@ export default function JobsPage() {
         // For "all" mode, sort merged results and paginate client-side
         allJobs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setTotalCount(allJobs.length);
-        setJobs(allJobs.slice(from, from + ITEMS_PER_PAGE));
+        setJobs(allJobs.slice(from, from + pageSize));
       } else {
         setTotalCount(total);
         // Already paginated server-side
