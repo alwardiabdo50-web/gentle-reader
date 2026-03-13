@@ -329,44 +329,67 @@ export default function SchedulesPage() {
                 <div className="p-8 text-center text-muted-foreground">
                   No runs yet. They'll appear here once the schedule triggers.
                 </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Changed</TableHead>
-                      <TableHead>Started</TableHead>
-                      <TableHead>Duration</TableHead>
-                      <TableHead>Error</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {runs.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell>{statusBadge(r.status)}</TableCell>
-                        <TableCell>{jobTypeBadge(r.job_type)}</TableCell>
-                        <TableCell>
-                          {r.content_changed ? (
-                            <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20">Changed</Badge>
-                          ) : "—"}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {r.started_at ? format(new Date(r.started_at), "MMM d HH:mm:ss") : "—"}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {r.started_at && r.finished_at
-                            ? `${((new Date(r.finished_at).getTime() - new Date(r.started_at).getTime()) / 1000).toFixed(1)}s`
-                            : "—"}
-                        </TableCell>
-                        <TableCell className="text-xs text-destructive truncate max-w-[200px]">
-                          {r.error_message ?? "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+              ) : (() => {
+                const totalRunPages = Math.max(1, Math.ceil(runs.length / RUNS_PER_PAGE));
+                const pagedRuns = runs.slice(
+                  (runsPage - 1) * RUNS_PER_PAGE,
+                  runsPage * RUNS_PER_PAGE
+                );
+                return (
+                  <>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Changed</TableHead>
+                          <TableHead>Started</TableHead>
+                          <TableHead>Duration</TableHead>
+                          <TableHead>Error</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pagedRuns.map((r) => (
+                          <TableRow key={r.id}>
+                            <TableCell>{statusBadge(r.status)}</TableCell>
+                            <TableCell>{jobTypeBadge(r.job_type)}</TableCell>
+                            <TableCell>
+                              {r.content_changed ? (
+                                <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20">Changed</Badge>
+                              ) : "—"}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {r.started_at ? format(new Date(r.started_at), "MMM d HH:mm:ss") : "—"}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {r.started_at && r.finished_at
+                                ? `${((new Date(r.finished_at).getTime() - new Date(r.started_at).getTime()) / 1000).toFixed(1)}s`
+                                : "—"}
+                            </TableCell>
+                            <TableCell className="text-xs text-destructive truncate max-w-[200px]">
+                              {r.error_message ?? "—"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {totalRunPages > 1 && (
+                      <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                        <span className="text-xs text-muted-foreground">{runs.length} total runs</span>
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="outline" disabled={runsPage <= 1} onClick={() => setRunsPage(runsPage - 1)}>
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <span className="text-xs text-muted-foreground">Page {runsPage} of {totalRunPages}</span>
+                          <Button size="sm" variant="outline" disabled={runsPage >= totalRunPages} onClick={() => setRunsPage(runsPage + 1)}>
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
