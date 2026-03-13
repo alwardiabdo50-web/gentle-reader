@@ -147,7 +147,7 @@ export default function UsagePage() {
       const rate = jobs.length > 0 ? (successCount / jobs.length) * 100 : 0;
 
       setStats({
-        creditsUsed: profile?.credits_used ?? 0,
+        creditsUsed,
         scrapeJobs: scrapeCount,
         crawlJobs: crawlCount,
         successRate: Math.round(rate * 10) / 10,
