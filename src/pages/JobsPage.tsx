@@ -175,7 +175,7 @@ export default function JobsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Job History</h1>
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight">Job History</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Browse and inspect past scrape, crawl, map, extract, and pipeline jobs.
         </p>
