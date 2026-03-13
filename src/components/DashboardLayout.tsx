@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { PendingInvitationsBanner } from "@/components/PendingInvitationsBanner";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,7 +16,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               </span>
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-6">{children}</main>
+          <main className="flex-1 overflow-auto p-6">
+            <PendingInvitationsBanner />
+            {children}
+          </main>
         </div>
       </div>
     </SidebarProvider>
