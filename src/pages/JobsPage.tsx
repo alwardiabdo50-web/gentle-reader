@@ -173,7 +173,7 @@ export default function JobsPage() {
         <div className="rounded-lg border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border surface-2">
+              <tr className="border-b border-border bg-sidebar">
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Job ID</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Type</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">URL</th>
