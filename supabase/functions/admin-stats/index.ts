@@ -307,6 +307,21 @@ Deno.serve(async (req) => {
       const { data: contacts, count } = await query;
 
       result = { contacts: contacts ?? [], total: count ?? 0, page, limit };
+    } else if (action === "contacts-export") {
+      const statusFilter = url.searchParams.get("status") || "all";
+      let query = admin
+        .from("contact_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
+
+      const { data: contacts, error: exportError } = await query;
+      if (exportError) throw exportError;
+
+      result = { contacts: contacts ?? [] };
     } else if (action === "billing") {
       const { data: subs } = await admin
         .from("subscriptions")
