@@ -70,13 +70,7 @@ export function AppSidebar() {
               <span className="text-[10px] text-muted-foreground">v1.0.0</span>
             </div>
           )}
-          {!collapsed && <ThemeToggle />}
         </div>
-        {collapsed && (
-          <div className="flex justify-center">
-            <ThemeToggle />
-          </div>
-        )}
         <OrgSwitcher collapsed={collapsed} />
       </SidebarHeader>
 
