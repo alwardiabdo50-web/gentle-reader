@@ -21,7 +21,8 @@ import {
 
 
 const mainItems = [
-  { title: "Playground", url: "/", icon: Zap },
+  { title: "Overview", url: "/", icon: LayoutDashboard },
+  { title: "Playground", url: "/playground", icon: Zap },
   { title: "API Keys", url: "/api-keys", icon: Key },
   { title: "Usage", url: "/usage", icon: BarChart3 },
   { title: "Job History", url: "/jobs", icon: History },

@@ -78,7 +78,8 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardLayout>
                     <Routes>
-                      <Route path="/" element={<PlaygroundPage />} />
+                      <Route path="/" element={<OverviewPage />} />
+                      <Route path="/playground" element={<PlaygroundPage />} />
                       <Route path="/api-keys" element={<ApiKeysPage />} />
                       <Route path="/usage" element={<UsagePage />} />
                       <Route path="/jobs" element={<JobsPage />} />
