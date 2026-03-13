@@ -9,6 +9,7 @@ const navLinks = [
   { label: "Features", href: "#features" },
   { label: "Pricing", href: "/pricing" },
   { label: "Docs", href: "/docs" },
+  { label: "Status", href: "/status" },
 ];
 
 export function PublicNavbar() {

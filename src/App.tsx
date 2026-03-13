@@ -31,6 +31,7 @@ import AdminUsersPage from "@/pages/admin/AdminUsersPage";
 import AdminUserDetailPage from "@/pages/admin/AdminUserDetailPage";
 import AdminJobsPage from "@/pages/admin/AdminJobsPage";
 import AdminBillingPage from "@/pages/admin/AdminBillingPage";
+import PublicDocsPage from "@/pages/public/PublicDocsPage";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/home" element={<PublicLayout><HomePage /></PublicLayout>} />
             <Route path="/pricing" element={<PublicLayout><PricingPage /></PublicLayout>} />
             <Route path="/status" element={<PublicLayout><StatusPage /></PublicLayout>} />
+            <Route path="/docs" element={<PublicLayout><PublicDocsPage /></PublicLayout>} />
 
             <Route path="/auth" element={<AuthPage />} />
 
