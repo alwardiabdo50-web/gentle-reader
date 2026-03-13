@@ -88,6 +88,8 @@ export function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create Organization</DialogTitle>
+            <DialogDescription>Create a new team to share API keys and billing.</DialogDescription>
+          </DialogHeader>
           </DialogHeader>
           <div className="py-2">
             <Input
