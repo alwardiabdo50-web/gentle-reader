@@ -16,7 +16,7 @@ interface Job {
   title: string | null;
 }
 
-const ITEMS_PER_PAGE = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
 
 const statusStyles: Record<string, string> = {
   completed: "border-primary/30 text-primary bg-primary/10",
@@ -40,6 +40,7 @@ export default function JobsPage() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
@@ -51,8 +52,8 @@ export default function JobsPage() {
       setLoading(true);
       const allJobs: Job[] = [];
       let total = 0;
-      const from = (page - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
 
       // For multi-table queries, we fetch per-table with limits
       // When filtering to a specific type, we can do proper server-side pagination
@@ -70,7 +71,7 @@ export default function JobsPage() {
         if (filter !== "all") {
           scrapeQuery = scrapeQuery.range(from, to);
         } else {
-          scrapeQuery = scrapeQuery.limit(ITEMS_PER_PAGE * 3);
+          scrapeQuery = scrapeQuery.limit(pageSize * 3);
         }
 
         const { data, count } = await scrapeQuery;
@@ -89,7 +90,7 @@ export default function JobsPage() {
         if (filter === "extract") {
           extractQuery = extractQuery.range(from, to);
         } else {
-          extractQuery = extractQuery.limit(ITEMS_PER_PAGE * 3);
+          extractQuery = extractQuery.limit(pageSize * 3);
         }
 
         const { data, count } = await extractQuery;
@@ -121,7 +122,7 @@ export default function JobsPage() {
         if (filter === "pipeline") {
           pipelineQuery = pipelineQuery.range(from, to);
         } else {
-          pipelineQuery = pipelineQuery.limit(ITEMS_PER_PAGE * 3);
+          pipelineQuery = pipelineQuery.limit(pageSize * 3);
         }
 
         const { data, count } = await pipelineQuery;
@@ -146,7 +147,7 @@ export default function JobsPage() {
         // For "all" mode, sort merged results and paginate client-side
         allJobs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setTotalCount(allJobs.length);
-        setJobs(allJobs.slice(from, from + ITEMS_PER_PAGE));
+        setJobs(allJobs.slice(from, from + pageSize));
       } else {
         setTotalCount(total);
         // Already paginated server-side
@@ -157,9 +158,9 @@ export default function JobsPage() {
       setLoading(false);
     };
     fetchJobs();
-  }, [filter, search, page]);
+  }, [filter, search, page, pageSize]);
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const formatTime = (iso: string) =>
     new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
@@ -274,9 +275,20 @@ export default function JobsPage() {
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
-              {totalCount} total jobs
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{totalCount} total jobs</span>
+              <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
+                <SelectTrigger className="w-[70px] h-7 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-xs text-muted-foreground">per page</span>
+            </div>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                 <ChevronLeft className="h-4 w-4" />
