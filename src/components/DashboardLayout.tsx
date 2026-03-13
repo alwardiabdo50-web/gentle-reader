@@ -13,7 +13,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger />
             <ThemeToggle />
           </header>
-          <main className="flex-1 overflow-auto px-8 py-10">
+          <main className="flex-1 overflow-auto px-4 py-6 md:px-8 md:py-10">
             <div className="max-w-[1200px] mx-auto">
               <PendingInvitationsBanner />
               {children}

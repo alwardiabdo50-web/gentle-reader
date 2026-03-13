@@ -32,7 +32,7 @@ export default function AdminOverviewPage() {
             <div className="text-[11px] font-medium uppercase tracking-[0.07em] text-muted-foreground mb-2">
               {s.label}
             </div>
-            <div className="text-[28px] font-bold text-foreground tracking-[-0.03em]">{s.value}</div>
+            <div className="text-xl md:text-[28px] font-bold text-foreground tracking-[-0.03em]">{s.value}</div>
           </div>
         ))}
       </div>

@@ -35,9 +35,9 @@ export default function AdminBillingPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Billing & Usage</h1>
+      <h1 className="text-xl md:text-2xl font-bold text-foreground">Billing & Usage</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground mb-1">Active Subscriptions</div>

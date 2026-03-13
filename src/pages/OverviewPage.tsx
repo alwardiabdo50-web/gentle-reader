@@ -137,7 +137,7 @@ export default function OverviewPage() {
             <p className="text-sm text-muted-foreground">No jobs yet. Head to the <Link to="/playground" className="text-primary underline">Playground</Link> to run your first scrape.</p>
           </Card>
         ) : (
-          <div className="rounded-lg border border-border overflow-hidden">
+          <div className="rounded-lg border border-border overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/50 text-muted-foreground text-[11px] uppercase tracking-wide">

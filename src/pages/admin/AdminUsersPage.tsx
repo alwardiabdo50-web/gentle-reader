@@ -85,7 +85,7 @@ export default function AdminUsersPage() {
             </Table>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <span className="text-xs text-muted-foreground">
               {data?.total ?? 0} total users
             </span>

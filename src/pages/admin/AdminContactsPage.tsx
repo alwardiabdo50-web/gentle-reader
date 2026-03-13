@@ -224,7 +224,7 @@ export default function AdminContactsPage() {
           )}
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-4">
               <span className="text-xs text-muted-foreground">
                 Page {page} of {totalPages}
               </span>
