@@ -24,6 +24,7 @@ import NotFound from "@/pages/NotFound";
 import HomePage from "@/pages/public/HomePage";
 import PricingPage from "@/pages/public/PricingPage";
 import StatusPage from "@/pages/public/StatusPage";
+import TeamPage from "@/pages/TeamPage";
 import AdminOverviewPage from "@/pages/admin/AdminOverviewPage";
 import AdminUsersPage from "@/pages/admin/AdminUsersPage";
 import AdminUserDetailPage from "@/pages/admin/AdminUserDetailPage";
