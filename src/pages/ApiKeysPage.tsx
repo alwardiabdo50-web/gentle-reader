@@ -248,7 +248,7 @@ export default function ApiKeysPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {k.is_active && (
+                    {k.is_active && canCreateKeys && (
                       <Button
                         variant="ghost"
                         size="sm"
