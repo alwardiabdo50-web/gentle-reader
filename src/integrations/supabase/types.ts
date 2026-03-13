@@ -438,6 +438,33 @@ export type Database = {
         }
         Relationships: []
       }
+      playground_presets: {
+        Row: {
+          config_json: Json
+          created_at: string
+          id: string
+          mode: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          config_json?: Json
+          created_at?: string
+          id?: string
+          mode: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          config_json?: Json
+          created_at?: string
+          id?: string
+          mode?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -480,6 +507,30 @@ export type Database = {
           plan?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      rate_limit_log: {
+        Row: {
+          endpoint: string
+          hit_at: string
+          id: string
+          user_id: string
+          was_limited: boolean
+        }
+        Insert: {
+          endpoint: string
+          hit_at?: string
+          id?: string
+          user_id: string
+          was_limited?: boolean
+        }
+        Update: {
+          endpoint?: string
+          hit_at?: string
+          id?: string
+          user_id?: string
+          was_limited?: boolean
         }
         Relationships: []
       }
