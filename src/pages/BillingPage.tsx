@@ -41,7 +41,7 @@ export default function BillingPage() {
     try {
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (!error && data) {
-        setCurrentPlan(data.plan || "free");
+        // Plan is now sourced from useCredits hook
         setHasStripeSubscription(data.subscribed || false);
         if (data.subscription_end) {
           setPeriodEnd(data.subscription_end);
