@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshOrgs = useCallback(async () => {
     if (!session?.user) return;
     try {
-      const { data, error } = await supabase.functions.invoke("org-manage", { method: "GET" });
+      const { data, error } = await supabase.functions.invoke("org-manage", { body: { action: "list" } });
       if (!error && data?.orgs) {
         setOrgs(data.orgs);
         // Restore active org from profile

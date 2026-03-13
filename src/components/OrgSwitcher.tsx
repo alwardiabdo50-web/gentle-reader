@@ -25,8 +25,7 @@ export function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
     setCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke("org-manage", {
-        method: "POST",
-        body: { name: newName.trim() },
+        body: { action: "create", name: newName.trim() },
       });
       if (error) throw error;
       toast.success("Organization created");
