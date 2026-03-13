@@ -224,7 +224,7 @@ export default function UsagePage() {
             </div>
             <div className="text-2xl font-bold">{s.value}</div>
             {s.label === "Credits Used" && (
-              <div className="text-xs text-muted-foreground mt-1">of {totalCredits.toLocaleString()} total</div>
+              <div className="text-xs text-muted-foreground mt-1">of {credits.creditsTotal.toLocaleString()} total</div>
             )}
           </div>
         ))}
