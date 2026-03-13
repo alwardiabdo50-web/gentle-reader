@@ -1,6 +1,6 @@
 import {
   Zap, Key, BarChart3, History, CreditCard, Globe, Settings, LogOut,
-  BookOpen, ChevronsUpDown, Shield, Webhook, Calendar, GitBranch, Users,
+  BookOpen, ChevronsUpDown, Shield, Webhook, Calendar, GitBranch, Users, LayoutDashboard,
 } from "lucide-react";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useCredits } from "@/hooks/useCredits";
