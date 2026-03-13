@@ -57,7 +57,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-4 space-y-2">
+      <SidebarHeader className={collapsed ? "p-2 space-y-2" : "p-4 space-y-2"}>
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
             <Globe className="h-4 w-4 text-primary-foreground" />
@@ -70,8 +70,13 @@ export function AppSidebar() {
               <span className="text-[10px] text-muted-foreground">v1.0.0</span>
             </div>
           )}
-          <ThemeToggle />
+          {!collapsed && <ThemeToggle />}
         </div>
+        {collapsed && (
+          <div className="flex justify-center">
+            <ThemeToggle />
+          </div>
+        )}
         <OrgSwitcher collapsed={collapsed} />
       </SidebarHeader>
 
