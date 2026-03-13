@@ -193,7 +193,7 @@ export default function UsagePage() {
         }
         setCreditTrend(trend);
       } else {
-        setCreditTrend([{ date: "Today", remaining: total - (profile?.credits_used ?? 0) }]);
+        setCreditTrend([{ date: "Today", remaining: total - creditsUsed }]);
       }
 
       setLedgerEntries(ledger.slice(0, 20));
