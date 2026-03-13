@@ -32,6 +32,7 @@ import AdminUsersPage from "@/pages/admin/AdminUsersPage";
 import AdminUserDetailPage from "@/pages/admin/AdminUserDetailPage";
 import AdminJobsPage from "@/pages/admin/AdminJobsPage";
 import AdminBillingPage from "@/pages/admin/AdminBillingPage";
+import AdminContactsPage from "@/pages/admin/AdminContactsPage";
 import PublicDocsPage from "@/pages/public/PublicDocsPage";
 import ContactPage from "@/pages/public/ContactPage";
 
