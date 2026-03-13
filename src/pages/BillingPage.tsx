@@ -144,7 +144,7 @@ export default function BillingPage() {
         </p>
       </div>
 
-      <div className="rounded-lg border border-primary/30 p-5 surface-1 glow-primary">
+      <div className="rounded-lg border border-primary/30 p-5 bg-card">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
