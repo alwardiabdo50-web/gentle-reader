@@ -90,7 +90,7 @@ export default function JobsPage() {
         if (filter === "extract") {
           extractQuery = extractQuery.range(from, to);
         } else {
-          extractQuery = extractQuery.limit(ITEMS_PER_PAGE * 3);
+          extractQuery = extractQuery.limit(pageSize * 3);
         }
 
         const { data, count } = await extractQuery;
