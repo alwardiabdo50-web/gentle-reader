@@ -113,19 +113,33 @@ export default function UsagePage() {
   async function fetchUsageData() {
     setLoading(true);
     try {
-      const [profileRes, jobsRes, ledgerRes] = await Promise.all([
-        supabase.from("profiles").select("credits_used, monthly_credits, extra_credits, plan").eq("user_id", user!.id).single(),
+      let creditsUsed = 0;
+      let total = 500;
+      let currentPlan = "free";
+
+      if (activeOrg) {
+        // Org-level credits
+        total = activeOrg.monthly_credits + activeOrg.extra_credits;
+        creditsUsed = activeOrg.credits_used;
+        currentPlan = activeOrg.plan;
+      } else {
+        const { data: profile } = await supabase.from("profiles").select("credits_used, monthly_credits, extra_credits, plan").eq("user_id", user!.id).single();
+        total = (profile?.monthly_credits ?? 500) + (profile?.extra_credits ?? 0);
+        creditsUsed = profile?.credits_used ?? 0;
+        currentPlan = profile?.plan ?? "free";
+      }
+
+      setTotalCredits(total);
+      setPlan(currentPlan);
+
+      // Jobs are always user-scoped (RLS)
+      const [jobsRes, ledgerRes] = await Promise.all([
         supabase.from("scrape_jobs").select("id, mode, status, credits_used, created_at").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1000),
         supabase.from("usage_ledger").select("id, credits, balance_after, created_at, action, source_type, metadata_json").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(100),
       ]);
 
-      const profile = profileRes.data;
       const jobs = jobsRes.data || [];
       const ledger = (ledgerRes.data || []) as unknown as LedgerRow[];
-
-      const total = (profile?.monthly_credits ?? 500) + (profile?.extra_credits ?? 0);
-      setTotalCredits(total);
-      setPlan(profile?.plan ?? "free");
 
       const scrapeCount = jobs.filter(j => j.mode === "scrape").length;
       const crawlCount = jobs.filter(j => j.mode === "crawl").length;
