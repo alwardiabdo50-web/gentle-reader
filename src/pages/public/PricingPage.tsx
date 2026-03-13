@@ -117,7 +117,7 @@ export default function PricingPage() {
               </p>
               <Button
                 variant={plan.highlighted ? "default" : "outline"}
-                className={`w-full ${plan.highlighted ? "glow-primary" : ""}`}
+                className="w-full"
                 asChild
               >
                 <Link to="/auth">{plan.cta}</Link>
