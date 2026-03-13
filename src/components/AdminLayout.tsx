@@ -111,7 +111,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex bg-background">
       {/* Desktop sidebar */}
       <aside
-        className={`hidden md:flex shrink-0 border-r border-border flex-col bg-sidebar transition-[width] duration-200 ${
+        className={`hidden md:flex shrink-0 border-r border-border flex-col bg-sidebar transition-[width] duration-200 overflow-hidden whitespace-nowrap ${
           collapsed ? "w-[52px]" : "w-60"
         }`}
       >
