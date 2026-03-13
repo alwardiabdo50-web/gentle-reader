@@ -121,6 +121,7 @@ export default function BillingPage() {
     }
   };
 
+  const currentPlan = credits.plan;
   const currentPlanData = plans.find((p) => p.name === currentPlan) ?? plans[0];
   const formattedEnd = periodEnd
     ? new Date(periodEnd).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
