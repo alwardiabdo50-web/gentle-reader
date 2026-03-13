@@ -122,7 +122,7 @@ export default function JobsPage() {
         if (filter === "pipeline") {
           pipelineQuery = pipelineQuery.range(from, to);
         } else {
-          pipelineQuery = pipelineQuery.limit(ITEMS_PER_PAGE * 3);
+          pipelineQuery = pipelineQuery.limit(pageSize * 3);
         }
 
         const { data, count } = await pipelineQuery;
