@@ -79,6 +79,7 @@ export default function ApiKeysPage() {
         name: newKeyName,
         key_prefix: prefix,
         key_hash: hashHex,
+        org_id: activeOrg?.id ?? null,
       });
 
       if (error) throw error;
