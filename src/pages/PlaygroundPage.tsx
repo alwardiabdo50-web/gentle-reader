@@ -1240,8 +1240,38 @@ export default function PlaygroundPage() {
         </div>
       }
 
+      {/* Search Results */}
+      {mode === "search" && result?.success && Array.isArray(result.data) &&
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">{result.meta?.total_results ?? result.data.length} results</span>
+              <span className="text-xs font-mono text-muted-foreground">{result.meta?.duration_ms}ms</span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
+              <Copy className="h-3 w-3" />
+              {copied ? "Copied!" : "Copy JSON"}
+            </Button>
+          </div>
+          <div className="divide-y divide-border">
+            {result.data.map((item: any, idx: number) => (
+              <div key={idx} className="px-4 py-3 space-y-1">
+                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline">{item.title}</a>
+                <p className="text-xs font-mono text-muted-foreground truncate">{item.url}</p>
+                <p className="text-xs text-foreground">{item.description}</p>
+              </div>
+            ))}
+          </div>
+          <div className="px-4 py-3 border-t border-border flex gap-6 text-xs text-muted-foreground">
+            <span>Credits: {result.meta?.credits_used}</span>
+            {result.meta?.job_id && <span className="font-mono">{result.meta.job_id.slice(0, 8)}…</span>}
+          </div>
+        </div>
+      }
+
       {/* Single-item Results (scrape, crawl, map, extract) */}
-      {d && !isBatchResult && mode !== "pipeline" &&
+      {d && !isBatchResult && mode !== "pipeline" && mode !== "search" &&
       <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-3">
