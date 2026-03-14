@@ -813,6 +813,8 @@ export default function PlaygroundPage() {
               </div>
             )}
             <div>
+              <Label className="text-xs text-muted-foreground block mb-1.5">Extraction prompt</Label>
+              <Input
               placeholder="Extract the product name, price, and availability"
               value={pipelinePrompt}
               onChange={(e) => setPipelinePrompt(e.target.value)}
