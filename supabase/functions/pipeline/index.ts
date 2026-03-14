@@ -358,26 +358,30 @@ Deno.serve(async (req) => {
     const totalCredits = scrapeCreditCost + EXTRACT_CREDIT_COST + transformCreditCost;
 
     // ─── Billing ───────────────────────────────────────────
-    const credits = await getUserCredits(ctx.userId);
-    const newBalance = Math.max(0, credits.remaining - totalCredits);
+    try {
+      const credits = await getUserCredits(ctx.userId);
+      const newBalance = Math.max(0, credits.remaining - totalCredits);
 
-    await recordLedgerEntry({
-      user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
-      action: "pipeline_charge",
-      credits: -totalCredits,
-      source_type: "pipeline",
-      balance_after: newBalance,
-      metadata_json: {
-        url: normalizedUrl,
-        pipeline_id: pipelineId,
-        run_id: run.id,
-        scrape_cost: scrapeCreditCost,
-        extract_cost: EXTRACT_CREDIT_COST,
-        transform_cost: transformCreditCost,
-        cache_hit: scrapeCacheHit,
-      },
-    });
+      await recordLedgerEntry({
+        user_id: ctx.userId,
+        api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
+        action: "pipeline_charge",
+        credits: -totalCredits,
+        source_type: "pipeline",
+        balance_after: newBalance,
+        metadata_json: {
+          url: normalizedUrl,
+          pipeline_id: pipelineId,
+          run_id: run.id,
+          scrape_cost: scrapeCreditCost,
+          extract_cost: EXTRACT_CREDIT_COST,
+          transform_cost: transformCreditCost,
+          cache_hit: scrapeCacheHit,
+        },
+      });
+    } catch (billingError) {
+      console.error(`Billing error for pipeline run=${run.id}:`, billingError);
+    }
 
     // ─── Finalize ──────────────────────────────────────────
     await admin.from("pipeline_runs").update({
