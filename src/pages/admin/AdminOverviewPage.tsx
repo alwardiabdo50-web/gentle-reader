@@ -9,6 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 const TIER_VARIANT: Record<string, "success" | "info" | "warning" | "secondary"> = {
   free: "success",
@@ -16,12 +23,33 @@ const TIER_VARIANT: Record<string, "success" | "info" | "warning" | "secondary">
   expensive: "warning",
 };
 
+const TIER_COLORS: Record<string, string> = {
+  free: "hsl(142 71% 45%)",
+  cheaper: "hsl(217 91% 60%)",
+  expensive: "hsl(25 95% 53%)",
+  unknown: "hsl(240 5% 64%)",
+};
+
+// Distinct palette for up to 5 models within same tier
+const MODEL_PALETTE = [
+  "hsl(217 91% 60%)",
+  "hsl(142 71% 45%)",
+  "hsl(25 95% 53%)",
+  "hsl(280 67% 55%)",
+  "hsl(352 83% 55%)",
+];
+
 interface ModelUsageEntry {
   model: string;
   tier: string;
   total_jobs: number;
   credits: number;
   by_plan: Record<string, number>;
+}
+
+interface TrendModel {
+  model: string;
+  tier: string;
 }
 
 export default function AdminOverviewPage() {
@@ -45,6 +73,17 @@ export default function AdminOverviewPage() {
   ];
 
   const modelUsage: ModelUsageEntry[] = data.modelUsage ?? [];
+  const modelUsageTrend: Record<string, unknown>[] = data.modelUsageTrend ?? [];
+  const trendModels: TrendModel[] = data.trendModels ?? [];
+
+  // Build chart config from trend models
+  const chartConfig: ChartConfig = {};
+  trendModels.forEach((tm, i) => {
+    chartConfig[tm.model] = {
+      label: tm.model,
+      color: TIER_COLORS[tm.tier] || MODEL_PALETTE[i % MODEL_PALETTE.length],
+    };
+  });
 
   return (
     <div className="space-y-8">
@@ -82,6 +121,40 @@ export default function AdminOverviewPage() {
           <Brain className="h-4 w-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold text-foreground">Model Usage (30d)</h2>
         </div>
+
+        {/* Trend Chart */}
+        {modelUsageTrend.length > 1 && trendModels.length > 0 && (
+          <div className="p-5 border-b border-border">
+            <ChartContainer config={chartConfig} className="h-[250px] w-full">
+              <AreaChart data={modelUsageTrend} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(v: string) => v.substring(5)} // MM-DD
+                  tick={{ fontSize: 11 }}
+                  className="text-muted-foreground"
+                />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                <ChartTooltip
+                  content={<ChartTooltipContent />}
+                  labelFormatter={(label: string) => new Date(label).toLocaleDateString()}
+                />
+                {trendModels.map((tm, i) => (
+                  <Area
+                    key={tm.model}
+                    type="monotone"
+                    dataKey={tm.model}
+                    stackId="1"
+                    stroke={chartConfig[tm.model]?.color || MODEL_PALETTE[i]}
+                    fill={chartConfig[tm.model]?.color || MODEL_PALETTE[i]}
+                    fillOpacity={0.3}
+                  />
+                ))}
+              </AreaChart>
+            </ChartContainer>
+          </div>
+        )}
+
         <div className="p-0">
           {modelUsage.length === 0 ? (
             <div className="p-5 text-sm text-muted-foreground">No extraction jobs in the last 30 days.</div>

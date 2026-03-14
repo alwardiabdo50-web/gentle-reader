@@ -460,7 +460,7 @@ Deno.serve(async (req) => {
       // ─── Model usage analytics (30d) ───────────────────
       const { data: extractionRows } = await admin
         .from("extraction_jobs")
-        .select("model, credits_used, user_id")
+        .select("model, credits_used, user_id, created_at")
         .gte("created_at", thirtyDaysAgo);
 
       const { data: aiModelsData } = await admin
@@ -498,6 +498,22 @@ Deno.serve(async (req) => {
         }))
         .sort((a, b) => b.total_jobs - a.total_jobs);
 
+      // ─── Model usage trend (daily, top 5 models) ──────
+      const top5Models = modelUsage.slice(0, 5).map((m) => m.model);
+      const dailyBuckets: Record<string, Record<string, number>> = {};
+      (extractionRows ?? []).forEach((row: { model: string; created_at: string }) => {
+        if (!top5Models.includes(row.model)) return;
+        const date = row.created_at.substring(0, 10); // YYYY-MM-DD
+        if (!dailyBuckets[date]) dailyBuckets[date] = {};
+        dailyBuckets[date][row.model] = (dailyBuckets[date][row.model] || 0) + 1;
+      });
+      const modelUsageTrend = Object.entries(dailyBuckets)
+        .map(([date, models]) => ({ date, ...models }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      // Include tier info for top 5 models for chart coloring
+      const trendModels = top5Models.map((m) => ({ model: m, tier: modelTierMap[m] || "unknown" }));
+
       result = {
         totalUsers: totalUsers ?? 0,
         activeKeys: activeKeys ?? 0,
@@ -511,6 +527,8 @@ Deno.serve(async (req) => {
         planDistribution: planDist,
         recentFailures: recentFailures ?? [],
         modelUsage,
+        modelUsageTrend,
+        trendModels,
       };
     } else if (action === "users") {
       const page = parseInt(url.searchParams.get("page") || "1");
