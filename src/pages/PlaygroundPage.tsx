@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database, GitBranch, History, Save, Share2, ChevronDown, ChevronRight, Trash2, X, Lock as LockIcon } from "lucide-react";
+import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database, GitBranch, History, Save, Share2, ChevronDown, ChevronRight, Trash2, X, Lock as LockIcon, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCredits } from "@/hooks/useCredits";
