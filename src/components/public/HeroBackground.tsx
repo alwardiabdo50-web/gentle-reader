@@ -54,6 +54,19 @@ export function HeroBackground() {
     resize();
     window.addEventListener("resize", resize);
 
+    const GLOW_RADIUS = 150;
+
+    function onMouseMove(e: MouseEvent) {
+      const rect = canvas!.getBoundingClientRect();
+      mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+    function onMouseLeave() {
+      mouseRef.current = { x: -9999, y: -9999 };
+    }
+    canvas.style.pointerEvents = "auto";
+    canvas.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("mouseleave", onMouseLeave);
+
     function draw(time: number) {
       const w = canvas!.getBoundingClientRect().width;
       const h = canvas!.getBoundingClientRect().height;
