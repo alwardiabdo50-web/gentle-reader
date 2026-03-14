@@ -17,6 +17,7 @@ import {
   Coins,
   FileText,
   Settings,
+  Cpu,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -28,6 +29,7 @@ const adminNav = [
   { title: "Billing", url: "/admin/billing", icon: CreditCard },
   { title: "Plans", url: "/admin/plans", icon: CreditCard },
   { title: "API Credits", url: "/admin/credit-costs", icon: Coins },
+  { title: "AI Models", url: "/admin/models", icon: Cpu },
   { title: "Changelog", url: "/admin/changelog", icon: FileText },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];

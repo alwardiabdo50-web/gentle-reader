@@ -64,3 +64,19 @@ export function minimumPlanForFeature(feature: GatedFeature): string {
   if (feature === "webhooks") return "Hobby";
   return "Standard";
 }
+
+/** Model tier access per plan */
+export type ModelTier = "free" | "cheaper" | "expensive";
+
+export const MODEL_TIER_ACCESS: Record<PlanId, ModelTier[]> = {
+  free: ["free"],
+  hobby: ["free", "cheaper"],
+  standard: ["free", "cheaper", "expensive"],
+  growth: ["free", "cheaper", "expensive"],
+  scale: ["free", "cheaper", "expensive"],
+};
+
+export function getAllowedModelTiers(plan: string): ModelTier[] {
+  const normalized = plan.toLowerCase() as PlanId;
+  return MODEL_TIER_ACCESS[normalized] ?? MODEL_TIER_ACCESS.free;
+}

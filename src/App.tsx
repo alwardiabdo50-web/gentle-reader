@@ -38,6 +38,7 @@ import AdminPlansPage from "@/pages/admin/AdminPlansPage";
 import AdminCreditCostsPage from "@/pages/admin/AdminCreditCostsPage";
 import AdminChangelogPage from "@/pages/admin/AdminChangelogPage";
 import AdminSettingsPage from "@/pages/admin/AdminSettingsPage";
+import AdminModelsPage from "@/pages/admin/AdminModelsPage";
 import PublicDocsPage from "@/pages/public/PublicDocsPage";
 import ContactPage from "@/pages/public/ContactPage";
 import ChangelogPage from "@/pages/public/ChangelogPage";
@@ -81,6 +82,7 @@ const App = () => (
                       <Route path="/billing" element={<AdminBillingPage />} />
                       <Route path="/plans" element={<AdminPlansPage />} />
                       <Route path="/credit-costs" element={<AdminCreditCostsPage />} />
+                      <Route path="/models" element={<AdminModelsPage />} />
                       <Route path="/changelog" element={<AdminChangelogPage />} />
                       <Route path="/settings" element={<AdminSettingsPage />} />
                     </Routes>

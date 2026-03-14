@@ -291,6 +291,77 @@ Deno.serve(async (req) => {
         });
       }
 
+      // ─── Provider mutations ─────────────────────────────
+      if (postAction === "provider-create") {
+        const { id, name, base_url, is_default, sort_order } = body;
+        if (!id || !name || !base_url) {
+          return new Response(JSON.stringify({ error: "id, name, base_url required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error } = await admin.from("ai_providers").insert({ id, name, base_url, is_default: is_default ?? false, sort_order: sort_order ?? 0 });
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      if (postAction === "provider-update") {
+        const { providerId, ...fields } = body;
+        if (!providerId) {
+          return new Response(JSON.stringify({ error: "providerId required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const allowed = ["name", "base_url", "is_default", "is_active", "sort_order"];
+        const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        for (const key of allowed) { if (key in fields) updateData[key] = fields[key]; }
+        const { error } = await admin.from("ai_providers").update(updateData).eq("id", providerId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      if (postAction === "provider-delete") {
+        const { providerId } = body;
+        if (!providerId) {
+          return new Response(JSON.stringify({ error: "providerId required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error } = await admin.from("ai_providers").update({ is_active: false, updated_at: new Date().toISOString() }).eq("id", providerId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // ─── Model mutations ─────────────────────────────
+      if (postAction === "model-create") {
+        const { id, provider_id, name, tier, credit_cost, min_plan, is_default, sort_order } = body;
+        if (!id || !provider_id || !name) {
+          return new Response(JSON.stringify({ error: "id, provider_id, name required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error } = await admin.from("ai_models").insert({
+          id, provider_id, name, tier: tier ?? "free", credit_cost: credit_cost ?? 0,
+          min_plan: min_plan ?? "free", is_default: is_default ?? false, sort_order: sort_order ?? 0,
+        });
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      if (postAction === "model-update") {
+        const { modelId, ...fields } = body;
+        if (!modelId) {
+          return new Response(JSON.stringify({ error: "modelId required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const allowed = ["provider_id", "name", "tier", "credit_cost", "min_plan", "is_default", "is_active", "sort_order"];
+        const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        for (const key of allowed) { if (key in fields) updateData[key] = fields[key]; }
+        const { error } = await admin.from("ai_models").update(updateData).eq("id", modelId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      if (postAction === "model-delete") {
+        const { modelId } = body;
+        if (!modelId) {
+          return new Response(JSON.stringify({ error: "modelId required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error } = await admin.from("ai_models").update({ is_active: false, updated_at: new Date().toISOString() }).eq("id", modelId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
       return new Response(JSON.stringify({ error: "Unknown action" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -299,7 +370,15 @@ Deno.serve(async (req) => {
 
     let result: Record<string, unknown> = {};
 
-    if (action === "credit-costs") {
+    if (action === "providers") {
+      const { data, error } = await admin.from("ai_providers").select("*").order("sort_order", { ascending: true });
+      if (error) throw error;
+      result = { providers: data ?? [] };
+    } else if (action === "models") {
+      const { data, error } = await admin.from("ai_models").select("*").order("sort_order", { ascending: true });
+      if (error) throw error;
+      result = { models: data ?? [] };
+    } else if (action === "credit-costs") {
       const { data: costs, error } = await admin
         .from("api_credit_costs")
         .select("*")

@@ -76,6 +76,22 @@ export async function getPlanLimitsFromDB(planId: string): Promise<PlanLimits> {
   return getPlanLimits(planId);
 }
 
+/** Model tier access per plan */
+export type ModelTier = "free" | "cheaper" | "expensive";
+
+export const MODEL_TIER_ACCESS: Record<PlanId, ModelTier[]> = {
+  free: ["free"],
+  hobby: ["free", "cheaper"],
+  standard: ["free", "cheaper", "expensive"],
+  growth: ["free", "cheaper", "expensive"],
+  scale: ["free", "cheaper", "expensive"],
+};
+
+export function getAllowedModelTiers(plan: string): ModelTier[] {
+  const normalized = plan.toLowerCase() as PlanId;
+  return MODEL_TIER_ACCESS[normalized] ?? MODEL_TIER_ACCESS.free;
+}
+
 /** Fetch user plan from profiles table. Returns 'free' as fallback. */
 export async function getUserPlan(userId: string): Promise<string> {
   const admin = createClient(

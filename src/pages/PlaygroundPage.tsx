@@ -13,6 +13,7 @@ import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Lay
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCredits } from "@/hooks/useCredits";
+import { useModels } from "@/hooks/useModels";
 import { canAccessFeature } from "@/lib/plan-limits";
 import { toast } from "sonner";
 import type { ScrapeResponse } from "@/lib/api/scrape";
@@ -72,6 +73,7 @@ export default function PlaygroundPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { plan } = useCredits();
+  const { models, grouped, defaultModel, canUseModel, getModelCost } = useModels(plan);
   const extractAllowed = canAccessFeature(plan, "extract");
   const [mode, setMode] = useState<Mode>((searchParams.get("mode") as Mode) || "scrape");
   const [url, setUrl] = useState(searchParams.get("url") || "");
@@ -96,13 +98,13 @@ export default function PlaygroundPage() {
   // Extract options
   const [extractPrompt, setExtractPrompt] = useState(searchParams.get("extractPrompt") || "");
   const [extractSchema, setExtractSchema] = useState(searchParams.get("extractSchema") || "");
-  const [extractModel, setExtractModel] = useState(searchParams.get("extractModel") || "google/gemini-3-flash-preview");
+  const [extractModel, setExtractModel] = useState(searchParams.get("extractModel") || "");
 
   // Pipeline options
   const [pipelinePrompt, setPipelinePrompt] = useState(searchParams.get("pipelinePrompt") || "");
   const [pipelineSchema, setPipelineSchema] = useState(searchParams.get("pipelineSchema") || "");
   const [pipelineTransformPrompt, setPipelineTransformPrompt] = useState(searchParams.get("pipelineTransformPrompt") || "");
-  const [pipelineModel, setPipelineModel] = useState(searchParams.get("pipelineModel") || "google/gemini-3-flash-preview");
+  const [pipelineModel, setPipelineModel] = useState(searchParams.get("pipelineModel") || "");
 
   // History & presets
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -120,6 +122,12 @@ export default function PlaygroundPage() {
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [templateDesc, setTemplateDesc] = useState("");
+
+  // Set default model when models load
+  useEffect(() => {
+    if (defaultModel && !extractModel) setExtractModel(defaultModel);
+    if (defaultModel && !pipelineModel) setPipelineModel(defaultModel);
+  }, [defaultModel]);
 
   // Fetch extraction templates
   useEffect(() => {
@@ -769,13 +777,14 @@ export default function PlaygroundPage() {
             <div className="flex items-center gap-2">
               <Label className="text-xs text-muted-foreground">Model</Label>
               <Select value={extractModel} onValueChange={setExtractModel}>
-                <SelectTrigger className="w-56 h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-64 h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash (fast)</SelectItem>
-                  <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-                  <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
-                  <SelectItem value="openai/gpt-5-mini">GPT-5 Mini</SelectItem>
-                  <SelectItem value="openai/gpt-5">GPT-5</SelectItem>
+                  {grouped.free.length > 0 && <SelectItem value="__free_header" disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Free — 0 credits</SelectItem>}
+                  {grouped.free.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                  {grouped.cheaper.length > 0 && <SelectItem value="__cheaper_header" disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Cheaper — 2 credits</SelectItem>}
+                  {grouped.cheaper.map(m => <SelectItem key={m.id} value={m.id} disabled={!canUseModel(m.id)}>{m.name}{!canUseModel(m.id) ? " 🔒" : ""}</SelectItem>)}
+                  {grouped.expensive.length > 0 && <SelectItem value="__expensive_header" disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Expensive — 5 credits</SelectItem>}
+                  {grouped.expensive.map(m => <SelectItem key={m.id} value={m.id} disabled={!canUseModel(m.id)}>{m.name}{!canUseModel(m.id) ? " 🔒" : ""}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -831,13 +840,14 @@ export default function PlaygroundPage() {
             <div className="flex items-center gap-2">
               <Label className="text-xs text-muted-foreground">Model</Label>
               <Select value={pipelineModel} onValueChange={setPipelineModel}>
-                <SelectTrigger className="w-56 h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-64 h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash (fast)</SelectItem>
-                  <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-                  <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
-                  <SelectItem value="openai/gpt-5-mini">GPT-5 Mini</SelectItem>
-                  <SelectItem value="openai/gpt-5">GPT-5</SelectItem>
+                  {grouped.free.length > 0 && <SelectItem value="__free_header_p" disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Free — 0 credits</SelectItem>}
+                  {grouped.free.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                  {grouped.cheaper.length > 0 && <SelectItem value="__cheaper_header_p" disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Cheaper — 2 credits</SelectItem>}
+                  {grouped.cheaper.map(m => <SelectItem key={m.id} value={m.id} disabled={!canUseModel(m.id)}>{m.name}{!canUseModel(m.id) ? " 🔒" : ""}</SelectItem>)}
+                  {grouped.expensive.length > 0 && <SelectItem value="__expensive_header_p" disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Expensive — 5 credits</SelectItem>}
+                  {grouped.expensive.map(m => <SelectItem key={m.id} value={m.id} disabled={!canUseModel(m.id)}>{m.name}{!canUseModel(m.id) ? " 🔒" : ""}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
