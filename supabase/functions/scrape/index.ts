@@ -339,15 +339,16 @@ Deno.serve(async (req) => {
     );
   }
 
-  // --- Record ledger entry (charge 1 credit) ---
+  // --- Record ledger entry ---
+  let newBalance = 0;
   try {
     const userCredits = await getUserCredits(ctx.userId);
-    const newBalance = Math.max(0, userCredits.remaining - 1);
+    newBalance = Math.max(0, userCredits.remaining - scrapeCreditCost);
     await recordLedgerEntry({
       user_id: ctx.userId,
       api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
       action: "scrape_charge",
-      credits: -1,
+      credits: -scrapeCreditCost,
       job_id: job.id,
       source_type: "scrape",
       balance_after: newBalance,
