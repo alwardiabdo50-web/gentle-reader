@@ -344,7 +344,7 @@ Deno.serve(async (req) => {
 
     await recordLedgerEntry({
       user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId,
+      api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
       action: "extract_charge",
       credits: -EXTRACTION_CREDIT_COST,
       job_id: scrapeResult.scrapeJobId,

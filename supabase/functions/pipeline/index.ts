@@ -363,7 +363,7 @@ Deno.serve(async (req) => {
 
     await recordLedgerEntry({
       user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId,
+      api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
       action: "pipeline_charge",
       credits: -totalCredits,
       source_type: "pipeline",

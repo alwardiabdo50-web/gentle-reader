@@ -310,7 +310,7 @@ Deno.serve(async (req) => {
 
     await recordLedgerEntry({
       user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId,
+      api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
       action: "batch_scrape_charge",
       credits: -creditsUsed,
       job_id: parentJob.id,
