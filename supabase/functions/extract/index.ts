@@ -291,6 +291,9 @@ Deno.serve(async (req) => {
     return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
   }
 
+  // Dynamic credit cost
+  const EXTRACTION_CREDIT_COST = await getCreditCost(admin, "extract");
+
   // Quota check
   const quotaError = await checkQuota(ctx.userId, EXTRACTION_CREDIT_COST);
   if (quotaError) {

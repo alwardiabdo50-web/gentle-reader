@@ -226,6 +226,11 @@ Deno.serve(async (req) => {
   const rateLimitError = await checkRateLimit(ctx.userId);
   if (rateLimitError) return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
 
+  // Fetch dynamic credit costs
+  const SCRAPE_CREDIT_COST = await getCreditCost(admin, "scrape");
+  const EXTRACT_CREDIT_COST = await getCreditCost(admin, "extract");
+  const TRANSFORM_CREDIT_COST = await getCreditCost(admin, "extract"); // transform uses same cost as extract
+
   // Calculate max cost
   const hasTransform = !!transformPrompt;
   const maxCost = SCRAPE_CREDIT_COST + EXTRACT_CREDIT_COST + (hasTransform ? TRANSFORM_CREDIT_COST : 0);

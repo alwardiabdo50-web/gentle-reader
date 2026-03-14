@@ -385,7 +385,7 @@ Deno.serve(async (req) => {
     },
     meta: {
       job_id: job.id,
-      credits_used: 1,
+      credits_used: scrapeCreditCost,
       cache_hit: false,
     },
   });

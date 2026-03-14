@@ -354,7 +354,7 @@ Deno.serve(async (req) => {
       },
       meta: {
         count: result.urls.length,
-        credits_used: 1,
+        credits_used: mapCreditCost,
         job_id: jobId,
       },
       warnings: result.warnings.length > 0 ? result.warnings : undefined,
