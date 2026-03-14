@@ -31,7 +31,7 @@ function HeroSection() {
             <Link to="/auth">Start Free <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
           <Button variant="outline" size="lg" className="text-base px-8" asChild>
-            <a href="#api-example">View API Example</a>
+            <Link to="/docs">View API Example</Link>
           </Button>
         </div>
         <p className="mt-5 text-xs text-muted-foreground">500 free credits · No credit card required</p>
