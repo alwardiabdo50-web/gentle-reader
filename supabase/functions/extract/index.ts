@@ -336,22 +336,26 @@ Deno.serve(async (req) => {
       validation.warnings.push("JSON was extracted from wrapped model output");
     }
 
-    // Step 4: Charge credits FIRST (before marking as completed)
-    const credits = await getUserCredits(ctx.userId);
-    const newBalance = Math.max(0, credits.remaining - EXTRACTION_CREDIT_COST);
+    // Step 4: Charge credits (non-fatal if billing fails)
+    try {
+      const credits = await getUserCredits(ctx.userId);
+      const newBalance = Math.max(0, credits.remaining - EXTRACTION_CREDIT_COST);
 
-    console.log(`Extract billing: user=${ctx.userId} job=${extractJob.id} cost=${EXTRACTION_CREDIT_COST} remaining=${credits.remaining} newBalance=${newBalance} scrapeJobId=${scrapeResult.scrapeJobId ?? "null"}`);
+      console.log(`Extract billing: user=${ctx.userId} job=${extractJob.id} cost=${EXTRACTION_CREDIT_COST} remaining=${credits.remaining} newBalance=${newBalance} scrapeJobId=${scrapeResult.scrapeJobId ?? "null"}`);
 
-    await recordLedgerEntry({
-      user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
-      action: "extract_charge",
-      credits: -EXTRACTION_CREDIT_COST,
-      job_id: scrapeResult.scrapeJobId,
-      source_type: "extract",
-      balance_after: newBalance,
-      metadata_json: { url: normalizedUrl, model, mode: body.schema ? "schema" : "prompt", extraction_job_id: extractJob.id },
-    });
+      await recordLedgerEntry({
+        user_id: ctx.userId,
+        api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
+        action: "extract_charge",
+        credits: -EXTRACTION_CREDIT_COST,
+        job_id: scrapeResult.scrapeJobId,
+        source_type: "extract",
+        balance_after: newBalance,
+        metadata_json: { url: normalizedUrl, model, mode: body.schema ? "schema" : "prompt", extraction_job_id: extractJob.id },
+      });
+    } catch (billingError) {
+      console.error(`Billing error for extract job=${extractJob.id}:`, billingError);
+    }
 
     // Step 5: Persist result (only after billing succeeds)
     await admin.from("extraction_jobs").update({

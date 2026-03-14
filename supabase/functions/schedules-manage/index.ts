@@ -180,7 +180,7 @@ Deno.serve(async (req) => {
           if (!res.ok) {
             jobError = result.error?.message || result.error || `HTTP ${res.status}`;
           } else {
-            jobId = result.data?.id || result.id || null;
+            jobId = result.meta?.job_id || result.data?.id || result.id || null;
             content = result.data?.markdown || (result.data?.output_json ? JSON.stringify(result.data.output_json) : "") || "";
           }
         } catch (err) {

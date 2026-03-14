@@ -318,22 +318,26 @@ Deno.serve(async (req) => {
     }
 
     // Charge 1 credit
-    const credits = await getUserCredits(ctx.userId);
-    const newBalance = Math.max(0, credits.remaining - 1);
-    await recordLedgerEntry({
-      user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
-      action: "map_charge",
-      credits: -1,
-      source_type: "map",
-      balance_after: newBalance,
-      job_id: jobId,
-      metadata_json: {
-        root_url: result.normalizedRootUrl,
-        urls_returned: result.urls.length,
-        used_fallback: result.usedFallback,
-      },
-    });
+    try {
+      const credits = await getUserCredits(ctx.userId);
+      const newBalance = Math.max(0, credits.remaining - 1);
+      await recordLedgerEntry({
+        user_id: ctx.userId,
+        api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
+        action: "map_charge",
+        credits: -1,
+        source_type: "map",
+        balance_after: newBalance,
+        job_id: jobId,
+        metadata_json: {
+          root_url: result.normalizedRootUrl,
+          urls_returned: result.urls.length,
+          used_fallback: result.usedFallback,
+        },
+      });
+    } catch (billingError) {
+      console.error(`Billing error for map job=${jobId}:`, billingError);
+    }
 
     console.log(`Map completed user=${ctx.userId} root=${result.normalizedRootUrl} urls=${result.urls.length} fallback=${result.usedFallback}`);
 

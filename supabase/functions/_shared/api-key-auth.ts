@@ -112,7 +112,7 @@ export async function validateApiKey(rawKey: string): Promise<{ ok: true; ctx: A
  * Check if the request is authenticated with the service role key (used by scheduled jobs).
  * Returns the user_id from the request body's _schedule_user_id if present.
  */
-export function authenticateServiceRole(req: Request, body: Record<string, unknown>): AuthContext | null {
+export async function authenticateServiceRole(req: Request, body: Record<string, unknown>): Promise<AuthContext | null> {
   const authHeader = req.headers.get("authorization");
   const apikeyHeader = req.headers.get("apikey");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -126,11 +126,26 @@ export function authenticateServiceRole(req: Request, body: Record<string, unkno
   const userId = body._schedule_user_id as string;
   if (!userId) return null;
 
+  // Look up org context from user profile
+  let orgId: string | null = null;
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const admin = createClient(supabaseUrl, serviceKey);
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("active_org_id")
+      .eq("user_id", userId)
+      .single();
+    orgId = profile?.active_org_id ?? null;
+  } catch (e) {
+    console.error("Failed to look up org context for scheduled job:", e);
+  }
+
   return {
     userId,
     apiKeyId: "scheduled",
     apiKeyName: "Scheduled Job",
     plan: "scheduled",
-    orgId: null,
+    orgId,
   };
 }

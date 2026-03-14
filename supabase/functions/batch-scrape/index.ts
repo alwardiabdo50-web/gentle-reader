@@ -305,19 +305,23 @@ Deno.serve(async (req) => {
   // --- Charge credits only for cache misses that succeeded ---
   const creditsUsed = successCount - actualCacheHits;
   if (creditsUsed > 0) {
-    const userCredits = await getUserCredits(ctx.userId);
-    const newBalance = Math.max(0, userCredits.remaining - creditsUsed);
+    try {
+      const userCredits = await getUserCredits(ctx.userId);
+      const newBalance = Math.max(0, userCredits.remaining - creditsUsed);
 
-    await recordLedgerEntry({
-      user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
-      action: "batch_scrape_charge",
-      credits: -creditsUsed,
-      job_id: parentJob.id,
-      source_type: "scrape",
-      balance_after: newBalance,
-      metadata_json: { total: urls.length, completed: successCount, failed: failCount, cache_hits: actualCacheHits },
-    });
+      await recordLedgerEntry({
+        user_id: ctx.userId,
+        api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
+        action: "batch_scrape_charge",
+        credits: -creditsUsed,
+        job_id: parentJob.id,
+        source_type: "scrape",
+        balance_after: newBalance,
+        metadata_json: { total: urls.length, completed: successCount, failed: failCount, cache_hits: actualCacheHits },
+      });
+    } catch (billingError) {
+      console.error(`Billing error for batch job=${parentJob.id}:`, billingError);
+    }
   }
 
   // --- Update parent job ---
