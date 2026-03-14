@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 
 interface CodeBlockProps {
@@ -7,7 +7,7 @@ interface CodeBlockProps {
   title?: string;
 }
 
-export function CodeBlock({ code, language = "bash", title }: CodeBlockProps) {
+export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(({ code, language = "bash", title }, ref) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
