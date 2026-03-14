@@ -209,6 +209,26 @@ export default function DocsPage() {
             ]} />
           </TabsContent>
 
+          {/* Search */}
+          <TabsContent value="search" className="space-y-4 mt-4">
+            <div>
+              <h3 className="text-sm font-semibold">POST /v1/search</h3>
+              <p className="text-xs text-muted-foreground mt-1">Search the web and get structured results. Costs <strong>1 credit</strong>.</p>
+            </div>
+            <ParamsTable params={[
+              { name: "query", type: "string", default: "required", desc: "Search query string" },
+              { name: "limit", type: "number", default: "5", desc: "Number of results (1-20)" },
+              { name: "lang", type: "string", default: '"en"', desc: "Language code (en, es, fr, de, etc.)" },
+              { name: "country", type: "string", default: '"us"', desc: "Country code (us, gb, de, fr, etc.)" },
+            ]} />
+            <LanguageSnippet snippets={snippets("POST", "/search", {
+              query: "best web scraping tools 2026",
+              limit: 5,
+              lang: "en",
+              country: "us",
+            }, apiKey)} />
+          </TabsContent>
+
           {/* Usage */}
           <TabsContent value="usage" className="space-y-4 mt-4">
             <div>
