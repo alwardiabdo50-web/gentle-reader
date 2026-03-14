@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
   const clonedReq = req.clone();
   try { peekBody = await clonedReq.json(); } catch {}
 
-  const serviceCtx = authenticateServiceRole(req, peekBody);
+  const serviceCtx = await authenticateServiceRole(req, peekBody);
   let ctx: { userId: string; apiKeyId: string; apiKeyName?: string; plan?: string };
 
   if (serviceCtx) {

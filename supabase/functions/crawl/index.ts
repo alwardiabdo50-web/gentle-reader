@@ -23,7 +23,7 @@ const json = (body: object, status = 200) =>
 async function authenticate(req: Request, body?: Record<string, unknown>) {
   // Check service-role auth first (for scheduled jobs)
   if (body) {
-    const serviceCtx = authenticateServiceRole(req, body);
+    const serviceCtx = await authenticateServiceRole(req, body);
     if (serviceCtx) {
       return { ok: true as const, ctx: serviceCtx };
     }
