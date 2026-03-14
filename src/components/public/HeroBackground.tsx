@@ -19,9 +19,13 @@ export function HeroBackground() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // Listen on the parent section so mouse events aren't blocked by content
+    const section = canvas.closest("section");
+    if (!section) return;
+
     const SPACING = 40;
     const DOT_RADIUS = 1.4;
-    // Teal accent: hsl(168 84% 49%) ≈ rgb(20, 184, 166)
+    const GLOW_RADIUS = 150;
     const R = 20, G = 184, B = 166;
 
     function buildDots() {
@@ -54,8 +58,6 @@ export function HeroBackground() {
     resize();
     window.addEventListener("resize", resize);
 
-    const GLOW_RADIUS = 150;
-
     function onMouseMove(e: MouseEvent) {
       const rect = canvas!.getBoundingClientRect();
       mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
@@ -63,9 +65,8 @@ export function HeroBackground() {
     function onMouseLeave() {
       mouseRef.current = { x: -9999, y: -9999 };
     }
-    canvas.style.pointerEvents = "auto";
-    canvas.addEventListener("mousemove", onMouseMove);
-    canvas.addEventListener("mouseleave", onMouseLeave);
+    section.addEventListener("mousemove", onMouseMove);
+    section.addEventListener("mouseleave", onMouseLeave);
 
     function draw(time: number) {
       const w = canvas!.getBoundingClientRect().width;
@@ -106,8 +107,8 @@ export function HeroBackground() {
 
     return () => {
       window.removeEventListener("resize", resize);
-      canvas.removeEventListener("mousemove", onMouseMove);
-      canvas.removeEventListener("mouseleave", onMouseLeave);
+      section.removeEventListener("mousemove", onMouseMove);
+      section.removeEventListener("mouseleave", onMouseLeave);
       cancelAnimationFrame(animRef.current);
     };
   }, []);
@@ -115,8 +116,7 @@ export function HeroBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full z-10"
-      style={{ pointerEvents: "auto" }}
+      className="absolute inset-0 w-full h-full pointer-events-none"
       aria-hidden="true"
     />
   );
