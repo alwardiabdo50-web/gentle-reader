@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_models: {
+        Row: {
+          created_at: string
+          credit_cost: number
+          id: string
+          is_active: boolean
+          is_default: boolean
+          min_plan: string
+          name: string
+          provider_id: string
+          sort_order: number
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credit_cost?: number
+          id: string
+          is_active?: boolean
+          is_default?: boolean
+          min_plan?: string
+          name: string
+          provider_id: string
+          sort_order?: number
+          tier?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credit_cost?: number
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          min_plan?: string
+          name?: string
+          provider_id?: string
+          sort_order?: number
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_models_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "ai_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_providers: {
+        Row: {
+          base_url: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          base_url: string
+          created_at?: string
+          id: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          base_url?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       api_credit_costs: {
         Row: {
           base_cost: number
