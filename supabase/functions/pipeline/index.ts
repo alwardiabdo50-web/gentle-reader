@@ -4,6 +4,7 @@ import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { buildCacheKey, getCachedResult, setCachedResult } from "../_shared/scrape-cache.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
 import { normalizeUrl } from "../_shared/crawl-utils.ts";
+import { getCreditCost } from "../_shared/credit-costs.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
