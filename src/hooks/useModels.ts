@@ -25,7 +25,7 @@ export function useModels(userPlan = "free") {
     queryKey: ["ai-models"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("ai_models")
+        .from("ai_models" as any)
         .select("*")
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
