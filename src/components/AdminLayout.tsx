@@ -81,33 +81,6 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
         )}
       </nav>
 
-      <div className="p-3 border-t border-border">
-        {collapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <NavLink
-                to="/app"
-                className="flex items-center justify-center p-2.5 rounded-lg text-foreground/70 hover:bg-accent hover:text-foreground transition-colors duration-150"
-                onClick={onNavigate}
-              >
-                <ArrowLeft className="h-6 w-6" />
-              </NavLink>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8}>
-              Back to Dashboard
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <NavLink
-            to="/app"
-            className="flex items-center gap-2 px-3 py-[7px] rounded-lg text-[13px] text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
-            onClick={onNavigate}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
-          </NavLink>
-        )}
-      </div>
     </>
   );
 }
@@ -125,35 +98,44 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         }`}
       >
         <SidebarNav collapsed={collapsed} />
-        <div className="p-2 border-t border-border flex justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-sidebar-foreground hover:text-foreground"
-            onClick={() => setCollapsed((c) => !c)}
-          >
-            {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-          </Button>
-        </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-12 flex items-center justify-between border-b border-border px-4 shrink-0 bg-sidebar">
-          {/* Mobile menu trigger */}
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden h-8 w-8">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-60 p-0 bg-sidebar">
-              <div className="flex flex-col h-full">
-                <SidebarNav onNavigate={() => setOpen(false)} />
-              </div>
-            </SheetContent>
-          </Sheet>
-          <div className="hidden md:block" />
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            {/* Mobile menu trigger */}
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden h-8 w-8">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-60 p-0 bg-sidebar">
+                <div className="flex flex-col h-full">
+                  <SidebarNav onNavigate={() => setOpen(false)} />
+                </div>
+              </SheetContent>
+            </Sheet>
+            {/* Desktop collapse button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden md:inline-flex h-8 w-8 text-sidebar-foreground hover:text-foreground"
+              onClick={() => setCollapsed((c) => !c)}
+            >
+              {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <NavLink
+              to="/app"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Back to Dashboard</span>
+            </NavLink>
+          </div>
         </header>
         <main className="flex-1 overflow-auto px-4 py-6 md:px-8 md:py-10">
           <div className="max-w-[1200px] mx-auto">
