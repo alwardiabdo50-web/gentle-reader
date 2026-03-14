@@ -519,6 +519,13 @@ Deno.serve(async (req) => {
       if (exportError) throw exportError;
 
       result = { contacts: contacts ?? [] };
+    } else if (action === "changelog") {
+      const { data: entries, error } = await admin
+        .from("changelog_entries")
+        .select("*")
+        .order("date", { ascending: false });
+      if (error) throw error;
+      result = { entries: entries ?? [] };
     } else if (action === "billing") {
       const { data: subs } = await admin
         .from("subscriptions")

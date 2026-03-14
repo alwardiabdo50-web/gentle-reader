@@ -27,6 +27,7 @@ const adminNav = [
   { title: "Billing", url: "/admin/billing", icon: CreditCard },
   { title: "Plans", url: "/admin/plans", icon: CreditCard },
   { title: "API Credits", url: "/admin/credit-costs", icon: Coins },
+  { title: "Changelog", url: "/admin/changelog", icon: FileText },
 ];
 
 function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
