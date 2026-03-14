@@ -97,6 +97,45 @@ export type Database = {
           },
         ]
       }
+      changelog_entries: {
+        Row: {
+          category: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          is_published: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          date: string
+          description: string
+          id?: string
+          is_published?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          is_published?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       contact_requests: {
         Row: {
           company: string | null

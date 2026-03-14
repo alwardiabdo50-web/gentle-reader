@@ -174,6 +174,37 @@ export function useAdminPlanMutations() {
   return { updatePlan, createPlan, deletePlan };
 }
 
+export function useAdminChangelog() {
+  return useQuery({
+    queryKey: ["admin", "changelog"],
+    queryFn: () => fetchAdminData("changelog"),
+  });
+}
+
+export function useAdminChangelogMutations() {
+  const queryClient = useQueryClient();
+
+  const createEntry = useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      postAdminAction({ action: "changelog-create", ...body } as Record<string, string>),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "changelog"] }),
+  });
+
+  const updateEntry = useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      postAdminAction({ action: "changelog-update", ...body } as Record<string, string>),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "changelog"] }),
+  });
+
+  const deleteEntry = useMutation({
+    mutationFn: (entryId: string) =>
+      postAdminAction({ action: "changelog-delete", entryId }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "changelog"] }),
+  });
+
+  return { createEntry, updateEntry, deleteEntry };
+}
+
 export function useAdminContactActions() {
   const queryClient = useQueryClient();
 
