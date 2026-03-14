@@ -1,6 +1,7 @@
 import { DOMParser } from "npm:linkedom@0.16.11";
 import { Readability } from "npm:@mozilla/readability@0.6.0";
 import TurndownService from "npm:turndown@7.2.0";
+import { extractBranding } from "./branding-extract.ts";
 
 export interface ScrapeAction {
   type: "click" | "scroll" | "wait" | "type" | "press" | "screenshot";
