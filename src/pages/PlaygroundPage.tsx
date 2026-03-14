@@ -1378,6 +1378,60 @@ export default function PlaygroundPage() {
                   ))}
                 </div>
               </TabsContent>
+           }
+            {mode === "scrape" && d.branding &&
+          <TabsContent value="branding" className="p-4 m-0 space-y-4">
+                <div className="space-y-3">
+                  {/* Colors */}
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Colors</p>
+                    {d.branding.colors.theme_color && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-5 h-5 rounded border border-border" style={{ backgroundColor: d.branding.colors.theme_color }} />
+                        <span className="text-xs font-mono">{d.branding.colors.theme_color}</span>
+                        <span className="text-[10px] text-muted-foreground">theme-color</span>
+                      </div>
+                    )}
+                    {d.branding.colors.dominant.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {d.branding.colors.dominant.map((c: string, i: number) => (
+                          <div key={i} className="flex items-center gap-1.5 text-xs">
+                            <div className="w-4 h-4 rounded border border-border" style={{ backgroundColor: c }} />
+                            <code className="font-mono text-[10px]">{c}</code>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {/* Fonts */}
+                  {d.branding.fonts.families.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Fonts</p>
+                      <div className="flex flex-wrap gap-2">
+                        {d.branding.fonts.families.map((f: string, i: number) => (
+                          <span key={i} className="text-xs px-2 py-1 rounded border border-border bg-muted/30">{f}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Logos */}
+                  {(d.branding.logos.favicon || d.branding.logos.og_image || d.branding.logos.detected.length > 0) && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Logos & Icons</p>
+                      <div className="space-y-1">
+                        {d.branding.logos.favicon && <p className="text-xs font-mono truncate">Favicon: {d.branding.logos.favicon}</p>}
+                        {d.branding.logos.og_image && <p className="text-xs font-mono truncate">OG Image: {d.branding.logos.og_image}</p>}
+                        {d.branding.logos.detected.map((l: string, i: number) => <p key={i} className="text-xs font-mono truncate">Logo: {l}</p>)}
+                      </div>
+                    </div>
+                  )}
+                  {/* Full JSON */}
+                  <details>
+                    <summary className="text-xs text-muted-foreground cursor-pointer">Raw branding JSON</summary>
+                    <pre className="text-xs font-mono text-secondary-foreground whitespace-pre-wrap mt-2">{JSON.stringify(d.branding, null, 2)}</pre>
+                  </details>
+                </div>
+              </TabsContent>
           }
             {mode === "extract" && d.extracted &&
           <TabsContent value="extracted" className="p-4 m-0">
