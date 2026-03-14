@@ -372,7 +372,7 @@ Deno.serve(async (req) => {
 
   try {
     // Step 1: Scrape
-    const scrapeResult = await scrapeForExtraction(normalizedUrl, admin, ctx.userId, ctx.apiKeyId);
+    const scrapeResult = await scrapeForExtraction(normalizedUrl, admin, ctx.userId, ctx.apiKeyId, body.only_main_content !== false);
 
     await admin.from("extraction_jobs").update({
       scrape_job_id: scrapeResult.scrapeJobId || null,
