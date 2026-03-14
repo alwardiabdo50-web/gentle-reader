@@ -78,6 +78,7 @@ export default function AdminSettingsPage() {
           <TabsTrigger value="socials" className="gap-1.5"><Share2 className="h-3.5 w-3.5" />Socials</TabsTrigger>
           <TabsTrigger value="branding" className="gap-1.5"><Palette className="h-3.5 w-3.5" />Branding</TabsTrigger>
           <TabsTrigger value="maintenance" className="gap-1.5"><AlertTriangle className="h-3.5 w-3.5" />Maintenance</TabsTrigger>
+          <TabsTrigger value="theme" className="gap-1.5"><Paintbrush className="h-3.5 w-3.5" />Theme</TabsTrigger>
         </TabsList>
 
         <TabsContent value="seo">
