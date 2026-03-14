@@ -72,7 +72,7 @@ export async function fetchAdminContactsExport(status = "all") {
   return fetchAdminData("contacts-export", { status });
 }
 
-async function postAdminAction(body: Record<string, string>) {
+async function postAdminAction(body: Record<string, unknown>) {
   const session = (await supabase.auth.getSession()).data.session;
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const url = `https://${projectId}.supabase.co/functions/v1/admin-stats`;
