@@ -12,55 +12,36 @@ export interface PlanLimits {
   features: Record<GatedFeature, boolean>;
 }
 
+// Hardcoded fallbacks — used when DB plans aren't available
 export const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
   free: {
     maxApiKeys: 2,
     features: {
-      webhooks: false,
-      schedules: false,
-      pipelines: false,
-      extract: false,
-      organizations: false,
+      webhooks: false, schedules: false, pipelines: false, extract: false, organizations: false,
     },
   },
   hobby: {
     maxApiKeys: 5,
     features: {
-      webhooks: true,
-      schedules: false,
-      pipelines: false,
-      extract: false,
-      organizations: false,
+      webhooks: true, schedules: false, pipelines: false, extract: false, organizations: false,
     },
   },
   standard: {
     maxApiKeys: 10,
     features: {
-      webhooks: true,
-      schedules: true,
-      pipelines: true,
-      extract: true,
-      organizations: true,
+      webhooks: true, schedules: true, pipelines: true, extract: true, organizations: true,
     },
   },
   growth: {
     maxApiKeys: 25,
     features: {
-      webhooks: true,
-      schedules: true,
-      pipelines: true,
-      extract: true,
-      organizations: true,
+      webhooks: true, schedules: true, pipelines: true, extract: true, organizations: true,
     },
   },
   scale: {
     maxApiKeys: -1,
     features: {
-      webhooks: true,
-      schedules: true,
-      pipelines: true,
-      extract: true,
-      organizations: true,
+      webhooks: true, schedules: true, pipelines: true, extract: true, organizations: true,
     },
   },
 };

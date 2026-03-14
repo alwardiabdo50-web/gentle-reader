@@ -23,6 +23,7 @@ const adminNav = [
   { title: "Jobs", url: "/admin/jobs", icon: Briefcase },
   { title: "Contacts", url: "/admin/contacts", icon: Mail },
   { title: "Billing", url: "/admin/billing", icon: CreditCard },
+  { title: "Plans", url: "/admin/plans", icon: CreditCard },
 ];
 
 function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {

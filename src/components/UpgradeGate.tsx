@@ -1,10 +1,17 @@
 import { useCredits } from "@/hooks/useCredits";
-import { canAccessFeature, minimumPlanForFeature, type GatedFeature } from "@/lib/plan-limits";
+import { usePlans } from "@/hooks/usePlans";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
+
+export type GatedFeature =
+  | "webhooks"
+  | "schedules"
+  | "pipelines"
+  | "extract"
+  | "organizations";
 
 const FEATURE_LABELS: Record<GatedFeature, string> = {
   webhooks: "Webhooks",
@@ -21,15 +28,25 @@ interface UpgradeGateProps {
 
 export function UpgradeGate({ feature, children }: UpgradeGateProps) {
   const { plan, loading } = useCredits();
+  const { data: plans, isLoading: plansLoading } = usePlans();
   const navigate = useNavigate();
 
-  if (loading) return null;
+  if (loading || plansLoading) return null;
 
-  if (canAccessFeature(plan, feature)) {
+  // Check if current plan has access to the feature
+  const currentPlan = plans?.find((p) => p.id === plan.toLowerCase());
+  const hasAccess = currentPlan?.features_json?.[feature] ?? false;
+
+  if (hasAccess) {
     return <>{children}</>;
   }
 
-  const minPlan = minimumPlanForFeature(feature);
+  // Find the cheapest plan that has this feature
+  const minPlan = plans
+    ?.filter((p) => p.is_active && p.features_json?.[feature])
+    ?.sort((a, b) => a.sort_order - b.sort_order)?.[0];
+
+  const minPlanName = minPlan?.name ?? "a higher";
   const label = FEATURE_LABELS[feature];
 
   return (
@@ -42,12 +59,12 @@ export function UpgradeGate({ feature, children }: UpgradeGateProps) {
           <div>
             <h2 className="text-xl font-semibold text-foreground">{label}</h2>
             <p className="text-sm text-muted-foreground mt-2">
-              {label} is available on the <span className="font-medium text-foreground">{minPlan}</span> plan and above.
+              {label} is available on the <span className="font-medium text-foreground">{minPlanName}</span> plan and above.
               Upgrade your plan to unlock this feature.
             </p>
           </div>
           <Button onClick={() => navigate("/app/billing")} className="mt-2">
-            Upgrade to {minPlan}
+            Upgrade to {minPlanName}
           </Button>
         </CardContent>
       </Card>

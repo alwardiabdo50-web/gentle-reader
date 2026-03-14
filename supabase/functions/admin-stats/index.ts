@@ -90,6 +90,69 @@ Deno.serve(async (req) => {
         });
       }
 
+      if (postAction === "plan-update") {
+        const { planId, ...fields } = body;
+        if (!planId) {
+          return new Response(JSON.stringify({ error: "planId required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const allowed = ["name", "monthly_price", "yearly_price", "monthly_credits", "max_api_keys", "rate_limit_rpm", "features_json", "description", "display_features", "cta_text", "highlighted", "sort_order", "is_active"];
+        const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        for (const key of allowed) {
+          if (key in fields) updateData[key] = fields[key];
+        }
+        const { error } = await admin.from("plans").update(updateData).eq("id", planId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (postAction === "plan-create") {
+        const { id, name, monthly_price, yearly_price, monthly_credits, max_api_keys, rate_limit_rpm, features_json, description, display_features, cta_text, highlighted, sort_order } = body;
+        if (!id || !name) {
+          return new Response(JSON.stringify({ error: "id and name required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await admin.from("plans").insert({
+          id, name,
+          monthly_price: monthly_price ?? 0,
+          yearly_price: yearly_price ?? 0,
+          monthly_credits: monthly_credits ?? 500,
+          max_api_keys: max_api_keys ?? 2,
+          rate_limit_rpm: rate_limit_rpm ?? 5,
+          features_json: features_json ?? {},
+          description: description ?? "",
+          display_features: display_features ?? [],
+          cta_text: cta_text ?? "Get Started",
+          highlighted: highlighted ?? false,
+          sort_order: sort_order ?? 0,
+        });
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (postAction === "plan-delete") {
+        const { planId } = body;
+        if (!planId) {
+          return new Response(JSON.stringify({ error: "planId required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await admin.from("plans").update({ is_active: false, updated_at: new Date().toISOString() }).eq("id", planId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       return new Response(JSON.stringify({ error: "Unknown action" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -98,7 +161,14 @@ Deno.serve(async (req) => {
 
     let result: Record<string, unknown> = {};
 
-    if (action === "overview") {
+    if (action === "plans") {
+      const { data: plans, error } = await admin
+        .from("plans")
+        .select("*")
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      result = { plans: plans ?? [] };
+    } else if (action === "overview") {
       // Total users
       const { count: totalUsers } = await admin
         .from("profiles")

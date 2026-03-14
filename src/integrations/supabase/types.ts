@@ -603,6 +603,63 @@ export type Database = {
         }
         Relationships: []
       }
+      plans: {
+        Row: {
+          created_at: string
+          cta_text: string
+          description: string | null
+          display_features: Json
+          features_json: Json
+          highlighted: boolean
+          id: string
+          is_active: boolean
+          max_api_keys: number
+          monthly_credits: number
+          monthly_price: number
+          name: string
+          rate_limit_rpm: number
+          sort_order: number
+          updated_at: string
+          yearly_price: number
+        }
+        Insert: {
+          created_at?: string
+          cta_text?: string
+          description?: string | null
+          display_features?: Json
+          features_json?: Json
+          highlighted?: boolean
+          id: string
+          is_active?: boolean
+          max_api_keys?: number
+          monthly_credits?: number
+          monthly_price?: number
+          name: string
+          rate_limit_rpm?: number
+          sort_order?: number
+          updated_at?: string
+          yearly_price?: number
+        }
+        Update: {
+          created_at?: string
+          cta_text?: string
+          description?: string | null
+          display_features?: Json
+          features_json?: Json
+          highlighted?: boolean
+          id?: string
+          is_active?: boolean
+          max_api_keys?: number
+          monthly_credits?: number
+          monthly_price?: number
+          name?: string
+          rate_limit_rpm?: number
+          sort_order?: number
+          updated_at?: string
+          yearly_price?: number
+        }
+        Relationships: []
+      }
       playground_presets: {
         Row: {
           config_json: Json

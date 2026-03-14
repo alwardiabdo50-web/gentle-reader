@@ -12,6 +12,7 @@ export interface PlanLimits {
   features: Record<GatedFeature, boolean>;
 }
 
+// Hardcoded fallbacks
 export const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
   free: {
     maxApiKeys: 2,
@@ -49,6 +50,31 @@ export function getMaxApiKeys(plan: string): number {
 }
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+/** Fetch plan limits from DB plans table, with hardcoded fallback */
+export async function getPlanLimitsFromDB(planId: string): Promise<PlanLimits> {
+  try {
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    const { data } = await admin
+      .from("plans")
+      .select("max_api_keys, features_json")
+      .eq("id", planId.toLowerCase())
+      .eq("is_active", true)
+      .single();
+    if (data) {
+      return {
+        maxApiKeys: data.max_api_keys,
+        features: data.features_json as Record<GatedFeature, boolean>,
+      };
+    }
+  } catch {
+    // fallback to hardcoded
+  }
+  return getPlanLimits(planId);
+}
 
 /** Fetch user plan from profiles table. Returns 'free' as fallback. */
 export async function getUserPlan(userId: string): Promise<string> {
