@@ -136,6 +136,7 @@ export default function AdminUsersPage() {
           </div>
         </>
       )}
+      <AdminUserDetailDialog userId={selectedUserId} open={!!selectedUserId} onOpenChange={(open) => !open && setSelectedUserId(null)} />
     </div>
   );
 }
