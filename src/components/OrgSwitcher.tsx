@@ -88,10 +88,10 @@ export function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
               Create Organization
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem disabled className="cursor-not-allowed opacity-60">
-              <Lock className="mr-2 h-4 w-4" />
-              Create Organization
-              <span className="ml-auto rounded bg-warning px-1.5 py-0.5 text-[10px] font-semibold text-white">Standard+</span>
+            <DropdownMenuItem disabled className="cursor-not-allowed">
+              <Lock className="mr-2 h-4 w-4 opacity-60" />
+              <span className="opacity-60">Create Organization</span>
+              <span className="ml-auto rounded bg-warning px-1.5 py-0.5 text-[10px] font-semibold text-[#ffffff]">Standard+</span>
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
