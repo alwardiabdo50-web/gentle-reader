@@ -18,8 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useNavigate } from "react-router-dom";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import AdminUserDetailDialog from "@/components/admin/AdminUserDetailDialog";
 
 const planBadgeVariant: Record<string, BadgeProps["variant"]> = {
   free: "secondary",
