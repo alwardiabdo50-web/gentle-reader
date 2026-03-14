@@ -276,6 +276,14 @@ Deno.serve(async (req) => {
 
   const model = body.model && ALLOWED_MODELS.includes(body.model) ? body.model : DEFAULT_MODEL;
 
+  // Plan gate — skip for scheduled jobs (service-role context)
+  if (!serviceCtx) {
+    const userPlan = await getUserPlan(ctx.userId);
+    if (!canAccessFeature(userPlan, "extract")) {
+      return json({ success: false, error: { code: "PLAN_REQUIRED", message: "AI Extract requires a Standard plan or above. Please upgrade." } }, 403);
+    }
+  }
+
   // Rate limit check
   const rateLimitError = await checkRateLimit(ctx.userId);
   if (rateLimitError) {

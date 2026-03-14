@@ -53,6 +53,20 @@ Deno.serve(async (req) => {
     const name = body.name?.trim();
     if (!name) return json({ success: false, error: "Name is required" }, 400);
 
+    // Plan gate: check API key limit
+    const userPlan = await getUserPlan(user.id);
+    const maxKeys = getMaxApiKeys(userPlan);
+    if (maxKeys !== -1) {
+      const { count } = await admin
+        .from("api_keys")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+      if ((count ?? 0) >= maxKeys) {
+        return json({ success: false, error: `Your ${userPlan} plan allows up to ${maxKeys} API keys. Please upgrade.` }, 403);
+      }
+    }
+
     const rawToken = `nc_live_${crypto.randomUUID().replace(/-/g, "").slice(0, 24)}`;
     const prefix = rawToken.slice(0, 13);
     const keyHash = await hashKey(rawToken);
