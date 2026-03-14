@@ -3,6 +3,7 @@ import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from ".
 import { getUserPlan, canAccessFeature } from "../_shared/plan-limits.ts";
 import { normalizeUrl } from "../_shared/crawl-utils.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
+import { getCreditCost } from "../_shared/credit-costs.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
