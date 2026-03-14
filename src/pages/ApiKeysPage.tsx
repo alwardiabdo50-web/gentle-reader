@@ -51,6 +51,8 @@ export default function ApiKeysPage() {
   const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
 
   const isOrgOwner = activeOrg?.role === "owner";
+  const activeKeys = keys.filter(k => k.is_active);
+  const atKeyLimit = maxKeys !== -1 && activeKeys.length >= maxKeys;
   const canManageKeys = !activeOrg || isOrgOwner;
 
   const fetchKeys = async () => {
