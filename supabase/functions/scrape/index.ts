@@ -238,8 +238,11 @@ Deno.serve(async (req) => {
     }
   }
 
+  // --- Dynamic credit cost ---
+  const scrapeCreditCost = await getCreditCost(getAdmin(), "scrape");
+
   // --- Quota check (only on cache miss) ---
-  const quotaError = await checkQuota(ctx.userId, 1);
+  const quotaError = await checkQuota(ctx.userId, scrapeCreditCost);
   if (quotaError) {
     console.warn(`Quota rejected: user=${ctx.userId} — ${quotaError.message}`);
     return json({
