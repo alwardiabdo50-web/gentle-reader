@@ -1,4 +1,5 @@
 import { useAdminOverview } from "@/hooks/useAdminData";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import {
   Users, Key, Zap, Bug, Coins, CheckCircle2, Brain, TrendingUp, TrendingDown,
