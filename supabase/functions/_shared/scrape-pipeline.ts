@@ -2,6 +2,21 @@ import { DOMParser } from "npm:linkedom@0.16.11";
 import { Readability } from "npm:@mozilla/readability@0.6.0";
 import TurndownService from "npm:turndown@7.2.0";
 
+export interface ScrapeAction {
+  type: "click" | "scroll" | "wait" | "type" | "press" | "screenshot";
+  selector?: string;
+  value?: string;
+  direction?: "up" | "down";
+  pixels?: number;
+  milliseconds?: number;
+  key?: string;
+}
+
+export interface ScrapeLocation {
+  country?: string;
+  languages?: string[];
+}
+
 export interface ScrapeRequest {
   url: string;
   formats?: string[];
@@ -15,6 +30,8 @@ export interface ScrapeRequest {
   cookies?: Array<{ name: string; value: string; domain?: string }>;
   proxy?: string | null;
   remove_selectors?: string[];
+  actions?: ScrapeAction[];
+  location?: ScrapeLocation;
 }
 
 export interface ScrapeResult {
