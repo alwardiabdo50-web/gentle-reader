@@ -1,11 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface ThemePalette {
+  light: Record<string, string>;
+  dark: Record<string, string>;
+}
+
 export interface SiteSettings {
   seo: { title: string; description: string; keywords: string; og_image: string };
   socials: { twitter: string; github: string; linkedin: string; discord: string; youtube: string };
   branding: { favicon_url: string; logo_url: string; hero_image_url: string };
   maintenance: { enabled: boolean; message: string };
+  theme: ThemePalette | null;
 }
 
 const defaults: SiteSettings = {
@@ -13,6 +19,7 @@ const defaults: SiteSettings = {
   socials: { twitter: "", github: "", linkedin: "", discord: "", youtube: "" },
   branding: { favicon_url: "", logo_url: "", hero_image_url: "" },
   maintenance: { enabled: false, message: "" },
+  theme: null,
 };
 
 export function useSiteSettings() {

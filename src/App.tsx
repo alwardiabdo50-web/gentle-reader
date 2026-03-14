@@ -48,12 +48,18 @@ import TermsPage from "@/pages/public/TermsPage";
 
 const queryClient = new QueryClient();
 
+function ThemeApplier() {
+  useThemeColors();
+  return null;
+}
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <ThemeApplier />
         <AuthProvider>
         <BrowserRouter>
           <Routes>

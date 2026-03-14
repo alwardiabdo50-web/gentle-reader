@@ -211,6 +211,9 @@ export default function AdminSettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="theme">
+          <ThemePaletteEditor />
+        </TabsContent>
       </Tabs>
     </div>
   );
