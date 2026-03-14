@@ -155,6 +155,64 @@ Deno.serve(async (req) => {
         });
       }
 
+      // ─── Credit Cost mutations ─────────────────────────────
+      if (postAction === "credit-cost-update") {
+        const { costId, ...fields } = body;
+        if (!costId) {
+          return new Response(JSON.stringify({ error: "costId required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const allowed = ["label", "base_cost", "plan_overrides", "is_addon", "sort_order", "is_active"];
+        const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        for (const key of allowed) {
+          if (key in fields) updateData[key] = fields[key];
+        }
+        const { error } = await admin.from("api_credit_costs").update(updateData).eq("id", costId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (postAction === "credit-cost-create") {
+        const { id, label, base_cost, plan_overrides, is_addon, sort_order } = body;
+        if (!id || !label) {
+          return new Response(JSON.stringify({ error: "id and label required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await admin.from("api_credit_costs").insert({
+          id,
+          label,
+          base_cost: base_cost ?? 1,
+          plan_overrides: plan_overrides ?? {},
+          is_addon: is_addon ?? false,
+          sort_order: sort_order ?? 0,
+        });
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (postAction === "credit-cost-delete") {
+        const { costId } = body;
+        if (!costId) {
+          return new Response(JSON.stringify({ error: "costId required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await admin.from("api_credit_costs").update({ is_active: false, updated_at: new Date().toISOString() }).eq("id", costId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       return new Response(JSON.stringify({ error: "Unknown action" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -163,7 +221,14 @@ Deno.serve(async (req) => {
 
     let result: Record<string, unknown> = {};
 
-    if (action === "plans") {
+    if (action === "credit-costs") {
+      const { data: costs, error } = await admin
+        .from("api_credit_costs")
+        .select("*")
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      result = { costs: costs ?? [] };
+    } else if (action === "plans") {
       const { data: plans, error } = await admin
         .from("plans")
         .select("*")
