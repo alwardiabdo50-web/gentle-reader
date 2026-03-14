@@ -17,7 +17,7 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(({ code, lan
   };
 
   return (
-    <div className="rounded-xl border border-border overflow-hidden bg-sidebar">
+    <div ref={ref} className="rounded-xl border border-border overflow-hidden bg-sidebar">
       {title && (
         <div className="flex items-center justify-between px-5 py-2.5 border-b border-border">
           <span className="text-xs font-mono text-muted-foreground">{title}</span>
@@ -35,4 +35,6 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(({ code, lan
       </pre>
     </div>
   );
-}
+});
+
+CodeBlock.displayName = "CodeBlock";
