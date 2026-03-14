@@ -45,7 +45,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                 <NavLink
                   to={item.url}
                   end={item.url === "/admin"}
-                  className="flex items-center justify-center p-2 rounded-lg text-foreground/70 hover:bg-accent hover:text-foreground transition-colors duration-150"
+                  className="flex items-center justify-center p-2.5 rounded-lg text-foreground/70 hover:bg-accent hover:text-foreground transition-colors duration-150"
                   activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                   onClick={onNavigate}
                 >
