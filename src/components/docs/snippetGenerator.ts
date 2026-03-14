@@ -1,4 +1,4 @@
-const BASE = "https://moeegphrlhtuovqtgrci.supabase.co/functions/v1";
+const BASE = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "ltaeqlnikprpodhwmzdn"}.supabase.co/functions/v1`;
 
 export type Lang = "curl" | "python" | "nodejs";
 

@@ -12,6 +12,21 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-api-key, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+interface ScrapeAction {
+  type: "click" | "scroll" | "wait" | "type" | "press" | "screenshot";
+  selector?: string;
+  value?: string;
+  direction?: "up" | "down";
+  pixels?: number;
+  milliseconds?: number;
+  key?: string;
+}
+
+interface ScrapeLocation {
+  country?: string;
+  languages?: string[];
+}
+
 interface ScrapeRequest {
   url: string;
   formats?: string[];
@@ -26,6 +41,8 @@ interface ScrapeRequest {
   proxy?: string | null;
   remove_selectors?: string[];
   cache_ttl?: number;
+  actions?: ScrapeAction[];
+  location?: ScrapeLocation;
 }
 
 interface ScrapeResult {
@@ -162,6 +179,8 @@ Deno.serve(async (req) => {
     cookies: body.cookies ?? [],
     proxy: body.proxy ?? null,
     remove_selectors: body.remove_selectors ?? [],
+    actions: body.actions ?? [],
+    location: body.location ?? undefined,
   };
 
   const cacheTtl = typeof body.cache_ttl === "number" ? Math.max(0, Math.floor(body.cache_ttl)) : 3600;
@@ -380,6 +399,7 @@ Deno.serve(async (req) => {
       ...(result.metadata !== undefined && { metadata: result.metadata }),
       ...(result.links !== undefined && { links: result.links }),
       ...(result.screenshot_url !== undefined && { screenshot_url: result.screenshot_url }),
+      ...(result.branding !== undefined && { branding: result.branding }),
       timings: result.timings,
       warnings: result.warnings,
     },

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database, GitBranch, History, Save, Share2, ChevronDown, ChevronRight, Trash2, X, Lock as LockIcon, FileText } from "lucide-react";
+import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database, GitBranch, History, Save, Share2, ChevronDown, ChevronRight, Trash2, X, Lock as LockIcon, FileText, Search, Palette, Plus, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCredits } from "@/hooks/useCredits";
@@ -18,7 +18,7 @@ import { canAccessFeature } from "@/lib/plan-limits";
 import { toast } from "sonner";
 import type { ScrapeResponse } from "@/lib/api/scrape";
 
-type Mode = "scrape" | "batch" | "crawl" | "map" | "extract" | "pipeline";
+type Mode = "scrape" | "batch" | "crawl" | "map" | "extract" | "pipeline" | "search";
 
 interface HistoryEntry {
   mode: Mode;
@@ -87,6 +87,22 @@ export default function PlaygroundPage() {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [batchSelectedIdx, setBatchSelectedIdx] = useState(0);
   const [cacheTtl, setCacheTtl] = useState(searchParams.get("cacheTtl") || "3600");
+
+  // Search options
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("searchQuery") || "");
+  const [searchLimit, setSearchLimit] = useState(searchParams.get("searchLimit") || "5");
+  const [searchLang, setSearchLang] = useState(searchParams.get("searchLang") || "en");
+  const [searchCountry, setSearchCountry] = useState(searchParams.get("searchCountry") || "us");
+
+  // Actions
+  const [actions, setActions] = useState<Array<{ type: string; selector?: string; value?: string; milliseconds?: number }>>([]);
+
+  // Branding format
+  const [includeBranding, setIncludeBranding] = useState(false);
+
+  // Location / geo-targeting
+  const [locationCountry, setLocationCountry] = useState("");
+  const [locationLanguages, setLocationLanguages] = useState("");
 
   // Crawl options
   const [maxPages, setMaxPages] = useState(searchParams.get("maxPages") || "50");
@@ -273,7 +289,9 @@ export default function PlaygroundPage() {
   };
 
   const handleRun = async () => {
-    if (mode === "batch") {
+    if (mode === "search") {
+      if (!searchQuery.trim() || !apiKey) return;
+    } else if (mode === "batch") {
       const urls = parseBatchUrls();
       if (urls.length === 0 || !apiKey) return;
     } else {
@@ -288,14 +306,25 @@ export default function PlaygroundPage() {
       let body: Record<string, unknown>;
 
       switch (mode) {
+        case "search":
+          functionName = "search";
+          body = {
+            query: searchQuery,
+            limit: Number(searchLimit),
+            lang: searchLang,
+            country: searchCountry,
+          };
+          break;
         case "scrape":
           functionName = "scrape";
           body = {
             url,
-            formats: ["markdown", "html", "metadata", "links"],
+            formats: ["markdown", "html", "metadata", "links", ...(includeBranding ? ["branding"] : [])],
             render_javascript: renderJs,
             only_main_content: mainContent,
-            cache_ttl: Number(cacheTtl)
+            cache_ttl: Number(cacheTtl),
+            ...(actions.length > 0 && { actions }),
+            ...(locationCountry && { location: { country: locationCountry, languages: locationLanguages ? locationLanguages.split(",").map(l => l.trim()) : undefined } }),
           };
           break;
         case "batch":
@@ -397,11 +426,13 @@ export default function PlaygroundPage() {
         setPreviousUrl(url);
 
         setResult(data);
-        if (mode === "batch") setResultTab("markdown");
+        if (mode === "search") setResultTab("json");
+        else if (mode === "batch") setResultTab("markdown");
         else if (mode === "map") setResultTab("json");
         else if (mode === "extract") setResultTab("extracted");
         else if (mode === "crawl") setResultTab("json");
         else if (mode === "pipeline") setResultTab("pipeline");
+        else if (mode === "scrape" && data?.data?.branding) setResultTab("branding");
         else setResultTab("markdown");
 
         // Save to history
@@ -438,6 +469,7 @@ export default function PlaygroundPage() {
     map: <Map className="h-4 w-4" />,
     extract: <Brain className="h-4 w-4" />,
     pipeline: <GitBranch className="h-4 w-4" />,
+    search: <Search className="h-4 w-4" />,
   };
 
   const d = result?.data;
@@ -594,7 +626,7 @@ export default function PlaygroundPage() {
 
       {/* Mode selector */}
       <div className="flex gap-2 flex-wrap">
-        {(["scrape", "batch", "crawl", "map", "extract", "pipeline"] as Mode[]).map((m) => {
+        {(["scrape", "batch", "crawl", "map", "extract", "pipeline", "search"] as Mode[]).map((m) => {
           const locked = (m === "extract" || m === "pipeline") && !extractAllowed;
           return (
             <Button
@@ -615,7 +647,72 @@ export default function PlaygroundPage() {
 
       {/* Input section */}
       <div className="rounded-lg border border-border p-5 bg-card space-y-4">
-        {mode === "batch" ?
+        {mode === "search" ?
+        <div className="space-y-3">
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Label htmlFor="search-query" className="text-xs text-muted-foreground mb-1.5 block">Search Query</Label>
+                <Input
+                  id="search-query"
+                  placeholder="Best web scraping tools 2026"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="text-sm"
+                  onKeyDown={(e) => e.key === "Enter" && handleRun()} />
+              </div>
+              <div className="flex items-end">
+                <Button onClick={handleRun} disabled={loading || !searchQuery.trim() || !apiKey} className="gap-2">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  {loading ? "Searching..." : "Search"}
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Results</Label>
+                <Select value={searchLimit} onValueChange={setSearchLimit}>
+                  <SelectTrigger className="w-16 h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3</SelectItem>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Language</Label>
+                <Select value={searchLang} onValueChange={setSearchLang}>
+                  <SelectTrigger className="w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">en</SelectItem>
+                    <SelectItem value="es">es</SelectItem>
+                    <SelectItem value="fr">fr</SelectItem>
+                    <SelectItem value="de">de</SelectItem>
+                    <SelectItem value="pt">pt</SelectItem>
+                    <SelectItem value="ja">ja</SelectItem>
+                    <SelectItem value="zh">zh</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Country</Label>
+                <Select value={searchCountry} onValueChange={setSearchCountry}>
+                  <SelectTrigger className="w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="us">US</SelectItem>
+                    <SelectItem value="gb">UK</SelectItem>
+                    <SelectItem value="de">DE</SelectItem>
+                    <SelectItem value="fr">FR</SelectItem>
+                    <SelectItem value="br">BR</SelectItem>
+                    <SelectItem value="jp">JP</SelectItem>
+                    <SelectItem value="in">IN</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div> :
+        mode === "batch" ?
         <div>
             <Label htmlFor="batch-urls" className="text-xs text-muted-foreground mb-1.5 block">
               URLs (one per line, max 100)
@@ -733,6 +830,81 @@ export default function PlaygroundPage() {
             </div>
           }
         </div>
+
+        {/* Scrape advanced options: branding, actions, location */}
+        {mode === "scrape" &&
+        <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1 px-0">
+                <ChevronRight className="h-3 w-3" /> Advanced options
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-3 border-t border-border mt-2">
+              {/* Branding */}
+              <div className="flex items-center gap-2">
+                <Switch id="branding" checked={includeBranding} onCheckedChange={setIncludeBranding} />
+                <Label htmlFor="branding" className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Palette className="h-3.5 w-3.5" /> Extract branding (colors, fonts, logos)
+                </Label>
+              </div>
+
+              {/* Location */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Country</Label>
+                  <Input placeholder="us" value={locationCountry} onChange={e => setLocationCountry(e.target.value)} className="w-20 h-8 text-xs" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Languages</Label>
+                  <Input placeholder="en, es" value={locationLanguages} onChange={e => setLocationLanguages(e.target.value)} className="w-32 h-8 text-xs" />
+                </div>
+              </div>
+
+              {/* Actions builder */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">Pre-scrape Actions</Label>
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => setActions(prev => [...prev, { type: "wait", milliseconds: 2000 }])}>
+                    <Plus className="h-3 w-3" /> Add Action
+                  </Button>
+                </div>
+                {actions.map((action, idx) => (
+                  <div key={idx} className="flex items-center gap-2 rounded border border-border p-2 bg-muted/30">
+                    <Select value={action.type} onValueChange={v => setActions(prev => prev.map((a, i) => i === idx ? { ...a, type: v } : a))}>
+                      <SelectTrigger className="w-24 h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="click">Click</SelectItem>
+                        <SelectItem value="wait">Wait</SelectItem>
+                        <SelectItem value="scroll">Scroll</SelectItem>
+                        <SelectItem value="type">Type</SelectItem>
+                        <SelectItem value="press">Press</SelectItem>
+                        <SelectItem value="screenshot">Screenshot</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {(action.type === "click" || action.type === "type") && (
+                      <Input placeholder="CSS selector" value={action.selector ?? ""} onChange={e => setActions(prev => prev.map((a, i) => i === idx ? { ...a, selector: e.target.value } : a))} className="flex-1 h-7 text-xs" />
+                    )}
+                    {action.type === "type" && (
+                      <Input placeholder="Text to type" value={action.value ?? ""} onChange={e => setActions(prev => prev.map((a, i) => i === idx ? { ...a, value: e.target.value } : a))} className="flex-1 h-7 text-xs" />
+                    )}
+                    {action.type === "wait" && (
+                      <Input type="number" placeholder="ms" value={action.milliseconds ?? ""} onChange={e => setActions(prev => prev.map((a, i) => i === idx ? { ...a, milliseconds: Number(e.target.value) } : a))} className="w-24 h-7 text-xs" />
+                    )}
+                    {action.type === "press" && (
+                      <Input placeholder="Key (Enter, Escape)" value={action.value ?? ""} onChange={e => setActions(prev => prev.map((a, i) => i === idx ? { ...a, value: e.target.value } : a))} className="flex-1 h-7 text-xs" />
+                    )}
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setActions(prev => prev.filter((_, i) => i !== idx))}>
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+                {actions.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground">⚠ Actions require JavaScript rendering. Without a browser runtime, actions will be recorded but not executed.</p>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        }
 
         {mode === "extract" &&
         <div className="space-y-3 pt-2 border-t border-border">
@@ -1068,8 +1240,38 @@ export default function PlaygroundPage() {
         </div>
       }
 
+      {/* Search Results */}
+      {mode === "search" && result?.success && Array.isArray(result.data) &&
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">{result.meta?.total_results ?? result.data.length} results</span>
+              <span className="text-xs font-mono text-muted-foreground">{result.meta?.duration_ms}ms</span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs">
+              <Copy className="h-3 w-3" />
+              {copied ? "Copied!" : "Copy JSON"}
+            </Button>
+          </div>
+          <div className="divide-y divide-border">
+            {result.data.map((item: any, idx: number) => (
+              <div key={idx} className="px-4 py-3 space-y-1">
+                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline">{item.title}</a>
+                <p className="text-xs font-mono text-muted-foreground truncate">{item.url}</p>
+                <p className="text-xs text-foreground">{item.description}</p>
+              </div>
+            ))}
+          </div>
+          <div className="px-4 py-3 border-t border-border flex gap-6 text-xs text-muted-foreground">
+            <span>Credits: {result.meta?.credits_used}</span>
+            {result.meta?.job_id && <span className="font-mono">{result.meta.job_id.slice(0, 8)}…</span>}
+          </div>
+        </div>
+      }
+
       {/* Single-item Results (scrape, crawl, map, extract) */}
-      {d && !isBatchResult && mode !== "pipeline" &&
+      {d && !isBatchResult && mode !== "pipeline" && mode !== "search" &&
       <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-3">
@@ -1126,6 +1328,11 @@ export default function PlaygroundPage() {
                 {mode === "scrape" && diffLines &&
               <TabsTrigger value="diff" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Diff</TabsTrigger>
               }
+                {mode === "scrape" && d.branding &&
+              <TabsTrigger value="branding" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">
+                <Palette className="h-3 w-3 mr-1 inline" />Branding
+              </TabsTrigger>
+              }
                 {mode === "extract" && d.extracted &&
               <TabsTrigger value="extracted" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Extracted</TabsTrigger>
               }
@@ -1169,6 +1376,60 @@ export default function PlaygroundPage() {
                       {line.text}
                     </div>
                   ))}
+                </div>
+              </TabsContent>
+           }
+            {mode === "scrape" && d.branding &&
+          <TabsContent value="branding" className="p-4 m-0 space-y-4">
+                <div className="space-y-3">
+                  {/* Colors */}
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Colors</p>
+                    {d.branding.colors.theme_color && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-5 h-5 rounded border border-border" style={{ backgroundColor: d.branding.colors.theme_color }} />
+                        <span className="text-xs font-mono">{d.branding.colors.theme_color}</span>
+                        <span className="text-[10px] text-muted-foreground">theme-color</span>
+                      </div>
+                    )}
+                    {d.branding.colors.dominant.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {d.branding.colors.dominant.map((c: string, i: number) => (
+                          <div key={i} className="flex items-center gap-1.5 text-xs">
+                            <div className="w-4 h-4 rounded border border-border" style={{ backgroundColor: c }} />
+                            <code className="font-mono text-[10px]">{c}</code>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {/* Fonts */}
+                  {d.branding.fonts.families.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Fonts</p>
+                      <div className="flex flex-wrap gap-2">
+                        {d.branding.fonts.families.map((f: string, i: number) => (
+                          <span key={i} className="text-xs px-2 py-1 rounded border border-border bg-muted/30">{f}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Logos */}
+                  {(d.branding.logos.favicon || d.branding.logos.og_image || d.branding.logos.detected.length > 0) && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Logos & Icons</p>
+                      <div className="space-y-1">
+                        {d.branding.logos.favicon && <p className="text-xs font-mono truncate">Favicon: {d.branding.logos.favicon}</p>}
+                        {d.branding.logos.og_image && <p className="text-xs font-mono truncate">OG Image: {d.branding.logos.og_image}</p>}
+                        {d.branding.logos.detected.map((l: string, i: number) => <p key={i} className="text-xs font-mono truncate">Logo: {l}</p>)}
+                      </div>
+                    </div>
+                  )}
+                  {/* Full JSON */}
+                  <details>
+                    <summary className="text-xs text-muted-foreground cursor-pointer">Raw branding JSON</summary>
+                    <pre className="text-xs font-mono text-secondary-foreground whitespace-pre-wrap mt-2">{JSON.stringify(d.branding, null, 2)}</pre>
+                  </details>
                 </div>
               </TabsContent>
           }

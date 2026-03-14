@@ -48,12 +48,13 @@ export default function DocsPage() {
         <h2 className="text-lg font-semibold">Endpoints</h2>
 
         <Tabs defaultValue="scrape">
-          <TabsList className="bg-muted/50 border border-border">
+          <TabsList className="bg-muted/50 border border-border flex-wrap">
             <TabsTrigger value="scrape" className="text-xs">Scrape</TabsTrigger>
             <TabsTrigger value="crawl" className="text-xs">Crawl</TabsTrigger>
             <TabsTrigger value="map" className="text-xs">Map</TabsTrigger>
             <TabsTrigger value="extract" className="text-xs">Extract</TabsTrigger>
             <TabsTrigger value="pipeline" className="text-xs">Pipeline</TabsTrigger>
+            <TabsTrigger value="search" className="text-xs">Search</TabsTrigger>
             <TabsTrigger value="usage" className="text-xs">Usage</TabsTrigger>
           </TabsList>
 
@@ -65,17 +66,39 @@ export default function DocsPage() {
             </div>
             <ParamsTable params={[
               { name: "url", type: "string", default: "required", desc: "Target URL to scrape" },
-              { name: "formats", type: "string[]", default: '["markdown"]', desc: "Output formats: markdown, html, metadata, links" },
+              { name: "formats", type: "string[]", default: '["markdown"]', desc: "Output formats: markdown, html, metadata, links, branding" },
               { name: "render_javascript", type: "boolean", default: "true", desc: "Enable JS rendering" },
               { name: "only_main_content", type: "boolean", default: "true", desc: "Strip nav/footer" },
               { name: "screenshot", type: "boolean", default: "false", desc: "Capture screenshot" },
               { name: "timeout_ms", type: "number", default: "30000", desc: "Request timeout (max 60000)" },
+              { name: "actions", type: "object[]", default: "[]", desc: "Pre-scrape browser actions (click, scroll, wait, type, press)" },
+              { name: "location", type: "object", default: "—", desc: "Geo-targeting: { country, languages[] }" },
             ]} />
             <LanguageSnippet snippets={snippets("POST", "/scrape", {
               url: "https://example.com",
               formats: ["markdown", "html", "metadata", "links"],
               render_javascript: true,
               only_main_content: true,
+            }, apiKey)} />
+            <p className="text-xs font-medium mt-4">With branding extraction:</p>
+            <LanguageSnippet snippets={snippets("POST", "/scrape", {
+              url: "https://example.com",
+              formats: ["markdown", "branding"],
+            }, apiKey)} />
+            <p className="text-xs font-medium mt-4">With actions:</p>
+            <LanguageSnippet snippets={snippets("POST", "/scrape", {
+              url: "https://example.com",
+              formats: ["markdown"],
+              actions: [
+                { type: "wait", milliseconds: 2000 },
+                { type: "click", selector: "#load-more" },
+                { type: "scroll", direction: "down", pixels: 500 },
+              ],
+            }, apiKey)} />
+            <p className="text-xs font-medium mt-4">With geo-targeting:</p>
+            <LanguageSnippet snippets={snippets("POST", "/scrape", {
+              url: "https://example.com",
+              location: { country: "de", languages: ["de", "en"] },
             }, apiKey)} />
           </TabsContent>
 
@@ -184,6 +207,26 @@ export default function DocsPage() {
               { name: "transform.prompt", type: "string", default: "—", desc: "Transform/reformat prompt" },
               { name: "transform.model", type: "string", default: "gemini-3-flash", desc: "AI model for transform" },
             ]} />
+          </TabsContent>
+
+          {/* Search */}
+          <TabsContent value="search" className="space-y-4 mt-4">
+            <div>
+              <h3 className="text-sm font-semibold">POST /v1/search</h3>
+              <p className="text-xs text-muted-foreground mt-1">Search the web and get structured results. Costs <strong>1 credit</strong>.</p>
+            </div>
+            <ParamsTable params={[
+              { name: "query", type: "string", default: "required", desc: "Search query string" },
+              { name: "limit", type: "number", default: "5", desc: "Number of results (1-20)" },
+              { name: "lang", type: "string", default: '"en"', desc: "Language code (en, es, fr, de, etc.)" },
+              { name: "country", type: "string", default: '"us"', desc: "Country code (us, gb, de, fr, etc.)" },
+            ]} />
+            <LanguageSnippet snippets={snippets("POST", "/search", {
+              query: "best web scraping tools 2026",
+              limit: 5,
+              lang: "en",
+              country: "us",
+            }, apiKey)} />
           </TabsContent>
 
           {/* Usage */}
