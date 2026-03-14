@@ -181,6 +181,9 @@ export async function performScrape(req: ScrapeRequest): Promise<ScrapeResult> {
   if (req.proxy) {
     warnings.push("Proxy requested but is not supported in this runtime.");
   }
+  if (req.actions && req.actions.length > 0) {
+    warnings.push("Actions (click, scroll, type, etc.) require JavaScript rendering which is not supported in this runtime. Actions were recorded but not executed.");
+  }
 
   // --- Fetch ---
   const navStart = Date.now();
