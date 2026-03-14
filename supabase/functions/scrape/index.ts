@@ -179,6 +179,8 @@ Deno.serve(async (req) => {
     cookies: body.cookies ?? [],
     proxy: body.proxy ?? null,
     remove_selectors: body.remove_selectors ?? [],
+    actions: body.actions ?? [],
+    location: body.location ?? undefined,
   };
 
   const cacheTtl = typeof body.cache_ttl === "number" ? Math.max(0, Math.floor(body.cache_ttl)) : 3600;
