@@ -195,7 +195,7 @@ Deno.serve(async (req) => {
         .from("scrape_jobs")
         .insert({
           user_id: ctx.userId,
-          api_key_id: ctx.apiKeyId,
+          api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
           url: normalizedUrl,
           mode: "scrape",
           status: "completed",
@@ -254,7 +254,7 @@ Deno.serve(async (req) => {
     .from("scrape_jobs")
     .insert({
       user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId,
+      api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
       url: scrapeReq.url,
       mode: "scrape",
       status: "running",

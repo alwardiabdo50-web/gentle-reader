@@ -94,7 +94,7 @@ async function handleCreateCrawl(req: Request, ctx: { userId: string; apiKeyId: 
     .from("crawl_jobs")
     .insert({
       user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId,
+      api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
       root_url: body.url as string,
       normalized_root_url: normalizedRootUrl,
       status: "queued",
