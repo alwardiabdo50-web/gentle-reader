@@ -194,6 +194,14 @@ export async function performScrape(req: ScrapeRequest): Promise<ScrapeResult> {
   const headers = new Headers(req.headers ?? {});
   if (!headers.has("accept")) headers.set("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
   if (!headers.has("user-agent")) headers.set("user-agent", pickUserAgent());
+
+  // Geo-targeting: set Accept-Language from location
+  if (req.location?.languages && req.location.languages.length > 0 && !headers.has("accept-language")) {
+    headers.set("accept-language", req.location.languages.join(", "));
+  } else if (req.location?.country && !headers.has("accept-language")) {
+    headers.set("accept-language", `${req.location.country}`);
+  }
+
   const cookieHeader = buildCookieHeader(req.cookies);
   if (cookieHeader && !headers.has("cookie")) headers.set("cookie", cookieHeader);
 
