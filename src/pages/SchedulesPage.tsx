@@ -309,7 +309,7 @@ function SchedulesPageContent() {
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground mt-2">
-                    {s.run_count} runs · Created {format(new Date(s.created_at), "MMM d, yyyy")}
+                    {s.run_count} runs · Created {format(new Date(s.created_at), "MMM d, yyyy HH:mm:ss")}
                   </p>
                 </CardContent>
               </Card>

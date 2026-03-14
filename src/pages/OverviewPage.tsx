@@ -189,7 +189,7 @@ export default function OverviewPage() {
                     <td className="px-4 py-2.5 truncate max-w-[280px] text-foreground">{job.url}</td>
                     <td className="px-4 py-2.5"><Badge variant="secondary">{job.mode}</Badge></td>
                     <td className="px-4 py-2.5"><Badge variant={statusVariant(job.status)}>{job.status}</Badge></td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{new Date(job.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{new Date(job.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })}</td>
                   </tr>
                 ))}
               </tbody>

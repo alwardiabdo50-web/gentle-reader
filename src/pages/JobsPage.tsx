@@ -163,7 +163,7 @@ export default function JobsPage() {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
   const formatDuration = (ms: number | null) => {
     if (!ms) return "—";
