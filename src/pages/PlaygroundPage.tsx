@@ -289,7 +289,9 @@ export default function PlaygroundPage() {
   };
 
   const handleRun = async () => {
-    if (mode === "batch") {
+    if (mode === "search") {
+      if (!searchQuery.trim() || !apiKey) return;
+    } else if (mode === "batch") {
       const urls = parseBatchUrls();
       if (urls.length === 0 || !apiKey) return;
     } else {
