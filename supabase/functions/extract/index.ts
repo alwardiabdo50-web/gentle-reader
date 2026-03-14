@@ -2,6 +2,7 @@ import { extractApiKey, validateApiKey, authenticateServiceRole } from "../_shar
 import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from "../_shared/billing.ts";
 import { getUserPlan, canAccessFeature } from "../_shared/plan-limits.ts";
 import { normalizeUrl } from "../_shared/crawl-utils.ts";
+import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
 import { getCreditCost } from "../_shared/credit-costs.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -69,30 +70,36 @@ async function validateModel(admin: ReturnType<typeof getAdmin>, requestedModel:
   return { model, modelCreditCost: 0 };
 }
 
-// ─── Scrape pipeline reuse (mock) ────────────────────────────
-async function scrapeForExtraction(url: string, admin: ReturnType<typeof getAdmin>, userId: string, apiKeyId: string): Promise<{
+// ─── Real scrape for extraction ──────────────────────────────
+async function scrapeForExtraction(url: string, admin: ReturnType<typeof getAdmin>, userId: string, apiKeyId: string, onlyMainContent = true): Promise<{
   scrapeJobId: string | null;
   title: string;
   markdown: string;
 }> {
-  const domain = new URL(url).hostname;
-  const title = `${domain} — Page`;
-  const markdown = `# ${title}\n\nThis is mock content from **${url}**.\n\nProduct: Example Widget\nPrice: $29.99\nCurrency: USD\nRating: 4.5/5\nAvailability: In Stock\n\nFeatures:\n- Durable construction\n- Lightweight design\n- 2-year warranty\n\n> Mock mode — connect a real browser for live scraping.`;
+  const scrapeResult = await performScrape({
+    url,
+    formats: ["markdown"],
+    only_main_content: onlyMainContent,
+  });
+
+  const title = scrapeResult.title || new URL(url).hostname;
+  const markdown = scrapeResult.markdown || "";
 
   const { data: job, error } = await admin
     .from("scrape_jobs")
     .insert({
       user_id: userId,
-      api_key_id: apiKeyId,
+      api_key_id: apiKeyId === "scheduled" ? null : apiKeyId,
       url,
       mode: "extract",
       status: "completed",
       title,
       markdown,
-      final_url: url,
-      http_status_code: 200,
-      duration_ms: 200,
-      credits_used: EXTRACTION_CREDIT_COST_FALLBACK,
+      final_url: scrapeResult.final_url || url,
+      http_status_code: scrapeResult.status_code,
+      duration_ms: scrapeResult.timings.total_ms,
+      credits_used: 0,
+      warnings_json: scrapeResult.warnings,
     })
     .select("id")
     .single();
@@ -365,7 +372,7 @@ Deno.serve(async (req) => {
 
   try {
     // Step 1: Scrape
-    const scrapeResult = await scrapeForExtraction(normalizedUrl, admin, ctx.userId, ctx.apiKeyId);
+    const scrapeResult = await scrapeForExtraction(normalizedUrl, admin, ctx.userId, ctx.apiKeyId, body.only_main_content !== false);
 
     await admin.from("extraction_jobs").update({
       scrape_job_id: scrapeResult.scrapeJobId || null,
