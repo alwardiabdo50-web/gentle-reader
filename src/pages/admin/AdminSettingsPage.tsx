@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminSettings, useAdminSettingsMutations } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, Search, Share2, Palette, AlertTriangle } from "lucide-react";
+import { Loader2, Upload, Search, Share2, Palette, AlertTriangle, Paintbrush } from "lucide-react";
+import ThemePaletteEditor from "@/components/admin/ThemePaletteEditor";
 
 export default function AdminSettingsPage() {
   const { data, isLoading } = useAdminSettings();
