@@ -38,6 +38,7 @@ import AdminPlansPage from "@/pages/admin/AdminPlansPage";
 import AdminCreditCostsPage from "@/pages/admin/AdminCreditCostsPage";
 import AdminChangelogPage from "@/pages/admin/AdminChangelogPage";
 import AdminSettingsPage from "@/pages/admin/AdminSettingsPage";
+import AdminModelsPage from "@/pages/admin/AdminModelsPage";
 import PublicDocsPage from "@/pages/public/PublicDocsPage";
 import ContactPage from "@/pages/public/ContactPage";
 import ChangelogPage from "@/pages/public/ChangelogPage";
