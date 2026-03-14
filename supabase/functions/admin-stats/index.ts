@@ -537,6 +537,14 @@ Deno.serve(async (req) => {
       if (exportError) throw exportError;
 
       result = { contacts: contacts ?? [] };
+    } else if (action === "settings") {
+      const { data: settings, error } = await admin
+        .from("site_settings")
+        .select("*");
+      if (error) throw error;
+      const settingsMap: Record<string, unknown> = {};
+      settings?.forEach((s: { key: string; value: unknown }) => { settingsMap[s.key] = s.value; });
+      result = { settings: settingsMap };
     } else if (action === "changelog") {
       const { data: entries, error } = await admin
         .from("changelog_entries")
