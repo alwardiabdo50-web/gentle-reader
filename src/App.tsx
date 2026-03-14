@@ -81,6 +81,7 @@ const App = () => (
                       <Route path="/plans" element={<AdminPlansPage />} />
                       <Route path="/credit-costs" element={<AdminCreditCostsPage />} />
                       <Route path="/changelog" element={<AdminChangelogPage />} />
+                      <Route path="/settings" element={<AdminSettingsPage />} />
                     </Routes>
                   </AdminLayout>
                 </AdminProtectedRoute>
