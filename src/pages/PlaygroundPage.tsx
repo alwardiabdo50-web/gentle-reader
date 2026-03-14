@@ -840,13 +840,14 @@ export default function PlaygroundPage() {
             <div className="flex items-center gap-2">
               <Label className="text-xs text-muted-foreground">Model</Label>
               <Select value={pipelineModel} onValueChange={setPipelineModel}>
-                <SelectTrigger className="w-56 h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-64 h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash (fast)</SelectItem>
-                  <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-                  <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
-                  <SelectItem value="openai/gpt-5-mini">GPT-5 Mini</SelectItem>
-                  <SelectItem value="openai/gpt-5">GPT-5</SelectItem>
+                  {grouped.free.length > 0 && <SelectItem value="__free_header_p" disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Free — 0 credits</SelectItem>}
+                  {grouped.free.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                  {grouped.cheaper.length > 0 && <SelectItem value="__cheaper_header_p" disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Cheaper — 2 credits</SelectItem>}
+                  {grouped.cheaper.map(m => <SelectItem key={m.id} value={m.id} disabled={!canUseModel(m.id)}>{m.name}{!canUseModel(m.id) ? " 🔒" : ""}</SelectItem>)}
+                  {grouped.expensive.length > 0 && <SelectItem value="__expensive_header_p" disabled className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Expensive — 5 credits</SelectItem>}
+                  {grouped.expensive.map(m => <SelectItem key={m.id} value={m.id} disabled={!canUseModel(m.id)}>{m.name}{!canUseModel(m.id) ? " 🔒" : ""}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
