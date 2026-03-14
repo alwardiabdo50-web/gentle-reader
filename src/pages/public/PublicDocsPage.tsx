@@ -3,6 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { generateSnippet, type Lang } from "@/components/docs/snippetGenerator";
 import { LanguageSnippet } from "@/components/docs/LanguageSnippet";
 import { ParamsTable } from "@/components/docs/ParamsTable";
+import { PlansTable } from "@/components/docs/PlansTable";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,15 +58,17 @@ export default function PublicDocsPage() {
         <h2 className="text-lg font-semibold">Endpoints</h2>
 
         <Tabs defaultValue="scrape">
-          <TabsList className="bg-muted/50 border border-border">
+          <TabsList className="bg-muted/50 border border-border flex-wrap">
             <TabsTrigger value="scrape" className="text-xs">Scrape</TabsTrigger>
             <TabsTrigger value="crawl" className="text-xs">Crawl</TabsTrigger>
             <TabsTrigger value="map" className="text-xs">Map</TabsTrigger>
             <TabsTrigger value="extract" className="text-xs">Extract</TabsTrigger>
             <TabsTrigger value="pipeline" className="text-xs">Pipeline</TabsTrigger>
+            <TabsTrigger value="search" className="text-xs">Search</TabsTrigger>
             <TabsTrigger value="usage" className="text-xs">Usage</TabsTrigger>
           </TabsList>
 
+          {/* Scrape */}
           <TabsContent value="scrape" className="space-y-4 mt-4">
             <div>
               <h3 className="text-sm font-semibold">POST /v1/scrape</h3>
@@ -73,11 +76,13 @@ export default function PublicDocsPage() {
             </div>
             <ParamsTable params={[
               { name: "url", type: "string", default: "required", desc: "Target URL to scrape" },
-              { name: "formats", type: "string[]", default: '["markdown"]', desc: "Output formats: markdown, html, metadata, links" },
+              { name: "formats", type: "string[]", default: '["markdown"]', desc: "Output formats: markdown, html, metadata, links, branding" },
               { name: "render_javascript", type: "boolean", default: "true", desc: "Enable JS rendering" },
               { name: "only_main_content", type: "boolean", default: "true", desc: "Strip nav/footer" },
               { name: "screenshot", type: "boolean", default: "false", desc: "Capture screenshot" },
               { name: "timeout_ms", type: "number", default: "30000", desc: "Request timeout (max 60000)" },
+              { name: "actions", type: "object[]", default: "[]", desc: "Pre-scrape browser actions (click, scroll, wait, type, press)" },
+              { name: "location", type: "object", default: "—", desc: "Geo-targeting: { country, languages[] }" },
             ]} />
             <LanguageSnippet snippets={snippets("POST", "/scrape", {
               url: "https://example.com",
@@ -85,8 +90,29 @@ export default function PublicDocsPage() {
               render_javascript: true,
               only_main_content: true,
             })} />
+            <p className="text-xs font-medium mt-4">With branding extraction:</p>
+            <LanguageSnippet snippets={snippets("POST", "/scrape", {
+              url: "https://example.com",
+              formats: ["markdown", "branding"],
+            })} />
+            <p className="text-xs font-medium mt-4">With actions:</p>
+            <LanguageSnippet snippets={snippets("POST", "/scrape", {
+              url: "https://example.com",
+              formats: ["markdown"],
+              actions: [
+                { type: "wait", milliseconds: 2000 },
+                { type: "click", selector: "#load-more" },
+                { type: "scroll", direction: "down", pixels: 500 },
+              ],
+            })} />
+            <p className="text-xs font-medium mt-4">With geo-targeting:</p>
+            <LanguageSnippet snippets={snippets("POST", "/scrape", {
+              url: "https://example.com",
+              location: { country: "de", languages: ["de", "en"] },
+            })} />
           </TabsContent>
 
+          {/* Crawl */}
           <TabsContent value="crawl" className="space-y-4 mt-4">
             <div>
               <h3 className="text-sm font-semibold">POST /v1/crawl</h3>
@@ -113,6 +139,7 @@ export default function PublicDocsPage() {
             <LanguageSnippet snippets={snippets("GET", "/crawl/<job_id>", undefined)} />
           </TabsContent>
 
+          {/* Map */}
           <TabsContent value="map" className="space-y-4 mt-4">
             <div>
               <h3 className="text-sm font-semibold">POST /v1/map</h3>
@@ -126,6 +153,7 @@ export default function PublicDocsPage() {
             })} />
           </TabsContent>
 
+          {/* Extract */}
           <TabsContent value="extract" className="space-y-4 mt-4">
             <div>
               <h3 className="text-sm font-semibold">POST /v1/extract</h3>
@@ -155,6 +183,7 @@ export default function PublicDocsPage() {
             })} />
           </TabsContent>
 
+          {/* Pipeline */}
           <TabsContent value="pipeline" className="space-y-4 mt-4">
             <div>
               <h3 className="text-sm font-semibold">POST /v1/pipeline</h3>
@@ -190,6 +219,27 @@ export default function PublicDocsPage() {
             ]} />
           </TabsContent>
 
+          {/* Search */}
+          <TabsContent value="search" className="space-y-4 mt-4">
+            <div>
+              <h3 className="text-sm font-semibold">POST /v1/search</h3>
+              <p className="text-xs text-muted-foreground mt-1">Search the web and get structured results. Costs <strong>1 credit</strong>.</p>
+            </div>
+            <ParamsTable params={[
+              { name: "query", type: "string", default: "required", desc: "Search query string" },
+              { name: "limit", type: "number", default: "5", desc: "Number of results (1-20)" },
+              { name: "lang", type: "string", default: '"en"', desc: "Language code (en, es, fr, de, etc.)" },
+              { name: "country", type: "string", default: '"us"', desc: "Country code (us, gb, de, fr, etc.)" },
+            ]} />
+            <LanguageSnippet snippets={snippets("POST", "/search", {
+              query: "best web scraping tools 2026",
+              limit: 5,
+              lang: "en",
+              country: "us",
+            })} />
+          </TabsContent>
+
+          {/* Usage */}
           <TabsContent value="usage" className="space-y-4 mt-4">
             <div>
               <h3 className="text-sm font-semibold">GET /v1/usage</h3>
@@ -203,33 +253,7 @@ export default function PublicDocsPage() {
       {/* Rate limits */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Rate Limits & Credits</h2>
-        <div className="rounded-lg border border-border overflow-hidden">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Plan</th>
-                <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Credits/mo</th>
-                <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Rate Limit</th>
-                <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ["Free", "500", "5 req/min", "$0"],
-                ["Starter", "10,000", "60 req/min", "$29/mo"],
-                ["Pro", "50,000", "200 req/min", "$99/mo"],
-                ["Scale", "250,000", "1,000 req/min", "$349/mo"],
-              ].map(([plan, credits, rate, price]) => (
-                <tr key={plan} className="border-b border-border last:border-0">
-                  <td className="px-4 py-2.5 font-medium">{plan}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{credits}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{rate}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{price}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <PlansTable />
       </section>
 
       {/* Error codes */}

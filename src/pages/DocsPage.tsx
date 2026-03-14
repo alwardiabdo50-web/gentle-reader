@@ -5,6 +5,7 @@ import { generateSnippet, type Lang } from "@/components/docs/snippetGenerator";
 import { LanguageSnippet } from "@/components/docs/LanguageSnippet";
 import { ApiKeySelector, DEFAULT_KEY } from "@/components/docs/ApiKeySelector";
 import { ParamsTable } from "@/components/docs/ParamsTable";
+import { PlansTable } from "@/components/docs/PlansTable";
 
 function snippets(method: "GET" | "POST", path: string, body: Record<string, unknown> | undefined, apiKey: string) {
   const def = { method, path, body };
@@ -243,33 +244,7 @@ export default function DocsPage() {
       {/* Rate limits */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Rate Limits & Credits</h2>
-        <div className="rounded-lg border border-border overflow-hidden">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Plan</th>
-                <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Credits/mo</th>
-                <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Rate Limit</th>
-                <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ["Free", "500", "5 req/min", "$0"],
-                ["Starter", "10,000", "60 req/min", "$29/mo"],
-                ["Pro", "50,000", "200 req/min", "$99/mo"],
-                ["Scale", "250,000", "1,000 req/min", "$349/mo"],
-              ].map(([plan, credits, rate, price]) => (
-                <tr key={plan} className="border-b border-border last:border-0">
-                  <td className="px-4 py-2.5 font-medium">{plan}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{credits}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{rate}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{price}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <PlansTable />
       </section>
 
       {/* Error codes */}
