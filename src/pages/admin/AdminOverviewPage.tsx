@@ -1,6 +1,28 @@
 import { useAdminOverview } from "@/hooks/useAdminData";
 import { Badge } from "@/components/ui/badge";
-import { Users, Key, Zap, Bug, Coins, CheckCircle2 } from "lucide-react";
+import { Users, Key, Zap, Bug, Coins, CheckCircle2, Brain } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+const TIER_VARIANT: Record<string, "success" | "info" | "warning" | "secondary"> = {
+  free: "success",
+  cheaper: "info",
+  expensive: "warning",
+};
+
+interface ModelUsageEntry {
+  model: string;
+  tier: string;
+  total_jobs: number;
+  credits: number;
+  by_plan: Record<string, number>;
+}
 
 export default function AdminOverviewPage() {
   const { data, isLoading } = useAdminOverview();
@@ -21,6 +43,8 @@ export default function AdminOverviewPage() {
     { label: "Failed Crawls (30d)", value: data.failedCrawls, icon: Bug },
     { label: "Credits Used (total)", value: data.totalCreditsUsed?.toLocaleString(), icon: Coins },
   ];
+
+  const modelUsage: ModelUsageEntry[] = data.modelUsage ?? [];
 
   return (
     <div className="space-y-8">
@@ -49,6 +73,56 @@ export default function AdminOverviewPage() {
               </Badge>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Model Usage Analytics */}
+      <div className="rounded-xl border border-border bg-card">
+        <div className="p-5 border-b border-border flex items-center gap-2">
+          <Brain className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-foreground">Model Usage (30d)</h2>
+        </div>
+        <div className="p-0">
+          {modelUsage.length === 0 ? (
+            <div className="p-5 text-sm text-muted-foreground">No extraction jobs in the last 30 days.</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Model</TableHead>
+                  <TableHead>Tier</TableHead>
+                  <TableHead className="text-right">Jobs</TableHead>
+                  <TableHead className="text-right">Credits</TableHead>
+                  <TableHead>By Plan</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {modelUsage.map((entry) => (
+                  <TableRow key={entry.model}>
+                    <TableCell className="font-mono text-foreground text-xs">{entry.model}</TableCell>
+                    <TableCell>
+                      <Badge variant={TIER_VARIANT[entry.tier] ?? "secondary"} className="capitalize">
+                        {entry.tier}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right text-foreground font-medium">{entry.total_jobs}</TableCell>
+                    <TableCell className="text-right text-foreground font-medium">{entry.credits.toLocaleString()}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {Object.entries(entry.by_plan)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([plan, count]) => (
+                            <Badge key={plan} variant="outline" className="text-[10px] px-1.5 py-0 capitalize">
+                              {plan}: {count}
+                            </Badge>
+                          ))}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </div>
 
