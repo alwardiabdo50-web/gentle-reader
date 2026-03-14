@@ -309,7 +309,7 @@ Deno.serve(async (req) => {
       url: result.rootUrl,
       final_url: result.normalizedRootUrl,
       status: "completed",
-      credits_used: 1,
+      credits_used: mapCreditCost,
       duration_ms: duration,
       metadata_json: {
         count: result.urls.length,
