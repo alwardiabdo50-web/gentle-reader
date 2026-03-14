@@ -91,7 +91,7 @@ export function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
             <DropdownMenuItem disabled className="cursor-not-allowed opacity-60">
               <Lock className="mr-2 h-4 w-4" />
               Create Organization
-              <span className="ml-auto rounded bg-warning/20 px-1.5 py-0.5 text-[10px] font-medium text-warning">Standard+</span>
+              <span className="ml-auto rounded bg-warning px-1.5 py-0.5 text-[10px] font-semibold text-white">Standard+</span>
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
