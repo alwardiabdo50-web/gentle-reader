@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getUserPlan, getMaxApiKeys } from "../_shared/plan-limits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
