@@ -31,11 +31,17 @@ export function PublicNavbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a key={link.label} href={link.href} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors duration-150">
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) =>
+            link.href.startsWith("/") ? (
+              <Link key={link.label} to={link.href} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors duration-150">
+                {link.label}
+              </Link>
+            ) : (
+              <a key={link.label} href={link.href} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors duration-150">
+                {link.label}
+              </a>
+            )
+          )}
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
