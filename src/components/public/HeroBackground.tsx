@@ -115,7 +115,8 @@ export function HeroBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full"
+      className="absolute inset-0 w-full h-full z-10"
+      style={{ pointerEvents: "auto" }}
       aria-hidden="true"
     />
   );
