@@ -21,6 +21,7 @@ import DocsPage from "@/pages/DocsPage";
 import WebhooksPage from "@/pages/WebhooksPage";
 import SchedulesPage from "@/pages/SchedulesPage";
 import PipelinesPage from "@/pages/PipelinesPage";
+import TemplatesPage from "@/pages/TemplatesPage";
 import AuthPage from "@/pages/AuthPage";
 import NotFound from "@/pages/NotFound";
 import HomePage from "@/pages/public/HomePage";
