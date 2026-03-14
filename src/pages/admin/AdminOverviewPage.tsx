@@ -1,4 +1,5 @@
 import { useAdminOverview } from "@/hooks/useAdminData";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import {
   Users, Key, Zap, Bug, Coins, CheckCircle2, Brain, TrendingUp, TrendingDown,
@@ -272,14 +273,15 @@ export default function AdminOverviewPage() {
             {topUsers.length === 0 ? (
               <div className="p-5 text-sm text-muted-foreground">No data yet.</div>
             ) : topUsers.map((u, i) => (
-              <div key={u.user_id} className="flex items-center gap-3 px-5 py-3">
+              <Link key={u.user_id} to={`/admin/users/${u.user_id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-muted/50 transition-colors group">
                 <span className="text-[11px] font-bold text-muted-foreground w-4">{i + 1}</span>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-foreground truncate">{u.full_name || "Unnamed"}</p>
                   <Badge variant={u.plan === "free" ? "secondary" : "default"} className="text-[9px] mt-0.5 capitalize">{u.plan}</Badge>
                 </div>
                 <span className="text-xs font-bold text-foreground">{u.credits_used.toLocaleString()}</span>
-              </div>
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
             ))}
           </div>
         </div>
