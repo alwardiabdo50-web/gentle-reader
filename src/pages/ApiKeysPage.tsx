@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCredits } from "@/hooks/useCredits";
+import { getMaxApiKeys } from "@/lib/plan-limits";
 import { toast } from "sonner";
 
 interface ApiKey {
