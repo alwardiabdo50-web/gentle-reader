@@ -30,7 +30,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
     <>
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2 justify-center">
-          <Shield className="h-5 w-5 text-primary shrink-0" />
+          <Shield className={`${collapsed ? "h-6 w-6" : "h-5 w-5"} text-primary shrink-0`} />
           {!collapsed && (
             <span className="font-semibold text-sm text-foreground tracking-tight">Admin Console</span>
           )}
