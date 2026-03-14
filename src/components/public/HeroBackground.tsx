@@ -106,6 +106,8 @@ export function HeroBackground() {
 
     return () => {
       window.removeEventListener("resize", resize);
+      canvas.removeEventListener("mousemove", onMouseMove);
+      canvas.removeEventListener("mouseleave", onMouseLeave);
       cancelAnimationFrame(animRef.current);
     };
   }, []);
