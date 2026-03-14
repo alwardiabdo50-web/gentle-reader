@@ -112,7 +112,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <aside
         className={`hidden md:flex shrink-0 border-r border-border flex-col bg-sidebar transition-[width] duration-200 overflow-hidden whitespace-nowrap ${
-          collapsed ? "w-[52px]" : "w-60"
+          collapsed ? "w-[60px]" : "w-60"
         }`}
       >
         <SidebarNav collapsed={collapsed} />
