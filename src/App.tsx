@@ -71,6 +71,7 @@ const App = () => (
                       <Route path="/contacts" element={<AdminContactsPage />} />
                       <Route path="/billing" element={<AdminBillingPage />} />
                       <Route path="/plans" element={<AdminPlansPage />} />
+                      <Route path="/credit-costs" element={<AdminCreditCostsPage />} />
                     </Routes>
                   </AdminLayout>
                 </AdminProtectedRoute>

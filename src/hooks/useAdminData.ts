@@ -101,6 +101,46 @@ export function useAdminPlans() {
   });
 }
 
+export function useAdminCreditCosts() {
+  return useQuery({
+    queryKey: ["admin", "credit-costs"],
+    queryFn: () => fetchAdminData("credit-costs"),
+  });
+}
+
+export function useAdminCreditCostMutations() {
+  const queryClient = useQueryClient();
+
+  const updateCost = useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      postAdminAction({ action: "credit-cost-update", ...body } as Record<string, string>),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "credit-costs"] });
+      queryClient.invalidateQueries({ queryKey: ["api-credit-costs"] });
+    },
+  });
+
+  const createCost = useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      postAdminAction({ action: "credit-cost-create", ...body } as Record<string, string>),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "credit-costs"] });
+      queryClient.invalidateQueries({ queryKey: ["api-credit-costs"] });
+    },
+  });
+
+  const deleteCost = useMutation({
+    mutationFn: (costId: string) =>
+      postAdminAction({ action: "credit-cost-delete", costId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "credit-costs"] });
+      queryClient.invalidateQueries({ queryKey: ["api-credit-costs"] });
+    },
+  });
+
+  return { updateCost, createCost, deleteCost };
+}
+
 export function useAdminPlanMutations() {
   const queryClient = useQueryClient();
 
