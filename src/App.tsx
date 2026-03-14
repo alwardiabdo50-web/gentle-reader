@@ -56,6 +56,7 @@ const App = () => (
             <Route path="/status" element={<PublicLayout><StatusPage /></PublicLayout>} />
             <Route path="/docs" element={<PublicLayout><PublicDocsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
+            <Route path="/changelog" element={<PublicLayout><ChangelogPage /></PublicLayout>} />
             <Route path="/auth" element={<AuthPage />} />
 
             {/* Admin */}
