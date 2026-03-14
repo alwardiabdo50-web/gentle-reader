@@ -18,8 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useNavigate } from "react-router-dom";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import AdminUserDetailDialog from "@/components/admin/AdminUserDetailDialog";
 
 const planBadgeVariant: Record<string, BadgeProps["variant"]> = {
   free: "secondary",
@@ -34,8 +34,8 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { data, isLoading } = useAdminUsers(page, search, planFilter);
-  const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +96,7 @@ export default function AdminUsersPage() {
                   <TableRow
                     key={u.user_id as string}
                     className="cursor-pointer hover:bg-accent/50"
-                    onClick={() => navigate(`/admin/users/${u.user_id}`)}
+                    onClick={() => setSelectedUserId(u.user_id as string)}
                   >
                     <TableCell className="font-medium text-foreground">
                       {(u.full_name as string) || <span className="text-muted-foreground italic">No name</span>}
@@ -136,6 +136,7 @@ export default function AdminUsersPage() {
           </div>
         </>
       )}
+      <AdminUserDetailDialog userId={selectedUserId} open={!!selectedUserId} onOpenChange={(open) => !open && setSelectedUserId(null)} />
     </div>
   );
 }
