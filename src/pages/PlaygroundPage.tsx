@@ -88,6 +88,22 @@ export default function PlaygroundPage() {
   const [batchSelectedIdx, setBatchSelectedIdx] = useState(0);
   const [cacheTtl, setCacheTtl] = useState(searchParams.get("cacheTtl") || "3600");
 
+  // Search options
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("searchQuery") || "");
+  const [searchLimit, setSearchLimit] = useState(searchParams.get("searchLimit") || "5");
+  const [searchLang, setSearchLang] = useState(searchParams.get("searchLang") || "en");
+  const [searchCountry, setSearchCountry] = useState(searchParams.get("searchCountry") || "us");
+
+  // Actions
+  const [actions, setActions] = useState<Array<{ type: string; selector?: string; value?: string; milliseconds?: number }>>([]);
+
+  // Branding format
+  const [includeBranding, setIncludeBranding] = useState(false);
+
+  // Location / geo-targeting
+  const [locationCountry, setLocationCountry] = useState("");
+  const [locationLanguages, setLocationLanguages] = useState("");
+
   // Crawl options
   const [maxPages, setMaxPages] = useState(searchParams.get("maxPages") || "50");
   const [maxDepth, setMaxDepth] = useState(searchParams.get("maxDepth") || "3");
