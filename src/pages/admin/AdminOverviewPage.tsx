@@ -98,6 +98,7 @@ function SecondaryStatCard({ label, value, icon: Icon }: { label: string; value:
 // ─── Main Component ──────────────────────────────────────
 export default function AdminOverviewPage() {
   const { data, isLoading } = useAdminOverview();
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   if (isLoading) {
     return (
