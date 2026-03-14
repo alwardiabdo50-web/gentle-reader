@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_credit_costs: {
+        Row: {
+          base_cost: number
+          created_at: string
+          id: string
+          is_active: boolean
+          is_addon: boolean
+          label: string
+          plan_overrides: Json
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          base_cost?: number
+          created_at?: string
+          id: string
+          is_active?: boolean
+          is_addon?: boolean
+          label: string
+          plan_overrides?: Json
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          base_cost?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_addon?: boolean
+          label?: string
+          plan_overrides?: Json
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           created_at: string
