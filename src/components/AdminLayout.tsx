@@ -81,33 +81,6 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
         )}
       </nav>
 
-      <div className="p-3 border-t border-border">
-        {collapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <NavLink
-                to="/app"
-                className="flex items-center justify-center p-2.5 rounded-lg text-foreground/70 hover:bg-accent hover:text-foreground transition-colors duration-150"
-                onClick={onNavigate}
-              >
-                <ArrowLeft className="h-6 w-6" />
-              </NavLink>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8}>
-              Back to Dashboard
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <NavLink
-            to="/app"
-            className="flex items-center gap-2 px-3 py-[7px] rounded-lg text-[13px] text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
-            onClick={onNavigate}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
-          </NavLink>
-        )}
-      </div>
     </>
   );
 }
