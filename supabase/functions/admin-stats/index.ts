@@ -438,7 +438,7 @@ Deno.serve(async (req) => {
       // Credits overview
       const { data: creditsData } = await admin
         .from("profiles")
-        .select("credits_used, monthly_credits, extra_credits, plan");
+        .select("user_id, credits_used, monthly_credits, extra_credits, plan");
 
       const totalCreditsUsed = creditsData?.reduce((s, p) => s + p.credits_used, 0) ?? 0;
       const totalCreditsGranted = creditsData?.reduce((s, p) => s + p.monthly_credits + p.extra_credits, 0) ?? 0;
