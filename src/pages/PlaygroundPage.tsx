@@ -304,14 +304,25 @@ export default function PlaygroundPage() {
       let body: Record<string, unknown>;
 
       switch (mode) {
+        case "search":
+          functionName = "search";
+          body = {
+            query: searchQuery,
+            limit: Number(searchLimit),
+            lang: searchLang,
+            country: searchCountry,
+          };
+          break;
         case "scrape":
           functionName = "scrape";
           body = {
             url,
-            formats: ["markdown", "html", "metadata", "links"],
+            formats: ["markdown", "html", "metadata", "links", ...(includeBranding ? ["branding"] : [])],
             render_javascript: renderJs,
             only_main_content: mainContent,
-            cache_ttl: Number(cacheTtl)
+            cache_ttl: Number(cacheTtl),
+            ...(actions.length > 0 && { actions }),
+            ...(locationCountry && { location: { country: locationCountry, languages: locationLanguages ? locationLanguages.split(",").map(l => l.trim()) : undefined } }),
           };
           break;
         case "batch":
