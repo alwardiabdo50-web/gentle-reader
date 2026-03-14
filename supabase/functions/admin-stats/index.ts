@@ -370,7 +370,15 @@ Deno.serve(async (req) => {
 
     let result: Record<string, unknown> = {};
 
-    if (action === "credit-costs") {
+    if (action === "providers") {
+      const { data, error } = await admin.from("ai_providers").select("*").order("sort_order", { ascending: true });
+      if (error) throw error;
+      result = { providers: data ?? [] };
+    } else if (action === "models") {
+      const { data, error } = await admin.from("ai_models").select("*").order("sort_order", { ascending: true });
+      if (error) throw error;
+      result = { models: data ?? [] };
+    } else if (action === "credit-costs") {
       const { data: costs, error } = await admin
         .from("api_credit_costs")
         .select("*")
