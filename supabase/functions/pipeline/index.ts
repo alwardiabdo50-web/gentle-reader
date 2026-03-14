@@ -237,7 +237,7 @@ Deno.serve(async (req) => {
     .insert({
       pipeline_id: pipelineId,
       user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId,
+      api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
       source_url: normalizedUrl,
       status: "running",
       started_at: new Date().toISOString(),

@@ -294,7 +294,7 @@ Deno.serve(async (req) => {
     .from("extraction_jobs")
     .insert({
       user_id: ctx.userId,
-      api_key_id: ctx.apiKeyId,
+      api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
       source_url: normalizedUrl,
       prompt: body.prompt ?? null,
       schema_json: body.schema ?? null,
