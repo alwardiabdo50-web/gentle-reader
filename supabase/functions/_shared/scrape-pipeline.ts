@@ -300,6 +300,13 @@ export async function performScrape(req: ScrapeRequest): Promise<ScrapeResult> {
   if (formats.includes("markdown")) result.markdown = markdown;
   if (formats.includes("metadata")) result.metadata = metadata;
   if (formats.includes("links")) result.links = links;
+  if (formats.includes("branding")) {
+    // Use the full document (not main content) for branding extraction
+    const fullDoc = new DOMParser().parseFromString(rawHtml, "text/html");
+    if (fullDoc) {
+      result.branding = extractBranding(fullDoc, finalUrl);
+    }
+  }
 
   return result;
 }
