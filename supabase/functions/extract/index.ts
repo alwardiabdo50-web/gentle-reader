@@ -1,5 +1,6 @@
 import { extractApiKey, validateApiKey, authenticateServiceRole } from "../_shared/api-key-auth.ts";
 import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from "../_shared/billing.ts";
+import { getUserPlan, canAccessFeature } from "../_shared/plan-limits.ts";
 import { normalizeUrl } from "../_shared/crawl-utils.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
