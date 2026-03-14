@@ -340,7 +340,7 @@ Deno.serve(async (req) => {
   const newBalance = Math.max(0, userCredits.remaining - 1);
   await recordLedgerEntry({
     user_id: ctx.userId,
-    api_key_id: ctx.apiKeyId,
+    api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
     action: "scrape_charge",
     credits: -1,
     job_id: job.id,
