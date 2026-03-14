@@ -1201,5 +1201,49 @@ export default function PlaygroundPage() {
           </div>
         </div>
       }
+    </div>
+
+    {/* Save as Template Dialog */}
+    <Dialog open={saveTemplateOpen} onOpenChange={setSaveTemplateOpen}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Save as Template</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 pt-2">
+          <Input placeholder="Template name..." value={templateName} onChange={e => setTemplateName(e.target.value)} />
+          <Input placeholder="Description (optional)" value={templateDesc} onChange={e => setTemplateDesc(e.target.value)} />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setSaveTemplateOpen(false)}>Cancel</Button>
+            <Button size="sm" disabled={!templateName.trim()} onClick={async () => {
+              if (!user) return;
+              const prompt = mode === "pipeline" ? pipelinePrompt : extractPrompt;
+              const schema = mode === "pipeline" ? pipelineSchema : extractSchema;
+              const model = mode === "pipeline" ? pipelineModel : extractModel;
+              let parsedSchema = null;
+              if (schema.trim()) { try { parsedSchema = JSON.parse(schema); } catch {} }
+              const { error } = await supabase.from("extraction_templates").insert({
+                user_id: user.id,
+                name: templateName.trim(),
+                description: templateDesc.trim() || null,
+                prompt: prompt.trim() || null,
+                schema_json: parsedSchema,
+                model,
+              });
+              if (!error) {
+                toast.success("Template saved");
+                setSaveTemplateOpen(false);
+                setTemplateName("");
+                setTemplateDesc("");
+                // Refresh templates list
+                const { data } = await supabase.from("extraction_templates").select("id,name,prompt,schema_json,model,use_count").order("use_count", { ascending: false });
+                if (data) setExtractionTemplates(data as any);
+              } else {
+                toast.error("Failed to save template");
+              }
+            }}>Save</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
     </div>);
 }
