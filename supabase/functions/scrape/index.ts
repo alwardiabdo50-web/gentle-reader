@@ -3,6 +3,7 @@ import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from ".
 import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
 import { buildCacheKey, getCachedResult, setCachedResult } from "../_shared/scrape-cache.ts";
+import { getCreditCost } from "../_shared/credit-costs.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
