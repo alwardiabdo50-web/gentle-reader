@@ -73,6 +73,7 @@ export default function PlaygroundPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { plan } = useCredits();
+  const { models, grouped, defaultModel, canUseModel, getModelCost } = useModels(plan);
   const extractAllowed = canAccessFeature(plan, "extract");
   const [mode, setMode] = useState<Mode>((searchParams.get("mode") as Mode) || "scrape");
   const [url, setUrl] = useState(searchParams.get("url") || "");
