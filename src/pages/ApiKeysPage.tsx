@@ -39,6 +39,8 @@ interface ApiKey {
 
 export default function ApiKeysPage() {
   const { user, activeOrg } = useAuth();
+  const { plan } = useCredits();
+  const maxKeys = getMaxApiKeys(plan);
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [newKeyName, setNewKeyName] = useState("");
