@@ -1,0 +1,1 @@
+UPDATE public.site_settings SET value = '{}'::jsonb WHERE key IN ('seo', 'socials', 'branding', 'maintenance');

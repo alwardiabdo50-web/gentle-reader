@@ -217,7 +217,7 @@ export function useAdminSettingsMutations() {
 
   const updateSetting = useMutation({
     mutationFn: ({ key, value }: { key: string; value: unknown }) =>
-      postAdminAction({ action: "settings-update", key, value: JSON.stringify(value) }),
+      postAdminAction({ action: "settings-update", key, value }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "settings"] });
       queryClient.invalidateQueries({ queryKey: ["site-settings"] });
