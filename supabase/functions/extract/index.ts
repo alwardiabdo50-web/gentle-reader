@@ -27,7 +27,7 @@ const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const DEFAULT_MODEL = "google/gemini-3-flash-preview";
 const EXTRACTION_TIMEOUT = 30000;
 const MAX_INPUT_LENGTH = 50000;
-const EXTRACTION_CREDIT_COST = 2;
+const EXTRACTION_CREDIT_COST_FALLBACK = 5;
 
 const ALLOWED_MODELS = [
   "google/gemini-2.5-pro",
