@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { extractApiKey, validateApiKey } from "../_shared/api-key-auth.ts";
 import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from "../_shared/billing.ts";
 import { normalizeUrl, isSameDomain, isBlockedUrl, extractLinks } from "../_shared/crawl-utils.ts";
+import { getCreditCost } from "../_shared/credit-costs.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
