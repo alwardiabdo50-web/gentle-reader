@@ -728,6 +728,28 @@ export default function PlaygroundPage() {
 
         {mode === "extract" &&
         <div className="space-y-3 pt-2 border-t border-border">
+            {extractionTemplates.length > 0 && (
+              <div className="flex items-center gap-2">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                <Select onValueChange={(id) => {
+                  const t = extractionTemplates.find(t => t.id === id);
+                  if (t) {
+                    if (t.prompt) setExtractPrompt(t.prompt);
+                    if (t.schema_json) setExtractSchema(JSON.stringify(t.schema_json, null, 2));
+                    if (t.model) setExtractModel(t.model);
+                    supabase.from("extraction_templates").update({ use_count: t.use_count + 1 }).eq("id", t.id).then();
+                    toast.success(`Loaded template: ${t.name}`);
+                  }
+                }}>
+                  <SelectTrigger className="w-52 h-8 text-xs"><SelectValue placeholder="Load template..." /></SelectTrigger>
+                  <SelectContent>
+                    {extractionTemplates.map(t => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label className="text-xs text-muted-foreground block mb-1.5">Extraction prompt</Label>
               <Input
@@ -757,6 +779,11 @@ export default function PlaygroundPage() {
                 </SelectContent>
               </Select>
             </div>
+            {(extractPrompt.trim() || extractSchema.trim()) && (
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setSaveTemplateOpen(true)}>
+                <Save className="h-3.5 w-3.5" /> Save as Template
+              </Button>
+            )}
           </div>
         }
 
