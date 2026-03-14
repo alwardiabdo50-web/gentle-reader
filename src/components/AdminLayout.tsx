@@ -30,7 +30,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
     <>
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2 justify-center">
-          <Shield className="h-5 w-5 text-primary shrink-0" />
+          <Shield className={`${collapsed ? "h-6 w-6" : "h-5 w-5"} text-primary shrink-0`} />
           {!collapsed && (
             <span className="font-semibold text-sm text-foreground tracking-tight">Admin Console</span>
           )}
@@ -45,11 +45,11 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                 <NavLink
                   to={item.url}
                   end={item.url === "/admin"}
-                  className="flex items-center justify-center p-2 rounded-lg text-foreground/70 hover:bg-accent hover:text-foreground transition-colors duration-150"
+                  className="flex items-center justify-center p-2.5 rounded-lg text-foreground/70 hover:bg-accent hover:text-foreground transition-colors duration-150"
                   activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                   onClick={onNavigate}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="h-6 w-6" />
                 </NavLink>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={8}>
@@ -78,10 +78,10 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
             <TooltipTrigger asChild>
               <NavLink
                 to="/app"
-                className="flex items-center justify-center p-2 rounded-lg text-foreground/70 hover:bg-accent hover:text-foreground transition-colors duration-150"
+                className="flex items-center justify-center p-2.5 rounded-lg text-foreground/70 hover:bg-accent hover:text-foreground transition-colors duration-150"
                 onClick={onNavigate}
               >
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-6 w-6" />
               </NavLink>
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={8}>
@@ -112,7 +112,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <aside
         className={`hidden md:flex shrink-0 border-r border-border flex-col bg-sidebar transition-[width] duration-200 overflow-hidden whitespace-nowrap ${
-          collapsed ? "w-[52px]" : "w-60"
+          collapsed ? "w-[60px]" : "w-60"
         }`}
       >
         <SidebarNav collapsed={collapsed} />
