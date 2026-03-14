@@ -617,6 +617,8 @@ export type Database = {
           monthly_credits: number
           monthly_price: number
           name: string
+          original_monthly_price: number | null
+          original_yearly_price: number | null
           rate_limit_rpm: number
           sort_order: number
           updated_at: string
@@ -635,6 +637,8 @@ export type Database = {
           monthly_credits?: number
           monthly_price?: number
           name: string
+          original_monthly_price?: number | null
+          original_yearly_price?: number | null
           rate_limit_rpm?: number
           sort_order?: number
           updated_at?: string
@@ -653,6 +657,8 @@ export type Database = {
           monthly_credits?: number
           monthly_price?: number
           name?: string
+          original_monthly_price?: number | null
+          original_yearly_price?: number | null
           rate_limit_rpm?: number
           sort_order?: number
           updated_at?: string

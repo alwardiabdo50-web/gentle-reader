@@ -91,6 +91,8 @@ export default function AdminPlansPage() {
       highlighted: !!form.highlighted,
       sort_order: Number(form.sort_order) || 0,
       is_active: form.is_active !== false,
+      original_monthly_price: form.original_monthly_price != null ? Number(form.original_monthly_price) : null,
+      original_yearly_price: form.original_yearly_price != null ? Number(form.original_yearly_price) : null,
     };
 
     try {
@@ -224,6 +226,18 @@ export default function AdminPlansPage() {
               <div>
                 <Label>Yearly Price (cents)</Label>
                 <Input type="number" value={String(form.yearly_price ?? 0)} onChange={(e) => setForm((p) => ({ ...p, yearly_price: Number(e.target.value) }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Original Monthly Price (cents)</Label>
+                <Input type="number" value={String(form.original_monthly_price ?? "")} onChange={(e) => setForm((p) => ({ ...p, original_monthly_price: e.target.value ? Number(e.target.value) : null }))} placeholder="Leave empty to hide" />
+                <p className="text-[10px] text-muted-foreground">Shown as strikethrough</p>
+              </div>
+              <div>
+                <Label>Original Yearly Price (cents)</Label>
+                <Input type="number" value={String(form.original_yearly_price ?? "")} onChange={(e) => setForm((p) => ({ ...p, original_yearly_price: e.target.value ? Number(e.target.value) : null }))} placeholder="Leave empty to hide" />
+                <p className="text-[10px] text-muted-foreground">Shown as strikethrough</p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">

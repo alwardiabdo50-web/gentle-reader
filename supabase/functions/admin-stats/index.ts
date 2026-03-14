@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-        const allowed = ["name", "monthly_price", "yearly_price", "monthly_credits", "max_api_keys", "rate_limit_rpm", "features_json", "description", "display_features", "cta_text", "highlighted", "sort_order", "is_active"];
+        const allowed = ["name", "monthly_price", "yearly_price", "monthly_credits", "max_api_keys", "rate_limit_rpm", "features_json", "description", "display_features", "cta_text", "highlighted", "sort_order", "is_active", "original_monthly_price", "original_yearly_price"];
         const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
         for (const key of allowed) {
           if (key in fields) updateData[key] = fields[key];
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       }
 
       if (postAction === "plan-create") {
-        const { id, name, monthly_price, yearly_price, monthly_credits, max_api_keys, rate_limit_rpm, features_json, description, display_features, cta_text, highlighted, sort_order } = body;
+        const { id, name, monthly_price, yearly_price, monthly_credits, max_api_keys, rate_limit_rpm, features_json, description, display_features, cta_text, highlighted, sort_order, original_monthly_price, original_yearly_price } = body;
         if (!id || !name) {
           return new Response(JSON.stringify({ error: "id and name required" }), {
             status: 400,
@@ -131,6 +131,8 @@ Deno.serve(async (req) => {
           cta_text: cta_text ?? "Get Started",
           highlighted: highlighted ?? false,
           sort_order: sort_order ?? 0,
+          original_monthly_price: original_monthly_price ?? null,
+          original_yearly_price: original_yearly_price ?? null,
         });
         if (error) throw error;
         return new Response(JSON.stringify({ success: true }), {
