@@ -1203,7 +1203,6 @@ export default function PlaygroundPage() {
           </div>
         </div>
       }
-    </div>
 
       {/* Save as Template Dialog */}
       <Dialog open={saveTemplateOpen} onOpenChange={setSaveTemplateOpen}>
