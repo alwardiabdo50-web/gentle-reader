@@ -104,7 +104,7 @@ export default function PlaygroundPage() {
   const [pipelinePrompt, setPipelinePrompt] = useState(searchParams.get("pipelinePrompt") || "");
   const [pipelineSchema, setPipelineSchema] = useState(searchParams.get("pipelineSchema") || "");
   const [pipelineTransformPrompt, setPipelineTransformPrompt] = useState(searchParams.get("pipelineTransformPrompt") || "");
-  const [pipelineModel, setPipelineModel] = useState(searchParams.get("pipelineModel") || "google/gemini-3-flash-preview");
+  const [pipelineModel, setPipelineModel] = useState(searchParams.get("pipelineModel") || "");
 
   // History & presets
   const [historyOpen, setHistoryOpen] = useState(false);
