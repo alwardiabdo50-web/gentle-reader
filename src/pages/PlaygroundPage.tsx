@@ -98,7 +98,7 @@ export default function PlaygroundPage() {
   // Extract options
   const [extractPrompt, setExtractPrompt] = useState(searchParams.get("extractPrompt") || "");
   const [extractSchema, setExtractSchema] = useState(searchParams.get("extractSchema") || "");
-  const [extractModel, setExtractModel] = useState(searchParams.get("extractModel") || "google/gemini-3-flash-preview");
+  const [extractModel, setExtractModel] = useState(searchParams.get("extractModel") || "");
 
   // Pipeline options
   const [pipelinePrompt, setPipelinePrompt] = useState(searchParams.get("pipelinePrompt") || "");
