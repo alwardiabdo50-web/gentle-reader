@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-        const allowed = ["name", "monthly_price", "yearly_price", "monthly_credits", "max_api_keys", "rate_limit_rpm", "features_json", "description", "display_features", "cta_text", "highlighted", "sort_order", "is_active"];
+        const allowed = ["name", "monthly_price", "yearly_price", "monthly_credits", "max_api_keys", "rate_limit_rpm", "features_json", "description", "display_features", "cta_text", "highlighted", "sort_order", "is_active", "original_monthly_price", "original_yearly_price"];
         const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
         for (const key of allowed) {
           if (key in fields) updateData[key] = fields[key];
