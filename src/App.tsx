@@ -34,6 +34,7 @@ import AdminJobsPage from "@/pages/admin/AdminJobsPage";
 import AdminBillingPage from "@/pages/admin/AdminBillingPage";
 import AdminContactsPage from "@/pages/admin/AdminContactsPage";
 import AdminPlansPage from "@/pages/admin/AdminPlansPage";
+import AdminCreditCostsPage from "@/pages/admin/AdminCreditCostsPage";
 import PublicDocsPage from "@/pages/public/PublicDocsPage";
 import ContactPage from "@/pages/public/ContactPage";
 
