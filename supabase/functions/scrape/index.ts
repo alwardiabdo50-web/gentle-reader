@@ -12,6 +12,21 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-api-key, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+interface ScrapeAction {
+  type: "click" | "scroll" | "wait" | "type" | "press" | "screenshot";
+  selector?: string;
+  value?: string;
+  direction?: "up" | "down";
+  pixels?: number;
+  milliseconds?: number;
+  key?: string;
+}
+
+interface ScrapeLocation {
+  country?: string;
+  languages?: string[];
+}
+
 interface ScrapeRequest {
   url: string;
   formats?: string[];
@@ -26,6 +41,8 @@ interface ScrapeRequest {
   proxy?: string | null;
   remove_selectors?: string[];
   cache_ttl?: number;
+  actions?: ScrapeAction[];
+  location?: ScrapeLocation;
 }
 
 interface ScrapeResult {
