@@ -48,12 +48,13 @@ export default function DocsPage() {
         <h2 className="text-lg font-semibold">Endpoints</h2>
 
         <Tabs defaultValue="scrape">
-          <TabsList className="bg-muted/50 border border-border">
+          <TabsList className="bg-muted/50 border border-border flex-wrap">
             <TabsTrigger value="scrape" className="text-xs">Scrape</TabsTrigger>
             <TabsTrigger value="crawl" className="text-xs">Crawl</TabsTrigger>
             <TabsTrigger value="map" className="text-xs">Map</TabsTrigger>
             <TabsTrigger value="extract" className="text-xs">Extract</TabsTrigger>
             <TabsTrigger value="pipeline" className="text-xs">Pipeline</TabsTrigger>
+            <TabsTrigger value="search" className="text-xs">Search</TabsTrigger>
             <TabsTrigger value="usage" className="text-xs">Usage</TabsTrigger>
           </TabsList>
 
