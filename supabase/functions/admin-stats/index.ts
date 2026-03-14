@@ -393,96 +393,161 @@ Deno.serve(async (req) => {
       if (error) throw error;
       result = { plans: plans ?? [] };
     } else if (action === "overview") {
-      // Total users
-      const { count: totalUsers } = await admin
-        .from("profiles")
-        .select("*", { count: "exact", head: true });
+      const now = Date.now();
+      const thirtyDaysAgo = new Date(now - 30 * 86400000).toISOString();
+      const sevenDaysAgo = new Date(now - 7 * 86400000).toISOString();
+      const oneDayAgo = new Date(now - 86400000).toISOString();
+      const todayStart = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
 
-      // Active API keys
-      const { count: activeKeys } = await admin
-        .from("api_keys")
-        .select("*", { count: "exact", head: true })
-        .eq("is_active", true);
+      // ─── Parallel batch 1: counts & profiles ─────────────
+      const [
+        { count: totalUsers },
+        { count: activeKeys },
+        { count: activeWebhooks },
+        { count: activeSchedules },
+        { count: pipelineRuns30d },
+        { count: scrapeCount },
+        { count: crawlCount },
+        { count: extractCount },
+        { count: failedScrapes },
+        { count: failedCrawls },
+        { count: failedExtracts },
+        { count: newUsersToday },
+        { count: newUsers7d },
+        { count: rateLimitHits24h },
+        { data: creditsData },
+      ] = await Promise.all([
+        admin.from("profiles").select("*", { count: "exact", head: true }),
+        admin.from("api_keys").select("*", { count: "exact", head: true }).eq("is_active", true),
+        admin.from("webhooks").select("*", { count: "exact", head: true }).eq("is_active", true),
+        admin.from("scheduled_jobs").select("*", { count: "exact", head: true }).eq("is_active", true),
+        admin.from("pipeline_runs").select("*", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo),
+        admin.from("scrape_jobs").select("*", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo),
+        admin.from("crawl_jobs").select("*", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo),
+        admin.from("extraction_jobs").select("*", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo),
+        admin.from("scrape_jobs").select("*", { count: "exact", head: true }).eq("status", "failed").gte("created_at", thirtyDaysAgo),
+        admin.from("crawl_jobs").select("*", { count: "exact", head: true }).eq("status", "failed").gte("created_at", thirtyDaysAgo),
+        admin.from("extraction_jobs").select("*", { count: "exact", head: true }).eq("status", "failed").gte("created_at", thirtyDaysAgo),
+        admin.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", todayStart),
+        admin.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", sevenDaysAgo),
+        admin.from("rate_limit_log").select("*", { count: "exact", head: true }).gte("hit_at", oneDayAgo).eq("was_limited", true),
+        admin.from("profiles").select("user_id, full_name, credits_used, monthly_credits, extra_credits, plan"),
+      ]);
 
-      // Job counts (last 30 days)
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-
-      const { count: scrapeCount } = await admin
-        .from("scrape_jobs")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", thirtyDaysAgo);
-
-      const { count: crawlCount } = await admin
-        .from("crawl_jobs")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", thirtyDaysAgo);
-
-      const { count: extractCount } = await admin
-        .from("extraction_jobs")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", thirtyDaysAgo);
-
-      // Failed jobs
-      const { count: failedScrapes } = await admin
-        .from("scrape_jobs")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "failed")
-        .gte("created_at", thirtyDaysAgo);
-
-      const { count: failedCrawls } = await admin
-        .from("crawl_jobs")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "failed")
-        .gte("created_at", thirtyDaysAgo);
-
-      // Credits overview
-      const { data: creditsData } = await admin
-        .from("profiles")
-        .select("user_id, credits_used, monthly_credits, extra_credits, plan");
-
-      const totalCreditsUsed = creditsData?.reduce((s, p) => s + p.credits_used, 0) ?? 0;
-      const totalCreditsGranted = creditsData?.reduce((s, p) => s + p.monthly_credits + p.extra_credits, 0) ?? 0;
+      const totalCreditsUsed = creditsData?.reduce((s: number, p: { credits_used: number }) => s + p.credits_used, 0) ?? 0;
+      const totalCreditsGranted = creditsData?.reduce((s: number, p: { monthly_credits: number; extra_credits: number }) => s + p.monthly_credits + p.extra_credits, 0) ?? 0;
 
       // Plan distribution
       const planDist: Record<string, number> = {};
-      creditsData?.forEach((p) => {
+      creditsData?.forEach((p: { plan: string }) => {
         planDist[p.plan] = (planDist[p.plan] || 0) + 1;
       });
 
-      // Recent failures
-      const { data: recentFailures } = await admin
-        .from("scrape_jobs")
-        .select("id, url, error_code, error_message, created_at, user_id, mode")
-        .eq("status", "failed")
-        .order("created_at", { ascending: false })
-        .limit(10);
+      // Success rate
+      const totalJobs30d = (scrapeCount ?? 0) + (crawlCount ?? 0) + (extractCount ?? 0);
+      const totalFailed30d = (failedScrapes ?? 0) + (failedCrawls ?? 0) + (failedExtracts ?? 0);
+      const successRate = totalJobs30d > 0 ? Math.round(((totalJobs30d - totalFailed30d) / totalJobs30d) * 10000) / 100 : 100;
+
+      // ─── Parallel batch 2: detailed data ──────────────
+      const [
+        { data: recentScrapeFailures },
+        { data: recentCrawlFailures },
+        { data: recentExtractFailures },
+        { data: topUsersData },
+        { data: activeSubs },
+        { data: scrapeJobs7d },
+        { data: crawlJobs7d },
+        { data: extractJobs7d },
+        { data: avgDurationData },
+        { data: recentSignups },
+        { data: recentSubChanges },
+        { data: extractionRows },
+        { data: aiModelsData },
+      ] = await Promise.all([
+        admin.from("scrape_jobs").select("id, url, error_code, error_message, created_at, user_id, mode").eq("status", "failed").order("created_at", { ascending: false }).limit(5),
+        admin.from("crawl_jobs").select("id, root_url, error_code, error_message, created_at, user_id").eq("status", "failed").order("created_at", { ascending: false }).limit(5),
+        admin.from("extraction_jobs").select("id, source_url, error_code, error_message, created_at, user_id, model").eq("status", "failed").order("created_at", { ascending: false }).limit(5),
+        admin.from("profiles").select("user_id, full_name, plan, credits_used").order("credits_used", { ascending: false }).limit(5),
+        admin.from("subscriptions").select("user_id, status, provider_subscription_id, price_id").eq("status", "active"),
+        admin.from("scrape_jobs").select("created_at").gte("created_at", sevenDaysAgo),
+        admin.from("crawl_jobs").select("created_at").gte("created_at", sevenDaysAgo),
+        admin.from("extraction_jobs").select("created_at").gte("created_at", sevenDaysAgo),
+        admin.from("scrape_jobs").select("duration_ms").gte("created_at", oneDayAgo).not("duration_ms", "is", null),
+        admin.from("profiles").select("user_id, full_name, created_at").order("created_at", { ascending: false }).limit(10),
+        admin.from("subscriptions").select("user_id, status, created_at, updated_at").order("updated_at", { ascending: false }).limit(10),
+        admin.from("extraction_jobs").select("model, credits_used, user_id, created_at").gte("created_at", thirtyDaysAgo),
+        admin.from("ai_models").select("id, tier"),
+      ]);
+
+      // ─── MRR from plans ───────────────────────────────
+      const { data: plansData } = await admin.from("plans").select("id, monthly_price");
+      const planPriceMap: Record<string, number> = {};
+      (plansData ?? []).forEach((p: { id: string; monthly_price: number }) => { planPriceMap[p.id] = p.monthly_price; });
+      const userPlanMap: Record<string, string> = {};
+      (creditsData ?? []).forEach((p: { user_id: string; plan: string }) => { if (p.user_id) userPlanMap[p.user_id] = p.plan; });
+      
+      // Count unique paying users from active subscriptions
+      const payingUserIds = new Set((activeSubs ?? []).map((s: { user_id: string }) => s.user_id));
+      let mrr = 0;
+      payingUserIds.forEach((uid) => {
+        const plan = userPlanMap[uid as string];
+        if (plan && planPriceMap[plan]) mrr += planPriceMap[plan];
+      });
+
+      // ─── Jobs daily trend (7 days) ────────────────────
+      const jobsDaily: Record<string, { scrapes: number; crawls: number; extractions: number }> = {};
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now - i * 86400000).toISOString().substring(0, 10);
+        jobsDaily[d] = { scrapes: 0, crawls: 0, extractions: 0 };
+      }
+      (scrapeJobs7d ?? []).forEach((r: { created_at: string }) => {
+        const d = r.created_at.substring(0, 10);
+        if (jobsDaily[d]) jobsDaily[d].scrapes++;
+      });
+      (crawlJobs7d ?? []).forEach((r: { created_at: string }) => {
+        const d = r.created_at.substring(0, 10);
+        if (jobsDaily[d]) jobsDaily[d].crawls++;
+      });
+      (extractJobs7d ?? []).forEach((r: { created_at: string }) => {
+        const d = r.created_at.substring(0, 10);
+        if (jobsDaily[d]) jobsDaily[d].extractions++;
+      });
+      const jobsDailyArray = Object.entries(jobsDaily).map(([date, counts]) => ({ date, ...counts }));
+
+      // ─── Avg duration (24h) ───────────────────────────
+      const durations = (avgDurationData ?? []).map((r: { duration_ms: number }) => r.duration_ms).filter(Boolean);
+      const avgDurationMs24h = durations.length > 0 ? Math.round(durations.reduce((a: number, b: number) => a + b, 0) / durations.length) : 0;
+
+      // ─── Activity feed (unified, last 20) ─────────────
+      type ActivityItem = { type: string; timestamp: string; description: string; id: string };
+      const activityItems: ActivityItem[] = [];
+      
+      (recentSignups ?? []).forEach((p: { user_id: string; full_name: string | null; created_at: string }) => {
+        activityItems.push({ type: "signup", timestamp: p.created_at, description: p.full_name || "New user", id: `signup-${p.user_id}` });
+      });
+      (recentSubChanges ?? []).forEach((s: { user_id: string; status: string; updated_at: string }) => {
+        activityItems.push({ type: "subscription", timestamp: s.updated_at, description: `Subscription ${s.status}`, id: `sub-${s.user_id}-${s.updated_at}` });
+      });
+      // Recent completed scrapes
+      const { data: recentCompletedScrapes } = await admin.from("scrape_jobs").select("id, url, created_at").eq("status", "completed").order("created_at", { ascending: false }).limit(10);
+      (recentCompletedScrapes ?? []).forEach((j: { id: string; url: string; created_at: string }) => {
+        activityItems.push({ type: "scrape_completed", timestamp: j.created_at, description: j.url, id: `scrape-${j.id}` });
+      });
+      // Recent failed scrapes for feed
+      (recentScrapeFailures ?? []).forEach((j: { id: string; url: string; created_at: string }) => {
+        activityItems.push({ type: "scrape_failed", timestamp: j.created_at, description: j.url, id: `sfail-${j.id}` });
+      });
+
+      activityItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const recentActivity = activityItems.slice(0, 20);
 
       // ─── Model usage analytics (30d) ───────────────────
-      const { data: extractionRows } = await admin
-        .from("extraction_jobs")
-        .select("model, credits_used, user_id, created_at")
-        .gte("created_at", thirtyDaysAgo);
-
-      const { data: aiModelsData } = await admin
-        .from("ai_models")
-        .select("id, tier");
-
       const modelTierMap: Record<string, string> = {};
-      (aiModelsData ?? []).forEach((m: { id: string; tier: string }) => {
-        modelTierMap[m.id] = m.tier;
-      });
+      (aiModelsData ?? []).forEach((m: { id: string; tier: string }) => { modelTierMap[m.id] = m.tier; });
 
-      const userPlanMap: Record<string, string> = {};
-      (creditsData ?? []).forEach((p: { user_id?: string; plan: string }) => {
-        if (p.user_id) userPlanMap[p.user_id] = p.plan;
-      });
-
-      // In-memory aggregation
       const modelAgg: Record<string, { total_jobs: number; credits: number; by_plan: Record<string, number> }> = {};
       (extractionRows ?? []).forEach((row: { model: string; credits_used: number; user_id: string }) => {
-        if (!modelAgg[row.model]) {
-          modelAgg[row.model] = { total_jobs: 0, credits: 0, by_plan: {} };
-        }
+        if (!modelAgg[row.model]) modelAgg[row.model] = { total_jobs: 0, credits: 0, by_plan: {} };
         const agg = modelAgg[row.model];
         agg.total_jobs++;
         agg.credits += row.credits_used;
@@ -491,44 +556,58 @@ Deno.serve(async (req) => {
       });
 
       const modelUsage = Object.entries(modelAgg)
-        .map(([model, stats]) => ({
-          model,
-          tier: modelTierMap[model] || "unknown",
-          ...stats,
-        }))
+        .map(([model, stats]) => ({ model, tier: modelTierMap[model] || "unknown", ...stats }))
         .sort((a, b) => b.total_jobs - a.total_jobs);
 
-      // ─── Model usage trend (daily, top 5 models) ──────
       const top5Models = modelUsage.slice(0, 5).map((m) => m.model);
       const dailyBuckets: Record<string, Record<string, number>> = {};
       (extractionRows ?? []).forEach((row: { model: string; created_at: string }) => {
         if (!top5Models.includes(row.model)) return;
-        const date = row.created_at.substring(0, 10); // YYYY-MM-DD
+        const date = row.created_at.substring(0, 10);
         if (!dailyBuckets[date]) dailyBuckets[date] = {};
         dailyBuckets[date][row.model] = (dailyBuckets[date][row.model] || 0) + 1;
       });
       const modelUsageTrend = Object.entries(dailyBuckets)
         .map(([date, models]) => ({ date, ...models }))
         .sort((a, b) => a.date.localeCompare(b.date));
-
-      // Include tier info for top 5 models for chart coloring
       const trendModels = top5Models.map((m) => ({ model: m, tier: modelTierMap[m] || "unknown" }));
+
+      // Combined recent failures
+      const recentFailures = [
+        ...(recentScrapeFailures ?? []).map((f: Record<string, unknown>) => ({ ...f, mode: (f as { mode?: string }).mode || "scrape" })),
+        ...(recentCrawlFailures ?? []).map((f: Record<string, unknown>) => ({ ...f, url: (f as { root_url?: string }).root_url, mode: "crawl" })),
+        ...(recentExtractFailures ?? []).map((f: Record<string, unknown>) => ({ ...f, url: (f as { source_url?: string }).source_url, mode: "extract" })),
+      ].sort((a, b) => new Date((b as { created_at: string }).created_at).getTime() - new Date((a as { created_at: string }).created_at).getTime()).slice(0, 10);
 
       result = {
         totalUsers: totalUsers ?? 0,
         activeKeys: activeKeys ?? 0,
+        activeWebhooks: activeWebhooks ?? 0,
+        activeSchedules: activeSchedules ?? 0,
+        pipelineRuns30d: pipelineRuns30d ?? 0,
         scrapeCount: scrapeCount ?? 0,
         crawlCount: crawlCount ?? 0,
         extractCount: extractCount ?? 0,
         failedScrapes: failedScrapes ?? 0,
         failedCrawls: failedCrawls ?? 0,
+        failedExtracts: failedExtracts ?? 0,
         totalCreditsUsed,
         totalCreditsGranted,
         planDistribution: planDist,
-        recentFailures: recentFailures ?? [],
+        recentFailures,
         modelUsage,
         modelUsageTrend,
         trendModels,
+        // New fields
+        newUsersToday: newUsersToday ?? 0,
+        newUsers7d: newUsers7d ?? 0,
+        successRate,
+        mrr,
+        jobsDaily: jobsDailyArray,
+        topUsers: topUsersData ?? [],
+        avgDurationMs24h,
+        rateLimitHits24h: rateLimitHits24h ?? 0,
+        recentActivity,
       };
     } else if (action === "users") {
       const page = parseInt(url.searchParams.get("page") || "1");
