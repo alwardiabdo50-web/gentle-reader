@@ -96,7 +96,7 @@ export default function AdminUsersPage() {
                   <TableRow
                     key={u.user_id as string}
                     className="cursor-pointer hover:bg-accent/50"
-                    onClick={() => navigate(`/admin/users/${u.user_id}`)}
+                    onClick={() => setSelectedUserId(u.user_id as string)}
                   >
                     <TableCell className="font-medium text-foreground">
                       {(u.full_name as string) || <span className="text-muted-foreground italic">No name</span>}
