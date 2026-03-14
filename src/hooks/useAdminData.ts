@@ -72,7 +72,7 @@ export async function fetchAdminContactsExport(status = "all") {
   return fetchAdminData("contacts-export", { status });
 }
 
-async function postAdminAction(body: Record<string, string>) {
+async function postAdminAction(body: Record<string, unknown>) {
   const session = (await supabase.auth.getSession()).data.session;
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const url = `https://${projectId}.supabase.co/functions/v1/admin-stats`;
@@ -217,7 +217,7 @@ export function useAdminSettingsMutations() {
 
   const updateSetting = useMutation({
     mutationFn: ({ key, value }: { key: string; value: unknown }) =>
-      postAdminAction({ action: "settings-update", key, value: JSON.stringify(value) }),
+      postAdminAction({ action: "settings-update", key, value }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "settings"] });
       queryClient.invalidateQueries({ queryKey: ["site-settings"] });

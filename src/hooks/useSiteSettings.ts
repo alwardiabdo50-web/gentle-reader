@@ -26,7 +26,11 @@ export function useSiteSettings() {
       const result = { ...defaults };
       data?.forEach((row: { key: string; value: unknown }) => {
         if (row.key in result) {
-          (result as Record<string, unknown>)[row.key] = row.value;
+          let val = row.value;
+          if (typeof val === "string") {
+            try { val = JSON.parse(val); } catch { /* keep as-is */ }
+          }
+          (result as Record<string, unknown>)[row.key] = val;
         }
       });
       return result;

@@ -270,12 +270,17 @@ Deno.serve(async (req) => {
 
       // ─── Settings mutations ─────────────────────────────
       if (postAction === "settings-update") {
-        const { key, value } = body;
-        if (!key || value === undefined) {
+        const { key, value: rawValue } = body;
+        if (!key || rawValue === undefined) {
           return new Response(JSON.stringify({ error: "key and value required" }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
+        }
+        // Safety: if value arrived as a string (double-serialized), parse it back
+        let value = rawValue;
+        if (typeof rawValue === "string") {
+          try { value = JSON.parse(rawValue); } catch { /* keep as-is */ }
         }
         const { error } = await admin
           .from("site_settings")
