@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { HeroBackground } from "@/components/public/HeroBackground";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { usePlans } from "@/hooks/usePlans";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function HeroSection() {
   return (
