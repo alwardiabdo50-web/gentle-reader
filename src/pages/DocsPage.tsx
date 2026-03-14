@@ -66,17 +66,39 @@ export default function DocsPage() {
             </div>
             <ParamsTable params={[
               { name: "url", type: "string", default: "required", desc: "Target URL to scrape" },
-              { name: "formats", type: "string[]", default: '["markdown"]', desc: "Output formats: markdown, html, metadata, links" },
+              { name: "formats", type: "string[]", default: '["markdown"]', desc: "Output formats: markdown, html, metadata, links, branding" },
               { name: "render_javascript", type: "boolean", default: "true", desc: "Enable JS rendering" },
               { name: "only_main_content", type: "boolean", default: "true", desc: "Strip nav/footer" },
               { name: "screenshot", type: "boolean", default: "false", desc: "Capture screenshot" },
               { name: "timeout_ms", type: "number", default: "30000", desc: "Request timeout (max 60000)" },
+              { name: "actions", type: "object[]", default: "[]", desc: "Pre-scrape browser actions (click, scroll, wait, type, press)" },
+              { name: "location", type: "object", default: "—", desc: "Geo-targeting: { country, languages[] }" },
             ]} />
             <LanguageSnippet snippets={snippets("POST", "/scrape", {
               url: "https://example.com",
               formats: ["markdown", "html", "metadata", "links"],
               render_javascript: true,
               only_main_content: true,
+            }, apiKey)} />
+            <p className="text-xs font-medium mt-4">With branding extraction:</p>
+            <LanguageSnippet snippets={snippets("POST", "/scrape", {
+              url: "https://example.com",
+              formats: ["markdown", "branding"],
+            }, apiKey)} />
+            <p className="text-xs font-medium mt-4">With actions:</p>
+            <LanguageSnippet snippets={snippets("POST", "/scrape", {
+              url: "https://example.com",
+              formats: ["markdown"],
+              actions: [
+                { type: "wait", milliseconds: 2000 },
+                { type: "click", selector: "#load-more" },
+                { type: "scroll", direction: "down", pixels: 500 },
+              ],
+            }, apiKey)} />
+            <p className="text-xs font-medium mt-4">With geo-targeting:</p>
+            <LanguageSnippet snippets={snippets("POST", "/scrape", {
+              url: "https://example.com",
+              location: { country: "de", languages: ["de", "en"] },
             }, apiKey)} />
           </TabsContent>
 
