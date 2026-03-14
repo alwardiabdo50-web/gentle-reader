@@ -12,10 +12,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
+import { canAccessFeature } from "@/lib/plan-limits";
 import { toast } from "sonner";
+import { Lock } from "lucide-react";
 
 export function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
   const { activeOrg, setActiveOrg, orgs, refreshOrgs } = useAuth();
+  const { plan } = useCredits();
+  const canCreateOrg = canAccessFeature(plan, "organizations");
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
