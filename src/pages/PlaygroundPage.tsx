@@ -831,6 +831,81 @@ export default function PlaygroundPage() {
           }
         </div>
 
+        {/* Scrape advanced options: branding, actions, location */}
+        {mode === "scrape" &&
+        <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1 px-0">
+                <ChevronRight className="h-3 w-3" /> Advanced options
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-3 border-t border-border mt-2">
+              {/* Branding */}
+              <div className="flex items-center gap-2">
+                <Switch id="branding" checked={includeBranding} onCheckedChange={setIncludeBranding} />
+                <Label htmlFor="branding" className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Palette className="h-3.5 w-3.5" /> Extract branding (colors, fonts, logos)
+                </Label>
+              </div>
+
+              {/* Location */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Country</Label>
+                  <Input placeholder="us" value={locationCountry} onChange={e => setLocationCountry(e.target.value)} className="w-20 h-8 text-xs" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Languages</Label>
+                  <Input placeholder="en, es" value={locationLanguages} onChange={e => setLocationLanguages(e.target.value)} className="w-32 h-8 text-xs" />
+                </div>
+              </div>
+
+              {/* Actions builder */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">Pre-scrape Actions</Label>
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => setActions(prev => [...prev, { type: "wait", milliseconds: 2000 }])}>
+                    <Plus className="h-3 w-3" /> Add Action
+                  </Button>
+                </div>
+                {actions.map((action, idx) => (
+                  <div key={idx} className="flex items-center gap-2 rounded border border-border p-2 bg-muted/30">
+                    <Select value={action.type} onValueChange={v => setActions(prev => prev.map((a, i) => i === idx ? { ...a, type: v } : a))}>
+                      <SelectTrigger className="w-24 h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="click">Click</SelectItem>
+                        <SelectItem value="wait">Wait</SelectItem>
+                        <SelectItem value="scroll">Scroll</SelectItem>
+                        <SelectItem value="type">Type</SelectItem>
+                        <SelectItem value="press">Press</SelectItem>
+                        <SelectItem value="screenshot">Screenshot</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {(action.type === "click" || action.type === "type") && (
+                      <Input placeholder="CSS selector" value={action.selector ?? ""} onChange={e => setActions(prev => prev.map((a, i) => i === idx ? { ...a, selector: e.target.value } : a))} className="flex-1 h-7 text-xs" />
+                    )}
+                    {action.type === "type" && (
+                      <Input placeholder="Text to type" value={action.value ?? ""} onChange={e => setActions(prev => prev.map((a, i) => i === idx ? { ...a, value: e.target.value } : a))} className="flex-1 h-7 text-xs" />
+                    )}
+                    {action.type === "wait" && (
+                      <Input type="number" placeholder="ms" value={action.milliseconds ?? ""} onChange={e => setActions(prev => prev.map((a, i) => i === idx ? { ...a, milliseconds: Number(e.target.value) } : a))} className="w-24 h-7 text-xs" />
+                    )}
+                    {action.type === "press" && (
+                      <Input placeholder="Key (Enter, Escape)" value={action.value ?? ""} onChange={e => setActions(prev => prev.map((a, i) => i === idx ? { ...a, value: e.target.value } : a))} className="flex-1 h-7 text-xs" />
+                    )}
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setActions(prev => prev.filter((_, i) => i !== idx))}>
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+                {actions.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground">⚠ Actions require JavaScript rendering. Without a browser runtime, actions will be recorded but not executed.</p>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        }
+
         {mode === "extract" &&
         <div className="space-y-3 pt-2 border-t border-border">
             {extractionTemplates.length > 0 && (
