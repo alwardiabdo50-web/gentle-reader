@@ -10,6 +10,7 @@ import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { PublicLayout } from "@/components/public/PublicLayout";
+import { useThemeColors } from "@/hooks/useThemeColors";
 import PlaygroundPage from "@/pages/PlaygroundPage";
 import OverviewPage from "@/pages/OverviewPage";
 import ApiKeysPage from "@/pages/ApiKeysPage";
@@ -47,12 +48,18 @@ import TermsPage from "@/pages/public/TermsPage";
 
 const queryClient = new QueryClient();
 
+function ThemeApplier() {
+  useThemeColors();
+  return null;
+}
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <ThemeApplier />
         <AuthProvider>
         <BrowserRouter>
           <Routes>

@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminSettings, useAdminSettingsMutations } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, Search, Share2, Palette, AlertTriangle } from "lucide-react";
+import { Loader2, Upload, Search, Share2, Palette, AlertTriangle, Paintbrush } from "lucide-react";
+import ThemePaletteEditor from "@/components/admin/ThemePaletteEditor";
 
 export default function AdminSettingsPage() {
   const { data, isLoading } = useAdminSettings();
@@ -77,6 +78,7 @@ export default function AdminSettingsPage() {
           <TabsTrigger value="socials" className="gap-1.5"><Share2 className="h-3.5 w-3.5" />Socials</TabsTrigger>
           <TabsTrigger value="branding" className="gap-1.5"><Palette className="h-3.5 w-3.5" />Branding</TabsTrigger>
           <TabsTrigger value="maintenance" className="gap-1.5"><AlertTriangle className="h-3.5 w-3.5" />Maintenance</TabsTrigger>
+          <TabsTrigger value="theme" className="gap-1.5"><Paintbrush className="h-3.5 w-3.5" />Theme</TabsTrigger>
         </TabsList>
 
         <TabsContent value="seo">
@@ -208,6 +210,9 @@ export default function AdminSettingsPage() {
               </Button>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="theme">
+          <ThemePaletteEditor />
         </TabsContent>
       </Tabs>
     </div>
