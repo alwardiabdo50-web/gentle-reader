@@ -329,6 +329,8 @@ Deno.serve(async (req) => {
     return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
   }
 
+  const admin = getAdmin();
+
   // Dynamic credit cost
   const EXTRACTION_CREDIT_COST = await getCreditCost(admin, "extract");
 
@@ -337,8 +339,6 @@ Deno.serve(async (req) => {
   if (quotaError) {
     return json({ success: false, error: { code: quotaError.code, message: quotaError.message } }, 402);
   }
-
-  const admin = getAdmin();
 
   // Create extraction job
   const { data: extractJob } = await admin
