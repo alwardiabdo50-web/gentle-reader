@@ -322,7 +322,7 @@ Deno.serve(async (req) => {
       screenshot_url: result.screenshot_url ?? null,
       warnings_json: result.warnings,
       duration_ms: result.timings.total_ms,
-      credits_used: 1,
+      credits_used: scrapeCreditCost,
     })
     .eq("id", job.id);
 
