@@ -438,6 +438,95 @@ export type Database = {
           },
         ]
       }
+      extraction_template_versions: {
+        Row: {
+          change_note: string | null
+          created_at: string
+          id: string
+          model: string
+          prompt: string | null
+          schema_json: Json | null
+          template_id: string
+          version: number
+        }
+        Insert: {
+          change_note?: string | null
+          created_at?: string
+          id?: string
+          model: string
+          prompt?: string | null
+          schema_json?: Json | null
+          template_id: string
+          version: number
+        }
+        Update: {
+          change_note?: string | null
+          created_at?: string
+          id?: string
+          model?: string
+          prompt?: string | null
+          schema_json?: Json | null
+          template_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extraction_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "extraction_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extraction_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean
+          model: string
+          name: string
+          prompt: string | null
+          schema_json: Json | null
+          tags: string[] | null
+          updated_at: string
+          use_count: number
+          user_id: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          model?: string
+          name: string
+          prompt?: string | null
+          schema_json?: Json | null
+          tags?: string[] | null
+          updated_at?: string
+          use_count?: number
+          user_id?: string | null
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          model?: string
+          name?: string
+          prompt?: string | null
+          schema_json?: Json | null
+          tags?: string[] | null
+          updated_at?: string
+          use_count?: number
+          user_id?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       org_invitations: {
         Row: {
           accepted_at: string | null

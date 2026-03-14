@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database, GitBranch, History, Save, Share2, ChevronDown, ChevronRight, Trash2, X, Lock as LockIcon } from "lucide-react";
+import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database, GitBranch, History, Save, Share2, ChevronDown, ChevronRight, Trash2, X, Lock as LockIcon, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCredits } from "@/hooks/useCredits";
@@ -114,6 +114,22 @@ export default function PlaygroundPage() {
   // Diff
   const [previousMarkdown, setPreviousMarkdown] = useState<string | null>(null);
   const [previousUrl, setPreviousUrl] = useState<string | null>(null);
+
+  // Extraction templates
+  const [extractionTemplates, setExtractionTemplates] = useState<Array<{ id: string; name: string; prompt: string | null; schema_json: any; model: string; use_count: number }>>([]);
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDesc, setTemplateDesc] = useState("");
+
+  // Fetch extraction templates
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("extraction_templates").select("id,name,prompt,schema_json,model,use_count")
+      .order("use_count", { ascending: false })
+      .then(({ data }) => {
+        if (data) setExtractionTemplates(data as any);
+      });
+  }, [user]);
 
   // Fetch presets
   useEffect(() => {
@@ -712,6 +728,28 @@ export default function PlaygroundPage() {
 
         {mode === "extract" &&
         <div className="space-y-3 pt-2 border-t border-border">
+            {extractionTemplates.length > 0 && (
+              <div className="flex items-center gap-2">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                <Select onValueChange={(id) => {
+                  const t = extractionTemplates.find(t => t.id === id);
+                  if (t) {
+                    if (t.prompt) setExtractPrompt(t.prompt);
+                    if (t.schema_json) setExtractSchema(JSON.stringify(t.schema_json, null, 2));
+                    if (t.model) setExtractModel(t.model);
+                    supabase.from("extraction_templates").update({ use_count: t.use_count + 1 }).eq("id", t.id).then();
+                    toast.success(`Loaded template: ${t.name}`);
+                  }
+                }}>
+                  <SelectTrigger className="w-52 h-8 text-xs"><SelectValue placeholder="Load template..." /></SelectTrigger>
+                  <SelectContent>
+                    {extractionTemplates.map(t => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label className="text-xs text-muted-foreground block mb-1.5">Extraction prompt</Label>
               <Input
@@ -741,12 +779,39 @@ export default function PlaygroundPage() {
                 </SelectContent>
               </Select>
             </div>
+            {(extractPrompt.trim() || extractSchema.trim()) && (
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setSaveTemplateOpen(true)}>
+                <Save className="h-3.5 w-3.5" /> Save as Template
+              </Button>
+            )}
           </div>
         }
 
         {mode === "pipeline" &&
         <div className="space-y-3 pt-2 border-t border-border">
             <p className="text-xs font-medium text-foreground">Extract Stage</p>
+            {extractionTemplates.length > 0 && (
+              <div className="flex items-center gap-2">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                <Select onValueChange={(id) => {
+                  const t = extractionTemplates.find(t => t.id === id);
+                  if (t) {
+                    if (t.prompt) setPipelinePrompt(t.prompt);
+                    if (t.schema_json) setPipelineSchema(JSON.stringify(t.schema_json, null, 2));
+                    if (t.model) setPipelineModel(t.model);
+                    supabase.from("extraction_templates").update({ use_count: t.use_count + 1 }).eq("id", t.id).then();
+                    toast.success(`Loaded template: ${t.name}`);
+                  }
+                }}>
+                  <SelectTrigger className="w-52 h-8 text-xs"><SelectValue placeholder="Load template..." /></SelectTrigger>
+                  <SelectContent>
+                    {extractionTemplates.map(t => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label className="text-xs text-muted-foreground block mb-1.5">Extraction prompt</Label>
               <Input
@@ -1138,5 +1203,47 @@ export default function PlaygroundPage() {
           </div>
         </div>
       }
+
+      {/* Save as Template Dialog */}
+      <Dialog open={saveTemplateOpen} onOpenChange={setSaveTemplateOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Save as Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <Input placeholder="Template name..." value={templateName} onChange={e => setTemplateName(e.target.value)} />
+            <Input placeholder="Description (optional)" value={templateDesc} onChange={e => setTemplateDesc(e.target.value)} />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setSaveTemplateOpen(false)}>Cancel</Button>
+              <Button size="sm" disabled={!templateName.trim()} onClick={async () => {
+                if (!user) return;
+                const prompt = mode === "pipeline" ? pipelinePrompt : extractPrompt;
+                const schema = mode === "pipeline" ? pipelineSchema : extractSchema;
+                const model = mode === "pipeline" ? pipelineModel : extractModel;
+                let parsedSchema = null;
+                if (schema.trim()) { try { parsedSchema = JSON.parse(schema); } catch {} }
+                const { error } = await supabase.from("extraction_templates").insert({
+                  user_id: user.id,
+                  name: templateName.trim(),
+                  description: templateDesc.trim() || null,
+                  prompt: prompt.trim() || null,
+                  schema_json: parsedSchema,
+                  model,
+                });
+                if (!error) {
+                  toast.success("Template saved");
+                  setSaveTemplateOpen(false);
+                  setTemplateName("");
+                  setTemplateDesc("");
+                  const { data } = await supabase.from("extraction_templates").select("id,name,prompt,schema_json,model,use_count").order("use_count", { ascending: false });
+                  if (data) setExtractionTemplates(data as any);
+                } else {
+                  toast.error("Failed to save template");
+                }
+              }}>Save</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>);
 }

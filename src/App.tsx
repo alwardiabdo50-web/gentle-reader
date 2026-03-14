@@ -21,6 +21,7 @@ import DocsPage from "@/pages/DocsPage";
 import WebhooksPage from "@/pages/WebhooksPage";
 import SchedulesPage from "@/pages/SchedulesPage";
 import PipelinesPage from "@/pages/PipelinesPage";
+import TemplatesPage from "@/pages/TemplatesPage";
 import AuthPage from "@/pages/AuthPage";
 import NotFound from "@/pages/NotFound";
 import HomePage from "@/pages/public/HomePage";
@@ -106,6 +107,7 @@ const App = () => (
                       <Route path="/webhooks" element={<WebhooksPage />} />
                       <Route path="/schedules" element={<SchedulesPage />} />
                       <Route path="/pipelines" element={<PipelinesPage />} />
+                      <Route path="/templates" element={<TemplatesPage />} />
                       <Route path="/docs" element={<DocsPage />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>

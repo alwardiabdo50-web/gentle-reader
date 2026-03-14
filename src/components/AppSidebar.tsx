@@ -1,6 +1,6 @@
 import {
   Zap, Key, BarChart3, History, CreditCard, Globe, Settings, LogOut,
-  BookOpen, ChevronsUpDown, Shield, Webhook, Calendar, GitBranch, Users, LayoutDashboard,
+  BookOpen, ChevronsUpDown, Shield, Webhook, Calendar, GitBranch, Users, LayoutDashboard, FileText,
 } from "lucide-react";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useCredits } from "@/hooks/useCredits";
@@ -29,6 +29,7 @@ const mainItems = [
   { title: "Webhooks", url: "/app/webhooks", icon: Webhook },
   { title: "Schedules", url: "/app/schedules", icon: Calendar },
   { title: "Pipelines", url: "/app/pipelines", icon: GitBranch },
+  { title: "Templates", url: "/app/templates", icon: FileText },
   { title: "Docs", url: "/app/docs", icon: BookOpen },
 ];
 
