@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getUserPlan, canAccessFeature } from "../_shared/plan-limits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -55,6 +56,12 @@ Deno.serve(async (req) => {
     let body: Record<string, unknown>;
     try { body = await req.json(); } catch {
       return json({ error: "Invalid JSON" }, 400);
+    }
+
+    // Plan gate
+    const userPlan = await getUserPlan(userId);
+    if (!canAccessFeature(userPlan, "pipelines")) {
+      return json({ error: "Pipelines require a Standard plan or above. Please upgrade." }, 403);
     }
 
     if (!body.name || typeof body.name !== "string") {

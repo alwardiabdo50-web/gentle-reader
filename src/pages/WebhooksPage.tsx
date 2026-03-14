@@ -75,7 +75,17 @@ async function invokeWebhooksApi(method: string, path = "", body?: object) {
   return json.data;
 }
 
+import { UpgradeGate } from "@/components/UpgradeGate";
+
 export default function WebhooksPage() {
+  return (
+    <UpgradeGate feature="webhooks">
+      <WebhooksPageContent />
+    </UpgradeGate>
+  );
+}
+
+function WebhooksPageContent() {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [newUrl, setNewUrl] = useState("");

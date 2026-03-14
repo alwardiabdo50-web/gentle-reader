@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCredits } from "@/hooks/useCredits";
+import { getMaxApiKeys } from "@/lib/plan-limits";
 import { toast } from "sonner";
 
 interface ApiKey {
@@ -37,6 +39,8 @@ interface ApiKey {
 
 export default function ApiKeysPage() {
   const { user, activeOrg } = useAuth();
+  const { plan } = useCredits();
+  const maxKeys = getMaxApiKeys(plan);
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [newKeyName, setNewKeyName] = useState("");
@@ -47,6 +51,8 @@ export default function ApiKeysPage() {
   const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
 
   const isOrgOwner = activeOrg?.role === "owner";
+  const activeKeys = keys.filter(k => k.is_active);
+  const atKeyLimit = maxKeys !== -1 && activeKeys.length >= maxKeys;
   const canManageKeys = !activeOrg || isOrgOwner;
 
   const fetchKeys = async () => {
@@ -163,7 +169,7 @@ export default function ApiKeysPage() {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="gap-1.5">
+              <Button className="gap-1.5" disabled={atKeyLimit} title={atKeyLimit ? `Your plan allows up to ${maxKeys} API keys` : undefined}>
                 <Plus className="h-4 w-4" /> New Key
               </Button>
             </DialogTrigger>

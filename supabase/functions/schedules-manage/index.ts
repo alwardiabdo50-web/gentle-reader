@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getUserPlan, canAccessFeature } from "../_shared/plan-limits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -222,6 +223,12 @@ Deno.serve(async (req) => {
       }
 
       // ── Create schedule ────────────────────────────────
+      // Plan gate
+      const userPlan = await getUserPlan(user.id);
+      if (!canAccessFeature(userPlan, "schedules")) {
+        return json({ success: false, error: { message: "Scheduled Jobs require a Standard plan or above. Please upgrade." } }, 403);
+      }
+
       const { name, description, job_type, config: cfgBody, cron_expression, preset, timezone, enable_diff } = body;
 
       if (!name || !job_type || !cfgBody) {

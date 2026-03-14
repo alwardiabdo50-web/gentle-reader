@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getUserPlan, canAccessFeature } from "../_shared/plan-limits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -77,6 +78,12 @@ async function handleCreate(userId: string, req: Request) {
   let body: { url?: string; events?: string[]; description?: string };
   try { body = await req.json(); } catch {
     return json({ success: false, error: { code: "BAD_REQUEST", message: "Invalid JSON" } }, 400);
+  }
+
+  // Plan gate
+  const userPlan = await getUserPlan(userId);
+  if (!canAccessFeature(userPlan, "webhooks")) {
+    return json({ success: false, error: { code: "PLAN_REQUIRED", message: "Webhooks require a Hobby plan or above. Please upgrade." } }, 403);
   }
 
   if (!body.url || typeof body.url !== "string") {

@@ -9,9 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database, GitBranch, History, Save, Share2, ChevronDown, ChevronRight, Trash2, X } from "lucide-react";
+import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Layers, Database, GitBranch, History, Save, Share2, ChevronDown, ChevronRight, Trash2, X, Lock as LockIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCredits } from "@/hooks/useCredits";
+import { canAccessFeature } from "@/lib/plan-limits";
 import { toast } from "sonner";
 import type { ScrapeResponse } from "@/lib/api/scrape";
 
@@ -69,6 +71,8 @@ function computeDiff(oldText: string, newText: string) {
 export default function PlaygroundPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  const { plan } = useCredits();
+  const extractAllowed = canAccessFeature(plan, "extract");
   const [mode, setMode] = useState<Mode>((searchParams.get("mode") as Mode) || "scrape");
   const [url, setUrl] = useState(searchParams.get("url") || "");
   const [batchUrls, setBatchUrls] = useState("");
@@ -566,17 +570,23 @@ export default function PlaygroundPage() {
 
       {/* Mode selector */}
       <div className="flex gap-2 flex-wrap">
-        {(["scrape", "batch", "crawl", "map", "extract", "pipeline"] as Mode[]).map((m) =>
-        <Button
-          key={m}
-          variant={mode === m ? "default" : "secondary"}
-          size="sm"
-          onClick={() => {setMode(m);setResult(null);}}
-          className="gap-1.5 capitalize">
-            {modeIcons[m]}
-            {m === "batch" ? "Batch Scrape" : m}
-          </Button>
-        )}
+        {(["scrape", "batch", "crawl", "map", "extract", "pipeline"] as Mode[]).map((m) => {
+          const locked = (m === "extract" || m === "pipeline") && !extractAllowed;
+          return (
+            <Button
+              key={m}
+              variant={mode === m ? "default" : "secondary"}
+              size="sm"
+              onClick={() => { if (!locked) { setMode(m); setResult(null); } }}
+              disabled={locked}
+              className="gap-1.5 capitalize"
+              title={locked ? "Upgrade to Standard to use this mode" : undefined}
+            >
+              {locked ? <LockIcon className="h-3.5 w-3.5" /> : modeIcons[m]}
+              {m === "batch" ? "Batch Scrape" : m}
+            </Button>
+          );
+        })}
       </div>
 
       {/* Input section */}

@@ -12,8 +12,17 @@ import { Plus, Trash2, Clock, Play, RefreshCw, Calendar, GitCompare, ArrowRight,
 import { format } from "date-fns";
 import ScheduleFormFields, { defaultFormState, PRESETS, type ScheduleFormState } from "@/components/schedules/ScheduleFormFields";
 import { invokeSchedulesApi, cronLabel, presetFromCron, type ScheduleData, type RunData } from "@/components/schedules/scheduleHelpers";
+import { UpgradeGate } from "@/components/UpgradeGate";
 
 export default function SchedulesPage() {
+  return (
+    <UpgradeGate feature="schedules">
+      <SchedulesPageContent />
+    </UpgradeGate>
+  );
+}
+
+function SchedulesPageContent() {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
