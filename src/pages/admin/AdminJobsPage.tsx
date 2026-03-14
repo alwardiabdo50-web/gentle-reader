@@ -87,7 +87,7 @@ export default function AdminJobsPage() {
                       {(j.user_id as string)?.slice(0, 8)}…
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {new Date(j.created_at as string).toLocaleDateString()}
+                      {new Date(j.created_at as string).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                     </TableCell>
                   </TableRow>
                 ))}

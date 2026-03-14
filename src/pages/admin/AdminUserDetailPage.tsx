@@ -111,7 +111,7 @@ export default function AdminUserDetailPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>{j.credits_used as number}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{new Date(j.created_at as string).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{new Date(j.created_at as string).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
