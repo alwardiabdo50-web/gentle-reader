@@ -268,6 +268,24 @@ Deno.serve(async (req) => {
         });
       }
 
+      // ─── Settings mutations ─────────────────────────────
+      if (postAction === "settings-update") {
+        const { key, value } = body;
+        if (!key || value === undefined) {
+          return new Response(JSON.stringify({ error: "key and value required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await admin
+          .from("site_settings")
+          .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       return new Response(JSON.stringify({ error: "Unknown action" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
