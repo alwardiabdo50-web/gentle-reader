@@ -40,8 +40,8 @@ const faqs = [
 ];
 
 export default function PricingPage() {
-  const [yearly, setYearly] = useState(false);
   const { data: plans, isLoading } = usePlans();
+  const { data: creditCosts, isLoading: costsLoading } = useApiCreditCosts();
 
   // Split plans: first 4 as main cards, rest as bottom cards
   const mainPlans = plans?.slice(0, 4) ?? [];
