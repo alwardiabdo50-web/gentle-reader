@@ -34,8 +34,8 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { data, isLoading } = useAdminUsers(page, search, planFilter);
-  const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
