@@ -94,6 +94,46 @@ async function postAdminAction(body: Record<string, string>) {
   return res.json();
 }
 
+export function useAdminPlans() {
+  return useQuery({
+    queryKey: ["admin", "plans"],
+    queryFn: () => fetchAdminData("plans"),
+  });
+}
+
+export function useAdminPlanMutations() {
+  const queryClient = useQueryClient();
+
+  const updatePlan = useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      postAdminAction({ action: "plan-update", ...body } as Record<string, string>),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "plans"] });
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
+    },
+  });
+
+  const createPlan = useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      postAdminAction({ action: "plan-create", ...body } as Record<string, string>),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "plans"] });
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
+    },
+  });
+
+  const deletePlan = useMutation({
+    mutationFn: (planId: string) =>
+      postAdminAction({ action: "plan-delete", planId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "plans"] });
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
+    },
+  });
+
+  return { updatePlan, createPlan, deletePlan };
+}
+
 export function useAdminContactActions() {
   const queryClient = useQueryClient();
 
