@@ -29,6 +29,7 @@ const mainItems = [
   { title: "Webhooks", url: "/app/webhooks", icon: Webhook },
   { title: "Schedules", url: "/app/schedules", icon: Calendar },
   { title: "Pipelines", url: "/app/pipelines", icon: GitBranch },
+  { title: "Templates", url: "/app/templates", icon: FileText },
   { title: "Docs", url: "/app/docs", icon: BookOpen },
 ];
 
