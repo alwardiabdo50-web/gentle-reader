@@ -29,7 +29,8 @@ const EXTRACTION_TIMEOUT = 30000;
 const MAX_INPUT_LENGTH = 50000;
 const EXTRACTION_CREDIT_COST_FALLBACK = 5;
 
-const ALLOWED_MODELS = [
+// Hardcoded fallback models (used if DB lookup fails)
+const FALLBACK_ALLOWED_MODELS = [
   "google/gemini-2.5-pro",
   "google/gemini-3.1-pro-preview",
   "google/gemini-3-flash-preview",
@@ -40,6 +41,33 @@ const ALLOWED_MODELS = [
   "openai/gpt-5-nano",
   "openai/gpt-5.2",
 ];
+
+/** Fetch allowed models from DB with plan-based validation */
+async function validateModel(admin: ReturnType<typeof getAdmin>, requestedModel: string | undefined, userPlan: string): Promise<{ model: string; modelCreditCost: number }> {
+  try {
+    const { data: dbModels } = await admin
+      .from("ai_models")
+      .select("id, tier, credit_cost, min_plan")
+      .eq("is_active", true);
+
+    if (dbModels && dbModels.length > 0) {
+      const { getAllowedModelTiers } = await import("../_shared/plan-limits.ts");
+      const allowedTiers = getAllowedModelTiers(userPlan);
+      const model = requestedModel && dbModels.find((m: any) => m.id === requestedModel) ? requestedModel : DEFAULT_MODEL;
+      const dbModel = dbModels.find((m: any) => m.id === model);
+      if (dbModel && !allowedTiers.includes(dbModel.tier)) {
+        throw new Error(`Model "${model}" requires a higher plan. Please upgrade.`);
+      }
+      return { model, modelCreditCost: dbModel?.credit_cost ?? 0 };
+    }
+  } catch (e) {
+    if ((e as Error).message.includes("requires a higher plan")) throw e;
+    console.error("DB model lookup failed, using fallback:", e);
+  }
+  // Fallback
+  const model = requestedModel && FALLBACK_ALLOWED_MODELS.includes(requestedModel) ? requestedModel : DEFAULT_MODEL;
+  return { model, modelCreditCost: 0 };
+}
 
 // ─── Scrape pipeline reuse (mock) ────────────────────────────
 async function scrapeForExtraction(url: string, admin: ReturnType<typeof getAdmin>, userId: string, apiKeyId: string): Promise<{
