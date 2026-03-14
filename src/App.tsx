@@ -10,6 +10,7 @@ import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { PublicLayout } from "@/components/public/PublicLayout";
+import { useThemeColors } from "@/hooks/useThemeColors";
 import PlaygroundPage from "@/pages/PlaygroundPage";
 import OverviewPage from "@/pages/OverviewPage";
 import ApiKeysPage from "@/pages/ApiKeysPage";
