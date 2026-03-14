@@ -274,8 +274,12 @@ Deno.serve(async (req) => {
     return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
   }
 
-  // Quota check (1 credit for map)
-  const quotaError = await checkQuota(ctx.userId, 1);
+  // Dynamic credit cost
+  const mapAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const mapCreditCost = await getCreditCost(mapAdmin, "map");
+
+  // Quota check
+  const quotaError = await checkQuota(ctx.userId, mapCreditCost);
   if (quotaError) {
     return json({ success: false, error: { code: quotaError.code, message: quotaError.message } }, 402);
   }
