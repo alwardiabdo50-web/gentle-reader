@@ -159,7 +159,9 @@ Deno.serve(async (req) => {
   let failedCount = 0;
   let creditsUsed = 0;
 
-  console.log(`Crawl worker started job=${jobId} root=${job.root_url}`);
+  const crawlCreditCost = await getCreditCost(admin, "crawl");
+
+  console.log(`Crawl worker started job=${jobId} root=${job.root_url} creditCost=${crawlCreditCost}`);
   console.log(`Crawl worker throttle settings job=${jobId}`, throttle.getSettings());
 
   try {
