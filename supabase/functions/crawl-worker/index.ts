@@ -4,6 +4,7 @@ import { getUserCredits, recordLedgerEntry, checkQuota } from "../_shared/billin
 import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { CrawlThrottle } from "../_shared/crawl-throttle.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
+import { getCreditCost } from "../_shared/credit-costs.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
