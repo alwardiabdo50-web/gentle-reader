@@ -137,7 +137,7 @@ export default function AdminOverviewPage() {
                 <YAxis allowDecimals={false} tick={{ fontSize: 11 }} className="text-muted-foreground" />
                 <ChartTooltip
                   content={<ChartTooltipContent />}
-                  labelFormatter={(label: string) => new Date(label).toLocaleDateString()}
+                  labelFormatter={(label: string) => new Date(label).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                 />
                 {trendModels.map((tm, i) => (
                   <Area
