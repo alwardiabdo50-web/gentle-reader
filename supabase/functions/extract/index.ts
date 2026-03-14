@@ -303,7 +303,17 @@ Deno.serve(async (req) => {
     return json({ success: false, error: { code: "INVALID_SCHEMA", message: "'schema' must be a valid JSON schema object" } }, 400);
   }
 
-  const model = body.model && ALLOWED_MODELS.includes(body.model) ? body.model : DEFAULT_MODEL;
+  // Validate model against DB
+  const userPlan = serviceCtx ? "scale" : await getUserPlan(ctx.userId);
+  let modelCreditCost = 0;
+  let model: string;
+  try {
+    const validated = await validateModel(getAdmin(), body.model, userPlan);
+    model = validated.model;
+    modelCreditCost = validated.modelCreditCost;
+  } catch (e) {
+    return json({ success: false, error: { code: "MODEL_ACCESS_DENIED", message: (e as Error).message } }, 403);
+  }
 
   // Plan gate — skip for scheduled jobs (service-role context)
   if (!serviceCtx) {

@@ -31,7 +31,7 @@ const SCRAPE_CREDIT_COST_FALLBACK = 1;
 const EXTRACT_CREDIT_COST_FALLBACK = 2;
 const TRANSFORM_CREDIT_COST_FALLBACK = 2;
 
-const ALLOWED_MODELS = [
+const FALLBACK_ALLOWED_MODELS = [
   "google/gemini-2.5-pro",
   "google/gemini-3.1-pro-preview",
   "google/gemini-3-flash-preview",
@@ -43,8 +43,25 @@ const ALLOWED_MODELS = [
   "openai/gpt-5.2",
 ];
 
+async function pickModelFromDB(admin: ReturnType<typeof getAdmin>, requested: string | undefined, userPlan: string): Promise<string> {
+  try {
+    const { data: dbModels } = await admin.from("ai_models").select("id, tier").eq("is_active", true);
+    if (dbModels && dbModels.length > 0) {
+      const { getAllowedModelTiers } = await import("../_shared/plan-limits.ts");
+      const allowedTiers = getAllowedModelTiers(userPlan);
+      const model = requested && dbModels.find((m: any) => m.id === requested) ? requested : DEFAULT_MODEL;
+      const dbModel = dbModels.find((m: any) => m.id === model);
+      if (dbModel && !allowedTiers.includes(dbModel.tier)) {
+        return DEFAULT_MODEL; // Downgrade silently for pipeline
+      }
+      return model;
+    }
+  } catch { /* fallback */ }
+  return requested && FALLBACK_ALLOWED_MODELS.includes(requested) ? requested : DEFAULT_MODEL;
+}
+
 function pickModel(m?: string): string {
-  return m && ALLOWED_MODELS.includes(m) ? m : DEFAULT_MODEL;
+  return m && FALLBACK_ALLOWED_MODELS.includes(m) ? m : DEFAULT_MODEL;
 }
 
 // ─── AI call ─────────────────────────────────────────────────
