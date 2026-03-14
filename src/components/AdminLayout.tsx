@@ -49,7 +49,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                   activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                   onClick={onNavigate}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="h-6 w-6" />
                 </NavLink>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={8}>
