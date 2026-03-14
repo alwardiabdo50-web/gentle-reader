@@ -18,7 +18,7 @@ import { canAccessFeature } from "@/lib/plan-limits";
 import { toast } from "sonner";
 import type { ScrapeResponse } from "@/lib/api/scrape";
 
-type Mode = "scrape" | "batch" | "crawl" | "map" | "extract" | "pipeline";
+type Mode = "scrape" | "batch" | "crawl" | "map" | "extract" | "pipeline" | "search";
 
 interface HistoryEntry {
   mode: Mode;
