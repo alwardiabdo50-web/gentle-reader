@@ -189,7 +189,17 @@ export default function PricingPage() {
                     <p className="text-xs text-muted-foreground mb-3">
                       {plan.description}
                     </p>
-                    <div className="mb-3">
+                    <div className="mb-3 flex items-baseline gap-1.5">
+                      {(() => {
+                        const origPrice = yearly
+                          ? plan.original_yearly_price
+                          : plan.original_monthly_price;
+                        return origPrice && origPrice > 0 ? (
+                          <span className="text-lg text-muted-foreground line-through">
+                            ${(origPrice / 100).toFixed(0)}
+                          </span>
+                        ) : null;
+                      })()}
                       <span className="text-2xl font-bold text-foreground">
                         ${price.toFixed(0)}
                       </span>

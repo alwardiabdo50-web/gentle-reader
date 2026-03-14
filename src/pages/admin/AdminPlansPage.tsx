@@ -91,6 +91,8 @@ export default function AdminPlansPage() {
       highlighted: !!form.highlighted,
       sort_order: Number(form.sort_order) || 0,
       is_active: form.is_active !== false,
+      original_monthly_price: form.original_monthly_price != null ? Number(form.original_monthly_price) : null,
+      original_yearly_price: form.original_yearly_price != null ? Number(form.original_yearly_price) : null,
     };
 
     try {

@@ -14,6 +14,8 @@ export interface Plan {
   display_features: string[];
   cta_text: string;
   highlighted: boolean;
+  original_monthly_price: number | null;
+  original_yearly_price: number | null;
   sort_order: number;
   is_active: boolean;
   created_at: string;

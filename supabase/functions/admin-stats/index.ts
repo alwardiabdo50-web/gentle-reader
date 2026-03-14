@@ -131,6 +131,8 @@ Deno.serve(async (req) => {
           cta_text: cta_text ?? "Get Started",
           highlighted: highlighted ?? false,
           sort_order: sort_order ?? 0,
+          original_monthly_price: original_monthly_price ?? null,
+          original_yearly_price: original_yearly_price ?? null,
         });
         if (error) throw error;
         return new Response(JSON.stringify({ success: true }), {
