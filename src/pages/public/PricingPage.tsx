@@ -9,16 +9,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { usePlans, type Plan } from "@/hooks/usePlans";
+import { useApiCreditCosts } from "@/hooks/useApiCreditCosts";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const creditRows = [
-  { label: "Scrape", values: ["1 credit", "1 credit", "1 credit", "1 credit"] },
-  { label: "Crawl (per page)", values: ["2 credits", "2 credits", "2 credits", "2 credits"] },
-  { label: "Map", values: ["1 credit", "1 credit", "1 credit", "1 credit"] },
-  { label: "AI Extract", values: ["—", "—", "5 credits", "5 credits"] },
-  { label: "Screenshot", values: ["—", "—", "2 credits", "2 credits"] },
-  { label: "JS Rendering", values: ["+1 credit", "+1 credit", "+1 credit", "+1 credit"] },
-];
 
 const faqs = [
   {
