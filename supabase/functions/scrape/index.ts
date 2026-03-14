@@ -399,6 +399,7 @@ Deno.serve(async (req) => {
       ...(result.metadata !== undefined && { metadata: result.metadata }),
       ...(result.links !== undefined && { links: result.links }),
       ...(result.screenshot_url !== undefined && { screenshot_url: result.screenshot_url }),
+      ...(result.branding !== undefined && { branding: result.branding }),
       timings: result.timings,
       warnings: result.warnings,
     },
