@@ -26,13 +26,13 @@ export default function ChangelogPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
+    (supabase as any)
       .from("changelog_entries")
       .select("id, date, version, category, title, description")
       .eq("is_published", true)
       .order("date", { ascending: false })
-      .then(({ data }) => {
-        setEntries((data as unknown as ChangelogEntry[]) ?? []);
+      .then(({ data }: { data: ChangelogEntry[] | null }) => {
+        setEntries(data ?? []);
         setLoading(false);
       });
   }, []);
