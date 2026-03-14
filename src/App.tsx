@@ -39,6 +39,8 @@ import AdminChangelogPage from "@/pages/admin/AdminChangelogPage";
 import PublicDocsPage from "@/pages/public/PublicDocsPage";
 import ContactPage from "@/pages/public/ContactPage";
 import ChangelogPage from "@/pages/public/ChangelogPage";
+import PrivacyPage from "@/pages/public/PrivacyPage";
+import TermsPage from "@/pages/public/TermsPage";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +60,8 @@ const App = () => (
             <Route path="/docs" element={<PublicLayout><PublicDocsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
             <Route path="/changelog" element={<PublicLayout><ChangelogPage /></PublicLayout>} />
+            <Route path="/privacy" element={<PublicLayout><PrivacyPage /></PublicLayout>} />
+            <Route path="/terms" element={<PublicLayout><TermsPage /></PublicLayout>} />
             <Route path="/auth" element={<AuthPage />} />
 
             {/* Admin */}

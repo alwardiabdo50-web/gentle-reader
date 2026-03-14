@@ -6,7 +6,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
-  { label: "Features", href: "#features" },
+  { label: "Features", href: "/#features" },
   { label: "Pricing", href: "/pricing" },
   { label: "Docs", href: "/docs" },
   { label: "Status", href: "/status" },
@@ -31,11 +31,17 @@ export function PublicNavbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a key={link.label} href={link.href} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors duration-150">
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) =>
+            link.href.startsWith("/") ? (
+              <Link key={link.label} to={link.href} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors duration-150">
+                {link.label}
+              </Link>
+            ) : (
+              <a key={link.label} href={link.href} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors duration-150">
+                {link.label}
+              </a>
+            )
+          )}
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
@@ -63,11 +69,17 @@ export function PublicNavbar() {
 
       {mobileOpen && (
         <div className="md:hidden border-t border-border bg-background px-6 py-4 space-y-3">
-          {navLinks.map((link) => (
-            <a key={link.label} href={link.href} className="block text-[13px] text-muted-foreground hover:text-foreground" onClick={() => setMobileOpen(false)}>
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) =>
+            link.href.startsWith("/") ? (
+              <Link key={link.label} to={link.href} className="block text-[13px] text-muted-foreground hover:text-foreground" onClick={() => setMobileOpen(false)}>
+                {link.label}
+              </Link>
+            ) : (
+              <a key={link.label} href={link.href} className="block text-[13px] text-muted-foreground hover:text-foreground" onClick={() => setMobileOpen(false)}>
+                {link.label}
+              </a>
+            )
+          )}
           <div className="flex gap-3 pt-2">
             {session ? (
               <Button size="sm" asChild><Link to="/app" onClick={() => setMobileOpen(false)}>Dashboard</Link></Button>

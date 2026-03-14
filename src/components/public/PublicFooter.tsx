@@ -5,10 +5,10 @@ const footerSections = [
   {
     title: "Product",
     links: [
-      { label: "Features", href: "#features" },
+      { label: "Features", href: "/#features" },
       { label: "Pricing", href: "/pricing" },
       { label: "API Reference", href: "/docs" },
-      { label: "Dashboard", href: "/" },
+      { label: "Dashboard", href: "/app" },
     ],
   },
   {
