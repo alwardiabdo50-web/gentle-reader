@@ -45,11 +45,11 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                 <NavLink
                   to={item.url}
                   end={item.url === "/admin"}
-                  className="flex items-center justify-center px-3 py-[7px] rounded-lg text-[13px] text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
+                  className="flex items-center justify-center p-2 rounded-lg text-foreground/70 hover:bg-accent hover:text-foreground transition-colors duration-150"
                   activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                   onClick={onNavigate}
                 >
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className="h-5 w-5" />
                 </NavLink>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={8}>
