@@ -13,6 +13,7 @@ import { Zap, Globe, Map, Brain, Loader2, Copy, CheckCircle2, AlertTriangle, Lay
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCredits } from "@/hooks/useCredits";
+import { useModels } from "@/hooks/useModels";
 import { canAccessFeature } from "@/lib/plan-limits";
 import { toast } from "sonner";
 import type { ScrapeResponse } from "@/lib/api/scrape";
