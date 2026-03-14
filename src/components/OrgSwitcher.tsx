@@ -82,10 +82,18 @@ export function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setCreateOpen(true)} className="cursor-pointer">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Organization
-          </DropdownMenuItem>
+          {canCreateOrg ? (
+            <DropdownMenuItem onClick={() => setCreateOpen(true)} className="cursor-pointer">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Organization
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem disabled className="cursor-not-allowed opacity-60">
+              <Lock className="mr-2 h-4 w-4" />
+              Create Organization
+              <span className="ml-auto text-[10px] text-muted-foreground">Standard+</span>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 

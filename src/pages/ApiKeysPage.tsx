@@ -169,7 +169,7 @@ export default function ApiKeysPage() {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="gap-1.5">
+              <Button className="gap-1.5" disabled={atKeyLimit} title={atKeyLimit ? `Your plan allows up to ${maxKeys} API keys` : undefined}>
                 <Plus className="h-4 w-4" /> New Key
               </Button>
             </DialogTrigger>

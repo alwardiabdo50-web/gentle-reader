@@ -46,7 +46,17 @@ const emptyForm: PipelineFormData = {
   transform_model: "google/gemini-3-flash-preview",
 };
 
+import { UpgradeGate } from "@/components/UpgradeGate";
+
 export default function PipelinesPage() {
+  return (
+    <UpgradeGate feature="pipelines">
+      <PipelinesPageContent />
+    </UpgradeGate>
+  );
+}
+
+function PipelinesPageContent() {
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
