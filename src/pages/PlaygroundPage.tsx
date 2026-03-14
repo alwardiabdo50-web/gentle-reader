@@ -115,6 +115,22 @@ export default function PlaygroundPage() {
   const [previousMarkdown, setPreviousMarkdown] = useState<string | null>(null);
   const [previousUrl, setPreviousUrl] = useState<string | null>(null);
 
+  // Extraction templates
+  const [extractionTemplates, setExtractionTemplates] = useState<Array<{ id: string; name: string; prompt: string | null; schema_json: any; model: string; use_count: number }>>([]);
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDesc, setTemplateDesc] = useState("");
+
+  // Fetch extraction templates
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("extraction_templates").select("id,name,prompt,schema_json,model,use_count")
+      .order("use_count", { ascending: false })
+      .then(({ data }) => {
+        if (data) setExtractionTemplates(data as any);
+      });
+  }, [user]);
+
   // Fetch presets
   useEffect(() => {
     if (!user) return;
