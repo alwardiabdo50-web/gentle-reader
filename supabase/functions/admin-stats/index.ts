@@ -460,7 +460,7 @@ Deno.serve(async (req) => {
       // ─── Model usage analytics (30d) ───────────────────
       const { data: extractionRows } = await admin
         .from("extraction_jobs")
-        .select("model, credits_used, user_id")
+        .select("model, credits_used, user_id, created_at")
         .gte("created_at", thirtyDaysAgo);
 
       const { data: aiModelsData } = await admin
