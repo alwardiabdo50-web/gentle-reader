@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { CodeBlock } from "@/components/public/CodeBlock";
 import {
   Zap, Globe, Map, Brain, Key, BarChart3, Shield, Clock,
-  ArrowRight, Sparkles, Code2, Users, Server, CheckCircle2,
-} from "lucide-react";
+  ArrowRight, Sparkles, Code2, Users, Server, CheckCircle2 } from
+"lucide-react";
 import { HeroBackground } from "@/components/public/HeroBackground";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { usePlans } from "@/hooks/usePlans";
@@ -36,20 +36,20 @@ function HeroSection() {
         </div>
         <p className="mt-5 text-xs text-muted-foreground">500 free credits · No credit card required</p>
       </div>
-    </section>
-  );
+    </section>);
+
 }
 
 const features = [
-  { icon: Zap, title: "Scrape", desc: "Fetch clean markdown, HTML, or screenshots from any URL with a single API call." },
-  { icon: Globe, title: "Crawl", desc: "Recursively crawl entire websites with depth control, pattern filters, and concurrency." },
-  { icon: Map, title: "Map", desc: "Discover all URLs on a domain instantly. Build sitemaps without full page scraping." },
-  { icon: Brain, title: "Extract", desc: "Use AI to pull structured JSON data from pages with custom schemas and prompts." },
-  { icon: Key, title: "API Keys", desc: "Manage multiple API keys with prefix tracking, rotation, and per-key usage analytics." },
-  { icon: BarChart3, title: "Usage Dashboard", desc: "Real-time visibility into credits, job history, success rates, and billing." },
-  { icon: Shield, title: "Reliable", desc: "Built-in retries, anti-bot handling, JavaScript rendering, and smart rate limiting." },
-  { icon: Clock, title: "Fast", desc: "Optimized pipeline delivers results in seconds. No queues, no waiting." },
-];
+{ icon: Zap, title: "Scrape", desc: "Fetch clean markdown, HTML, or screenshots from any URL with a single API call." },
+{ icon: Globe, title: "Crawl", desc: "Recursively crawl entire websites with depth control, pattern filters, and concurrency." },
+{ icon: Map, title: "Map", desc: "Discover all URLs on a domain instantly. Build sitemaps without full page scraping." },
+{ icon: Brain, title: "Extract", desc: "Use AI to pull structured JSON data from pages with custom schemas and prompts." },
+{ icon: Key, title: "API Keys", desc: "Manage multiple API keys with prefix tracking, rotation, and per-key usage analytics." },
+{ icon: BarChart3, title: "Usage Dashboard", desc: "Real-time visibility into credits, job history, success rates, and billing." },
+{ icon: Shield, title: "Reliable", desc: "Built-in retries, anti-bot handling, JavaScript rendering, and smart rate limiting." },
+{ icon: Clock, title: "Fast", desc: "Optimized pipeline delivers results in seconds. No queues, no waiting." }];
+
 
 function FeaturesSection() {
   const ref = useScrollReveal();
@@ -61,24 +61,24 @@ function FeaturesSection() {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">A complete toolkit for web data extraction. From single pages to entire domains.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {features.map((f, i) => (
-            <div
-              key={f.title}
-              ref={ref}
-              className="scroll-reveal group rounded-xl border border-border p-5 bg-card hover:bg-card-hover hover:border-border-strong transition-all duration-150"
-              style={{ "--reveal-delay": `${i * 80}ms` } as React.CSSProperties}
-            >
+          {features.map((f, i) =>
+          <div
+            key={f.title}
+            ref={ref}
+            className="scroll-reveal group rounded-xl border border-border p-5 bg-card hover:bg-card-hover hover:border-border-strong transition-all duration-150"
+            style={{ "--reveal-delay": `${i * 80}ms` } as React.CSSProperties}>
+            
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary mb-4">
                 <f.icon className="h-5 w-5" />
               </div>
               <h3 className="font-semibold text-foreground mb-2 text-[16px] tracking-[-0.01em]">{f.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 }
 
 const scrapeExample = `curl -X POST https://api.nebulacrawl.com/v1/scrape \\
@@ -120,16 +120,16 @@ function ApiExampleSection() {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 }
 
 const steps = [
-  { num: "01", title: "Get your API key", desc: "Sign up and grab your key from the dashboard." },
-  { num: "02", title: "Make a request", desc: "Call the scrape, crawl, map, or extract endpoint." },
-  { num: "03", title: "Get structured data", desc: "Receive clean markdown, HTML, JSON, or screenshots." },
-  { num: "04", title: "Scale confidently", desc: "Monitor usage, upgrade plans, and build at any scale." },
-];
+{ num: "01", title: "Get your API key", desc: "Sign up and grab your key from the dashboard." },
+{ num: "02", title: "Make a request", desc: "Call the scrape, crawl, map, or extract endpoint." },
+{ num: "03", title: "Get structured data", desc: "Receive clean markdown, HTML, JSON, or screenshots." },
+{ num: "04", title: "Scale confidently", desc: "Monitor usage, upgrade plans, and build at any scale." }];
+
 
 function WorkflowSection() {
   const ref = useScrollReveal();
@@ -141,30 +141,30 @@ function WorkflowSection() {
           <p className="text-muted-foreground text-lg">From signup to production in minutes.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {steps.map((s, i) => (
-            <div
-              key={s.num}
-              ref={ref}
-              className="scroll-reveal relative"
-              style={{ "--reveal-delay": `${i * 100}ms` } as React.CSSProperties}
-            >
-              <span className="text-5xl font-bold text-primary/10">{s.num}</span>
+          {steps.map((s, i) =>
+          <div
+            key={s.num}
+            ref={ref}
+            className="scroll-reveal relative"
+            style={{ "--reveal-delay": `${i * 100}ms` } as React.CSSProperties}>
+            
+              <span className="text-5xl font-bold text-[#24dbc9]/[0.46] text-left">{s.num}</span>
               <h3 className="font-semibold text-foreground mt-2 mb-2 tracking-[-0.01em]">{s.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 }
 
 const useCases = [
-  { icon: Code2, title: "AI & LLM Training", desc: "Collect web data to fine-tune models and build RAG pipelines." },
-  { icon: BarChart3, title: "Market Research", desc: "Track competitors, pricing, product catalogs at scale." },
-  { icon: Users, title: "Lead Generation", desc: "Extract contact info, company data, and business signals." },
-  { icon: Server, title: "Content Aggregation", desc: "Build news feeds, knowledge bases, and content indexes." },
-];
+{ icon: Code2, title: "AI & LLM Training", desc: "Collect web data to fine-tune models and build RAG pipelines." },
+{ icon: BarChart3, title: "Market Research", desc: "Track competitors, pricing, product catalogs at scale." },
+{ icon: Users, title: "Lead Generation", desc: "Extract contact info, company data, and business signals." },
+{ icon: Server, title: "Content Aggregation", desc: "Build news feeds, knowledge bases, and content indexes." }];
+
 
 function UseCasesSection() {
   const ref = useScrollReveal();
@@ -176,13 +176,13 @@ function UseCasesSection() {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">From startups to enterprises, Nebula Crawl powers data-driven workflows.</p>
         </div>
         <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
-          {useCases.map((uc, i) => (
-            <div
-              key={uc.title}
-              ref={ref}
-              className="scroll-reveal flex gap-4 p-5 rounded-xl border border-border bg-card hover:bg-card-hover transition-all duration-150"
-              style={{ "--reveal-delay": `${i * 100}ms` } as React.CSSProperties}
-            >
+          {useCases.map((uc, i) =>
+          <div
+            key={uc.title}
+            ref={ref}
+            className="scroll-reveal flex gap-4 p-5 rounded-xl border border-border bg-card hover:bg-card-hover transition-all duration-150"
+            style={{ "--reveal-delay": `${i * 100}ms` } as React.CSSProperties}>
+            
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <uc.icon className="h-5 w-5" />
               </div>
@@ -191,11 +191,11 @@ function UseCasesSection() {
                 <p className="text-sm text-muted-foreground">{uc.desc}</p>
               </div>
             </div>
-          ))}
+          )}
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 }
 
 function PricingTeaser() {
@@ -210,9 +210,9 @@ function PricingTeaser() {
           <p className="text-muted-foreground text-lg">Start free. Scale as you grow. No surprises.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
-          {isLoading
-            ? Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="rounded-xl border border-border p-6 flex flex-col gap-3">
+          {isLoading ?
+          Array.from({ length: 4 }).map((_, i) =>
+          <div key={i} className="rounded-xl border border-border p-6 flex flex-col gap-3">
                   <Skeleton className="h-5 w-20" />
                   <Skeleton className="h-9 w-24" />
                   <Skeleton className="h-4 w-32" />
@@ -223,16 +223,16 @@ function PricingTeaser() {
                   </div>
                   <Skeleton className="h-10 w-full mt-auto" />
                 </div>
-              ))
-            : plans?.slice(0, 4).map((plan, i) => {
-                const features = (plan.display_features ?? []) as string[];
-                return (
-                  <div
-                    key={plan.id}
-                    ref={ref}
-                    className={`scroll-reveal rounded-xl border p-6 flex flex-col transition-all duration-150 ${plan.highlighted ? "border-primary bg-card" : "border-border bg-card"}`}
-                    style={{ "--reveal-delay": `${i * 100}ms` } as React.CSSProperties}
-                  >
+          ) :
+          plans?.slice(0, 4).map((plan, i) => {
+            const features = (plan.display_features ?? []) as string[];
+            return (
+              <div
+                key={plan.id}
+                ref={ref}
+                className={`scroll-reveal rounded-xl border p-6 flex flex-col transition-all duration-150 ${plan.highlighted ? "border-primary bg-card" : "border-border bg-card"}`}
+                style={{ "--reveal-delay": `${i * 100}ms` } as React.CSSProperties}>
+                
                     <h3 className="font-semibold text-foreground text-lg">{plan.name}</h3>
                     <div className="mt-3 mb-1">
                       <span className="text-3xl font-bold text-foreground tracking-[-0.03em]">${plan.monthly_price}</span>
@@ -242,35 +242,35 @@ function PricingTeaser() {
                       {plan.monthly_credits.toLocaleString()} credits/mo
                     </p>
                     <ul className="flex-1 space-y-2.5 mb-6">
-                      {features.slice(0, 3).map((f) => (
-                        <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      {features.slice(0, 3).map((f) =>
+                  <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
                           <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                           {f}
                         </li>
-                      ))}
+                  )}
                     </ul>
                     <Button variant={plan.highlighted ? "default" : "outline"} asChild>
                       <Link to="/auth">{plan.cta_text}</Link>
                     </Button>
-                  </div>
-                );
-              })}
+                  </div>);
+
+          })}
         </div>
         <p className="text-center text-sm text-muted-foreground mt-8">
           Need more? <strong>Scale</strong> ($399/mo) and <strong>Enterprise</strong> plans available.{" "}
           <Link to="/pricing" className="text-primary hover:underline">View full pricing →</Link>
         </p>
       </div>
-    </section>
-  );
+    </section>);
+
 }
 
 const trustPoints = [
-  { label: "99.9% Uptime", desc: "Enterprise-grade infrastructure" },
-  { label: "Anti-bot Handling", desc: "Smart bypasses built in" },
-  { label: "JS Rendering", desc: "Full browser-grade rendering" },
-  { label: "GDPR Ready", desc: "Privacy-first data handling" },
-];
+{ label: "99.9% Uptime", desc: "Enterprise-grade infrastructure" },
+{ label: "Anti-bot Handling", desc: "Smart bypasses built in" },
+{ label: "JS Rendering", desc: "Full browser-grade rendering" },
+{ label: "GDPR Ready", desc: "Privacy-first data handling" }];
+
 
 function TrustSection() {
   const ref = useScrollReveal();
@@ -280,21 +280,21 @@ function TrustSection() {
         <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 tracking-[-0.02em]">Built for reliability</h2>
         <p className="text-muted-foreground text-lg mb-14 max-w-2xl mx-auto">Production-hardened infrastructure you can depend on.</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {trustPoints.map((tp, i) => (
-            <div
-              key={tp.label}
-              ref={ref}
-              className="scroll-reveal p-5 rounded-xl border border-border bg-card"
-              style={{ "--reveal-delay": `${i * 80}ms` } as React.CSSProperties}
-            >
+          {trustPoints.map((tp, i) =>
+          <div
+            key={tp.label}
+            ref={ref}
+            className="scroll-reveal p-5 rounded-xl border border-border bg-card"
+            style={{ "--reveal-delay": `${i * 80}ms` } as React.CSSProperties}>
+            
               <div className="text-lg font-bold text-primary mb-1">{tp.label}</div>
               <div className="text-xs text-muted-foreground">{tp.desc}</div>
             </div>
-          ))}
+          )}
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 }
 
 function CtaSection() {
@@ -313,8 +313,8 @@ function CtaSection() {
           </Button>
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 }
 
 export default function HomePage() {
@@ -328,6 +328,6 @@ export default function HomePage() {
       <PricingTeaser />
       <TrustSection />
       <CtaSection />
-    </>
-  );
+    </>);
+
 }
