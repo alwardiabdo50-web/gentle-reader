@@ -123,6 +123,12 @@ export default function PlaygroundPage() {
   const [templateName, setTemplateName] = useState("");
   const [templateDesc, setTemplateDesc] = useState("");
 
+  // Set default model when models load
+  useEffect(() => {
+    if (defaultModel && !extractModel) setExtractModel(defaultModel);
+    if (defaultModel && !pipelineModel) setPipelineModel(defaultModel);
+  }, [defaultModel]);
+
   // Fetch extraction templates
   useEffect(() => {
     if (!user) return;
