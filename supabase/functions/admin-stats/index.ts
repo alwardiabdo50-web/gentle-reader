@@ -213,6 +213,61 @@ Deno.serve(async (req) => {
         });
       }
 
+      // ─── Changelog mutations ─────────────────────────────
+      if (postAction === "changelog-create") {
+        const { date, version, category, title, description, is_published, sort_order } = body;
+        if (!date || !version || !category || !title || !description) {
+          return new Response(JSON.stringify({ error: "date, version, category, title, description required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await admin.from("changelog_entries").insert({
+          date, version, category, title, description,
+          is_published: is_published !== false,
+          sort_order: sort_order ?? 0,
+        });
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (postAction === "changelog-update") {
+        const { entryId, ...fields } = body;
+        if (!entryId) {
+          return new Response(JSON.stringify({ error: "entryId required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const allowed = ["date", "version", "category", "title", "description", "is_published", "sort_order"];
+        const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        for (const key of allowed) {
+          if (key in fields) updateData[key] = fields[key];
+        }
+        const { error } = await admin.from("changelog_entries").update(updateData).eq("id", entryId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (postAction === "changelog-delete") {
+        const { entryId } = body;
+        if (!entryId) {
+          return new Response(JSON.stringify({ error: "entryId required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await admin.from("changelog_entries").delete().eq("id", entryId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       return new Response(JSON.stringify({ error: "Unknown action" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
