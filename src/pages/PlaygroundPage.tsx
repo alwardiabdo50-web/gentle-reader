@@ -426,11 +426,13 @@ export default function PlaygroundPage() {
         setPreviousUrl(url);
 
         setResult(data);
-        if (mode === "batch") setResultTab("markdown");
+        if (mode === "search") setResultTab("json");
+        else if (mode === "batch") setResultTab("markdown");
         else if (mode === "map") setResultTab("json");
         else if (mode === "extract") setResultTab("extracted");
         else if (mode === "crawl") setResultTab("json");
         else if (mode === "pipeline") setResultTab("pipeline");
+        else if (mode === "scrape" && data?.data?.branding) setResultTab("branding");
         else setResultTab("markdown");
 
         // Save to history
