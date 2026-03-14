@@ -322,15 +322,15 @@ Deno.serve(async (req) => {
       console.error(`Failed to insert job record: ${insertError.message}`);
     }
 
-    // Charge 1 credit
+    // Charge credits
     try {
       const credits = await getUserCredits(ctx.userId);
-      const newBalance = Math.max(0, credits.remaining - 1);
+      const newBalance = Math.max(0, credits.remaining - mapCreditCost);
       await recordLedgerEntry({
         user_id: ctx.userId,
         api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
         action: "map_charge",
-        credits: -1,
+        credits: -mapCreditCost,
         source_type: "map",
         balance_after: newBalance,
         job_id: jobId,
