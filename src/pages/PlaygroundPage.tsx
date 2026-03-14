@@ -582,7 +582,7 @@ export default function PlaygroundPage() {
               className="gap-1.5 capitalize"
               title={locked ? "Upgrade to Standard to use this mode" : undefined}
             >
-              {locked ? <Lock className="h-3.5 w-3.5" /> : modeIcons[m]}
+              {locked ? <LockIcon className="h-3.5 w-3.5" /> : modeIcons[m]}
               {m === "batch" ? "Batch Scrape" : m}
             </Button>
           );
