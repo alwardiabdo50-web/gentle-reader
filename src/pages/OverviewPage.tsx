@@ -63,7 +63,7 @@ export default function OverviewPage() {
       const jobCount = (scrapes.count ?? 0) + (crawls.count ?? 0) + (extracts.count ?? 0);
 
       // Show onboarding if not completed AND no keys/jobs
-      const onboardingCompleted = (profile?.data as any)?.onboarding_completed ?? false;
+      const onboardingCompleted = (profile as any)?.onboarding_completed ?? false;
       if (!onboardingCompleted && keyCount === 0 && jobCount === 0) {
         setShowOnboarding(true);
       }
