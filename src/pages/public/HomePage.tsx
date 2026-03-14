@@ -10,7 +10,7 @@ import { HeroBackground } from "@/components/public/HeroBackground";
 function HeroSection() {
   return (
     <section className="relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+      <HeroBackground />
       <div className="relative mx-auto max-w-6xl px-6 py-28 md:py-40 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 mb-8">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
