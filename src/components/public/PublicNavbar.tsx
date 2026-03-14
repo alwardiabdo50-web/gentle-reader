@@ -69,11 +69,17 @@ export function PublicNavbar() {
 
       {mobileOpen && (
         <div className="md:hidden border-t border-border bg-background px-6 py-4 space-y-3">
-          {navLinks.map((link) => (
-            <a key={link.label} href={link.href} className="block text-[13px] text-muted-foreground hover:text-foreground" onClick={() => setMobileOpen(false)}>
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) =>
+            link.href.startsWith("/") ? (
+              <Link key={link.label} to={link.href} className="block text-[13px] text-muted-foreground hover:text-foreground" onClick={() => setMobileOpen(false)}>
+                {link.label}
+              </Link>
+            ) : (
+              <a key={link.label} href={link.href} className="block text-[13px] text-muted-foreground hover:text-foreground" onClick={() => setMobileOpen(false)}>
+                {link.label}
+              </a>
+            )
+          )}
           <div className="flex gap-3 pt-2">
             {session ? (
               <Button size="sm" asChild><Link to="/app" onClick={() => setMobileOpen(false)}>Dashboard</Link></Button>

@@ -60,6 +60,8 @@ const App = () => (
             <Route path="/docs" element={<PublicLayout><PublicDocsPage /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
             <Route path="/changelog" element={<PublicLayout><ChangelogPage /></PublicLayout>} />
+            <Route path="/privacy" element={<PublicLayout><PrivacyPage /></PublicLayout>} />
+            <Route path="/terms" element={<PublicLayout><TermsPage /></PublicLayout>} />
             <Route path="/auth" element={<AuthPage />} />
 
             {/* Admin */}
