@@ -205,6 +205,28 @@ export function useAdminChangelogMutations() {
   return { createEntry, updateEntry, deleteEntry };
 }
 
+export function useAdminSettings() {
+  return useQuery({
+    queryKey: ["admin", "settings"],
+    queryFn: () => fetchAdminData("settings"),
+  });
+}
+
+export function useAdminSettingsMutations() {
+  const queryClient = useQueryClient();
+
+  const updateSetting = useMutation({
+    mutationFn: ({ key, value }: { key: string; value: unknown }) =>
+      postAdminAction({ action: "settings-update", key, value: JSON.stringify(value) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "settings"] });
+      queryClient.invalidateQueries({ queryKey: ["site-settings"] });
+    },
+  });
+
+  return { updateSetting };
+}
+
 export function useAdminContactActions() {
   const queryClient = useQueryClient();
 
