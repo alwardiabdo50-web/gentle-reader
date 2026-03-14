@@ -78,10 +78,10 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
             <TooltipTrigger asChild>
               <NavLink
                 to="/app"
-                className="flex items-center justify-center p-2 rounded-lg text-foreground/70 hover:bg-accent hover:text-foreground transition-colors duration-150"
+                className="flex items-center justify-center p-2.5 rounded-lg text-foreground/70 hover:bg-accent hover:text-foreground transition-colors duration-150"
                 onClick={onNavigate}
               >
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-6 w-6" />
               </NavLink>
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={8}>
