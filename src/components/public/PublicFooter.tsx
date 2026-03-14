@@ -15,8 +15,8 @@ const footerSections = [
   links: [
   { label: "Documentation", href: "/docs" },
   { label: "Quick Start", href: "/docs" },
-  { label: "Status", href: "#" },
-  { label: "Changelog", href: "#" }]
+  { label: "Status", href: "/status" },
+  { label: "Changelog", href: "/changelog" }]
 
 },
 {

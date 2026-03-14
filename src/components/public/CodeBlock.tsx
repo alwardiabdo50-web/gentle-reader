@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 
 interface CodeBlockProps {
@@ -7,7 +7,7 @@ interface CodeBlockProps {
   title?: string;
 }
 
-export function CodeBlock({ code, language = "bash", title }: CodeBlockProps) {
+export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(({ code, language = "bash", title }, ref) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -17,7 +17,7 @@ export function CodeBlock({ code, language = "bash", title }: CodeBlockProps) {
   };
 
   return (
-    <div className="rounded-xl border border-border overflow-hidden bg-sidebar">
+    <div ref={ref} className="rounded-xl border border-border overflow-hidden bg-sidebar">
       {title && (
         <div className="flex items-center justify-between px-5 py-2.5 border-b border-border">
           <span className="text-xs font-mono text-muted-foreground">{title}</span>
@@ -35,4 +35,6 @@ export function CodeBlock({ code, language = "bash", title }: CodeBlockProps) {
       </pre>
     </div>
   );
-}
+});
+
+CodeBlock.displayName = "CodeBlock";
