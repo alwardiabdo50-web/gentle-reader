@@ -647,7 +647,72 @@ export default function PlaygroundPage() {
 
       {/* Input section */}
       <div className="rounded-lg border border-border p-5 bg-card space-y-4">
-        {mode === "batch" ?
+        {mode === "search" ?
+        <div className="space-y-3">
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Label htmlFor="search-query" className="text-xs text-muted-foreground mb-1.5 block">Search Query</Label>
+                <Input
+                  id="search-query"
+                  placeholder="Best web scraping tools 2026"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="text-sm"
+                  onKeyDown={(e) => e.key === "Enter" && handleRun()} />
+              </div>
+              <div className="flex items-end">
+                <Button onClick={handleRun} disabled={loading || !searchQuery.trim() || !apiKey} className="gap-2">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  {loading ? "Searching..." : "Search"}
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Results</Label>
+                <Select value={searchLimit} onValueChange={setSearchLimit}>
+                  <SelectTrigger className="w-16 h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3</SelectItem>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Language</Label>
+                <Select value={searchLang} onValueChange={setSearchLang}>
+                  <SelectTrigger className="w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">en</SelectItem>
+                    <SelectItem value="es">es</SelectItem>
+                    <SelectItem value="fr">fr</SelectItem>
+                    <SelectItem value="de">de</SelectItem>
+                    <SelectItem value="pt">pt</SelectItem>
+                    <SelectItem value="ja">ja</SelectItem>
+                    <SelectItem value="zh">zh</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Country</Label>
+                <Select value={searchCountry} onValueChange={setSearchCountry}>
+                  <SelectTrigger className="w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="us">US</SelectItem>
+                    <SelectItem value="gb">UK</SelectItem>
+                    <SelectItem value="de">DE</SelectItem>
+                    <SelectItem value="fr">FR</SelectItem>
+                    <SelectItem value="br">BR</SelectItem>
+                    <SelectItem value="jp">JP</SelectItem>
+                    <SelectItem value="in">IN</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div> :
+        mode === "batch" ?
         <div>
             <Label htmlFor="batch-urls" className="text-xs text-muted-foreground mb-1.5 block">
               URLs (one per line, max 100)
