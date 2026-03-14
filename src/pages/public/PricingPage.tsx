@@ -40,6 +40,7 @@ const faqs = [
 ];
 
 export default function PricingPage() {
+  const [yearly, setYearly] = useState(false);
   const { data: plans, isLoading } = usePlans();
   const { data: creditCosts, isLoading: costsLoading } = useApiCreditCosts();
 
