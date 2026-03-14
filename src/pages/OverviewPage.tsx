@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCredits } from "@/hooks/useCredits";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import OnboardingWizard from "@/components/OnboardingWizard";
 
 interface Stats {
   activeApiKeys: number;
@@ -32,6 +33,8 @@ export default function OverviewPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentJobs, setRecentJobs] = useState<RecentJob[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -39,6 +42,13 @@ export default function OverviewPage() {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
     const fetchAll = async () => {
+      // Check onboarding status
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_completed")
+        .eq("user_id", user.id)
+        .single();
+
       const [apiKeys, webhooks, schedules, scrapes, crawls, extracts, recent] = await Promise.all([
         supabase.from("api_keys").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_active", true),
         supabase.from("webhooks").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_active", true),
@@ -49,8 +59,18 @@ export default function OverviewPage() {
         supabase.from("scrape_jobs").select("id, url, status, created_at, mode").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
       ]);
 
+      const keyCount = apiKeys.count ?? 0;
+      const jobCount = (scrapes.count ?? 0) + (crawls.count ?? 0) + (extracts.count ?? 0);
+
+      // Show onboarding if not completed AND no keys/jobs
+      const onboardingCompleted = (profile?.data as any)?.onboarding_completed ?? false;
+      if (!onboardingCompleted && keyCount === 0 && jobCount === 0) {
+        setShowOnboarding(true);
+      }
+      setOnboardingChecked(true);
+
       setStats({
-        activeApiKeys: apiKeys.count ?? 0,
+        activeApiKeys: keyCount,
         activeWebhooks: webhooks.count ?? 0,
         activeSchedules: schedules.count ?? 0,
         scrapeJobs7d: scrapes.count ?? 0,
@@ -63,6 +83,22 @@ export default function OverviewPage() {
 
     fetchAll();
   }, [user]);
+
+  if (!onboardingChecked) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Skeleton className="h-6 w-6 rounded-full" />
+      </div>
+    );
+  }
+
+  if (showOnboarding) {
+    return (
+      <OnboardingWizard
+        onComplete={() => setShowOnboarding(false)}
+      />
+    );
+  }
 
   const statCards = stats
     ? [
