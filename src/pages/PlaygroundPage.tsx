@@ -438,6 +438,7 @@ export default function PlaygroundPage() {
     map: <Map className="h-4 w-4" />,
     extract: <Brain className="h-4 w-4" />,
     pipeline: <GitBranch className="h-4 w-4" />,
+    search: <Search className="h-4 w-4" />,
   };
 
   const d = result?.data;
