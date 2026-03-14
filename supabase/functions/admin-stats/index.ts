@@ -457,6 +457,47 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false })
         .limit(10);
 
+      // ─── Model usage analytics (30d) ───────────────────
+      const { data: extractionRows } = await admin
+        .from("extraction_jobs")
+        .select("model, credits_used, user_id")
+        .gte("created_at", thirtyDaysAgo);
+
+      const { data: aiModelsData } = await admin
+        .from("ai_models")
+        .select("id, tier");
+
+      const modelTierMap: Record<string, string> = {};
+      (aiModelsData ?? []).forEach((m: { id: string; tier: string }) => {
+        modelTierMap[m.id] = m.tier;
+      });
+
+      const userPlanMap: Record<string, string> = {};
+      (creditsData ?? []).forEach((p: { user_id?: string; plan: string }) => {
+        if (p.user_id) userPlanMap[p.user_id] = p.plan;
+      });
+
+      // In-memory aggregation
+      const modelAgg: Record<string, { total_jobs: number; credits: number; by_plan: Record<string, number> }> = {};
+      (extractionRows ?? []).forEach((row: { model: string; credits_used: number; user_id: string }) => {
+        if (!modelAgg[row.model]) {
+          modelAgg[row.model] = { total_jobs: 0, credits: 0, by_plan: {} };
+        }
+        const agg = modelAgg[row.model];
+        agg.total_jobs++;
+        agg.credits += row.credits_used;
+        const plan = userPlanMap[row.user_id] || "unknown";
+        agg.by_plan[plan] = (agg.by_plan[plan] || 0) + 1;
+      });
+
+      const modelUsage = Object.entries(modelAgg)
+        .map(([model, stats]) => ({
+          model,
+          tier: modelTierMap[model] || "unknown",
+          ...stats,
+        }))
+        .sort((a, b) => b.total_jobs - a.total_jobs);
+
       result = {
         totalUsers: totalUsers ?? 0,
         activeKeys: activeKeys ?? 0,
@@ -469,6 +510,7 @@ Deno.serve(async (req) => {
         totalCreditsGranted,
         planDistribution: planDist,
         recentFailures: recentFailures ?? [],
+        modelUsage,
       };
     } else if (action === "users") {
       const page = parseInt(url.searchParams.get("page") || "1");
