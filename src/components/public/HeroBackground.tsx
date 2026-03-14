@@ -11,6 +11,7 @@ export function HeroBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dotsRef = useRef<Dot[]>([]);
   const animRef = useRef<number>(0);
+  const mouseRef = useRef<{ x: number; y: number }>({ x: -9999, y: -9999 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -53,6 +54,19 @@ export function HeroBackground() {
     resize();
     window.addEventListener("resize", resize);
 
+    const GLOW_RADIUS = 150;
+
+    function onMouseMove(e: MouseEvent) {
+      const rect = canvas!.getBoundingClientRect();
+      mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+    function onMouseLeave() {
+      mouseRef.current = { x: -9999, y: -9999 };
+    }
+    canvas.style.pointerEvents = "auto";
+    canvas.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("mouseleave", onMouseLeave);
+
     function draw(time: number) {
       const w = canvas!.getBoundingClientRect().width;
       const h = canvas!.getBoundingClientRect().height;
@@ -68,14 +82,19 @@ export function HeroBackground() {
       ctx!.fillStyle = grad;
       ctx!.fillRect(0, 0, w, h);
 
-      // Animated dots
+      // Animated dots with mouse interaction
       const t = time * 0.001;
+      const mx = mouseRef.current.x;
+      const my = mouseRef.current.y;
       for (const dot of dotsRef.current) {
         const breathe = Math.sin(t * 0.8 + dot.phase) * 0.35 + 0.65;
-        const alpha = dot.radialAlpha * breathe * 0.45;
+        const dist = Math.sqrt((dot.x - mx) ** 2 + (dot.y - my) ** 2);
+        const interaction = dist < GLOW_RADIUS ? Math.pow(1 - dist / GLOW_RADIUS, 2) : 0;
+        const alpha = Math.min(1, (dot.radialAlpha * breathe + interaction * 0.4) * 0.45 + interaction * 0.35);
         if (alpha < 0.01) continue;
+        const currentRadius = DOT_RADIUS * (1 + interaction * 1.5);
         ctx!.beginPath();
-        ctx!.arc(dot.x, dot.y, DOT_RADIUS, 0, Math.PI * 2);
+        ctx!.arc(dot.x, dot.y, currentRadius, 0, Math.PI * 2);
         ctx!.fillStyle = `rgba(${R}, ${G}, ${B}, ${alpha})`;
         ctx!.fill();
       }
@@ -87,6 +106,8 @@ export function HeroBackground() {
 
     return () => {
       window.removeEventListener("resize", resize);
+      canvas.removeEventListener("mousemove", onMouseMove);
+      canvas.removeEventListener("mouseleave", onMouseLeave);
       cancelAnimationFrame(animRef.current);
     };
   }, []);
@@ -94,7 +115,7 @@ export function HeroBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none"
+      className="absolute inset-0 w-full h-full"
       aria-hidden="true"
     />
   );
