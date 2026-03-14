@@ -266,7 +266,7 @@ function PricingTeaser() {
 }
 
 const trustPoints = [
-{ label: "99.9% Uptime", desc: "Enterprise-grade infrastructure" },
+{ label: "100% Uptime", desc: "Enterprise-grade infrastructure" },
 { label: "Anti-bot Handling", desc: "Smart bypasses built in" },
 { label: "JS Rendering", desc: "Full browser-grade rendering" },
 { label: "GDPR Ready", desc: "Privacy-first data handling" }];
