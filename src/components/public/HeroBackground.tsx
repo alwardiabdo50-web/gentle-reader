@@ -11,6 +11,7 @@ export function HeroBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dotsRef = useRef<Dot[]>([]);
   const animRef = useRef<number>(0);
+  const mouseRef = useRef<{ x: number; y: number }>({ x: -9999, y: -9999 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
