@@ -32,10 +32,10 @@ export function useAdminOverview() {
   });
 }
 
-export function useAdminUsers(page = 1, search = "") {
+export function useAdminUsers(page = 1, search = "", plan = "all") {
   return useQuery({
-    queryKey: ["admin", "users", page, search],
-    queryFn: () => fetchAdminData("users", { page: String(page), search }),
+    queryKey: ["admin", "users", page, search, plan],
+    queryFn: () => fetchAdminData("users", { page: String(page), search, plan }),
   });
 }
 

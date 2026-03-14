@@ -2,7 +2,14 @@ import { useState } from "react";
 import { useAdminUsers } from "@/hooks/useAdminData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -14,11 +21,20 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 
+const planBadgeVariant: Record<string, BadgeProps["variant"]> = {
+  free: "secondary",
+  hobby: "info",
+  standard: "default",
+  growth: "warning",
+  scale: "success",
+};
+
 export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const { data, isLoading } = useAdminUsers(page, search);
+  const [planFilter, setPlanFilter] = useState("all");
+  const { data, isLoading } = useAdminUsers(page, search, planFilter);
   const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
@@ -31,18 +47,33 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <h1 className="text-xl md:text-2xl font-bold text-foreground">Users</h1>
 
-      <form onSubmit={handleSearch} className="flex gap-2 max-w-md">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name…"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Button type="submit" size="sm">Search</Button>
-      </form>
+      <div className="flex flex-col sm:flex-row gap-2 max-w-lg">
+        <form onSubmit={handleSearch} className="flex gap-2 flex-1">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Button type="submit" size="sm">Search</Button>
+        </form>
+        <Select value={planFilter} onValueChange={(v) => { setPlanFilter(v); setPage(1); }}>
+          <SelectTrigger className="w-[130px]">
+            <SelectValue placeholder="Plan" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Plans</SelectItem>
+            <SelectItem value="free">Free</SelectItem>
+            <SelectItem value="hobby">Hobby</SelectItem>
+            <SelectItem value="standard">Standard</SelectItem>
+            <SelectItem value="growth">Growth</SelectItem>
+            <SelectItem value="scale">Scale</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {isLoading ? (
         <div className="text-muted-foreground text-sm">Loading…</div>
@@ -71,7 +102,9 @@ export default function AdminUsersPage() {
                       {(u.full_name as string) || <span className="text-muted-foreground italic">No name</span>}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{u.plan as string}</Badge>
+                      <Badge variant={planBadgeVariant[(u.plan as string)] ?? "secondary"}>
+                        {(u.plan as string)?.charAt(0).toUpperCase() + (u.plan as string)?.slice(1)}
+                      </Badge>
                     </TableCell>
                     <TableCell>{(u.credits_used as number)?.toLocaleString()}</TableCell>
                     <TableCell>{((u.monthly_credits as number) + (u.extra_credits as number))?.toLocaleString()}</TableCell>
