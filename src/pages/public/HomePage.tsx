@@ -5,6 +5,7 @@ import {
   Zap, Globe, Map, Brain, Key, BarChart3, Shield, Clock,
   ArrowRight, Sparkles, Code2, Users, Server, CheckCircle2,
 } from "lucide-react";
+import { HeroBackground } from "@/components/public/HeroBackground";
 
 function HeroSection() {
   return (
