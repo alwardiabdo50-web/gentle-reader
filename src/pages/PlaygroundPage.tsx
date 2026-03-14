@@ -71,6 +71,8 @@ function computeDiff(oldText: string, newText: string) {
 export default function PlaygroundPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  const { plan } = useCredits();
+  const extractAllowed = canAccessFeature(plan, "extract");
   const [mode, setMode] = useState<Mode>((searchParams.get("mode") as Mode) || "scrape");
   const [url, setUrl] = useState(searchParams.get("url") || "");
   const [batchUrls, setBatchUrls] = useState("");
