@@ -3,6 +3,7 @@ import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from ".
 import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
 import { buildCacheKey, getCachedResult, setCachedResult } from "../_shared/scrape-cache.ts";
+import { getCreditCost } from "../_shared/credit-costs.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -237,8 +238,11 @@ Deno.serve(async (req) => {
     }
   }
 
+  // --- Dynamic credit cost ---
+  const scrapeCreditCost = await getCreditCost(getAdmin(), "scrape");
+
   // --- Quota check (only on cache miss) ---
-  const quotaError = await checkQuota(ctx.userId, 1);
+  const quotaError = await checkQuota(ctx.userId, scrapeCreditCost);
   if (quotaError) {
     console.warn(`Quota rejected: user=${ctx.userId} — ${quotaError.message}`);
     return json({
@@ -318,7 +322,7 @@ Deno.serve(async (req) => {
       screenshot_url: result.screenshot_url ?? null,
       warnings_json: result.warnings,
       duration_ms: result.timings.total_ms,
-      credits_used: 1,
+      credits_used: scrapeCreditCost,
     })
     .eq("id", job.id);
 
@@ -335,15 +339,16 @@ Deno.serve(async (req) => {
     );
   }
 
-  // --- Record ledger entry (charge 1 credit) ---
+  // --- Record ledger entry ---
+  let newBalance = 0;
   try {
     const userCredits = await getUserCredits(ctx.userId);
-    const newBalance = Math.max(0, userCredits.remaining - 1);
+    newBalance = Math.max(0, userCredits.remaining - scrapeCreditCost);
     await recordLedgerEntry({
       user_id: ctx.userId,
       api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
       action: "scrape_charge",
-      credits: -1,
+      credits: -scrapeCreditCost,
       job_id: job.id,
       source_type: "scrape",
       balance_after: newBalance,
@@ -380,7 +385,7 @@ Deno.serve(async (req) => {
     },
     meta: {
       job_id: job.id,
-      credits_used: 1,
+      credits_used: scrapeCreditCost,
       cache_hit: false,
     },
   });

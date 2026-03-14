@@ -4,6 +4,7 @@ import { getUserCredits, recordLedgerEntry, checkQuota } from "../_shared/billin
 import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { CrawlThrottle } from "../_shared/crawl-throttle.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
+import { getCreditCost } from "../_shared/credit-costs.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -158,7 +159,9 @@ Deno.serve(async (req) => {
   let failedCount = 0;
   let creditsUsed = 0;
 
-  console.log(`Crawl worker started job=${jobId} root=${job.root_url}`);
+  const crawlCreditCost = await getCreditCost(admin, "crawl");
+
+  console.log(`Crawl worker started job=${jobId} root=${job.root_url} creditCost=${crawlCreditCost}`);
   console.log(`Crawl worker throttle settings job=${jobId}`, throttle.getSettings());
 
   try {
@@ -193,7 +196,7 @@ Deno.serve(async (req) => {
       // Track results
       for (let i = 0; i < queuedPages.length; i++) {
         processedCount++;
-        creditsUsed++;
+        creditsUsed += crawlCreditCost;
 
         // Check page status to count failures
         const { data: pageStatus } = await admin
@@ -205,12 +208,12 @@ Deno.serve(async (req) => {
 
         // Record ledger entry per page
         const credits = await getUserCredits(job.user_id);
-        const newBalance = Math.max(0, credits.remaining - 1);
+        const newBalance = Math.max(0, credits.remaining - crawlCreditCost);
         await recordLedgerEntry({
           user_id: job.user_id,
           api_key_id: job.api_key_id,
           action: "crawl_charge",
-          credits: -1,
+          credits: -crawlCreditCost,
           job_id: jobId,
           source_type: "crawl",
           balance_after: newBalance,

@@ -9,16 +9,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { usePlans, type Plan } from "@/hooks/usePlans";
+import { useApiCreditCosts } from "@/hooks/useApiCreditCosts";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const creditRows = [
-  { label: "Scrape", values: ["1 credit", "1 credit", "1 credit", "1 credit"] },
-  { label: "Crawl (per page)", values: ["2 credits", "2 credits", "2 credits", "2 credits"] },
-  { label: "Map", values: ["1 credit", "1 credit", "1 credit", "1 credit"] },
-  { label: "AI Extract", values: ["—", "—", "5 credits", "5 credits"] },
-  { label: "Screenshot", values: ["—", "—", "2 credits", "2 credits"] },
-  { label: "JS Rendering", values: ["+1 credit", "+1 credit", "+1 credit", "+1 credit"] },
-];
 
 const faqs = [
   {
@@ -50,6 +42,7 @@ const faqs = [
 export default function PricingPage() {
   const [yearly, setYearly] = useState(false);
   const { data: plans, isLoading } = usePlans();
+  const { data: creditCosts, isLoading: costsLoading } = useApiCreditCosts();
 
   // Split plans: first 4 as main cards, rest as bottom cards
   const mainPlans = plans?.slice(0, 4) ?? [];
@@ -242,43 +235,53 @@ export default function PricingPage() {
           <p className="text-sm text-muted-foreground text-center mb-8">
             How credits are consumed per endpoint across plans.
           </p>
-          <div className="rounded-xl border border-border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/40">
-                  <th className="text-left px-5 py-3 text-muted-foreground font-medium">
-                    Endpoint
-                  </th>
-                  {["Free", "Hobby", "Standard", "Growth"].map((p) => (
-                    <th
-                      key={p}
-                      className="text-center px-5 py-3 text-foreground font-semibold"
-                    >
-                      {p}
+          {costsLoading ? (
+            <Skeleton className="h-48 rounded-xl" />
+          ) : (
+            <div className="rounded-xl border border-border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/40">
+                    <th className="text-left px-5 py-3 text-muted-foreground font-medium">
+                      Endpoint
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {creditRows.map((row) => (
-                  <tr key={row.label} className="border-t border-border">
-                    <td className="px-5 py-3 text-muted-foreground">
-                      {row.label}
-                    </td>
-                    {row.values.map((val, i) => (
-                      <td key={i} className="text-center px-5 py-3">
-                        {val === "—" ? (
-                          <Minus className="h-4 w-4 text-muted-foreground/40 mx-auto" />
-                        ) : (
-                          <span className="text-foreground">{val}</span>
-                        )}
-                      </td>
+                    {mainPlans.map((p) => (
+                      <th
+                        key={p.id}
+                        className="text-center px-5 py-3 text-foreground font-semibold"
+                      >
+                        {p.name}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {(creditCosts ?? []).map((cost) => (
+                    <tr key={cost.id} className="border-t border-border">
+                      <td className="px-5 py-3 text-muted-foreground">
+                        {cost.label}
+                      </td>
+                      {mainPlans.map((plan) => {
+                        const override = cost.plan_overrides?.[plan.id];
+                        const value = override !== undefined ? override : cost.base_cost;
+                        return (
+                          <td key={plan.id} className="text-center px-5 py-3">
+                            {value === 0 ? (
+                              <Minus className="h-4 w-4 text-muted-foreground/40 mx-auto" />
+                            ) : (
+                              <span className="text-foreground">
+                                {cost.is_addon ? "+" : ""}{value} credit{value !== 1 ? "s" : ""}
+                              </span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* FAQ */}

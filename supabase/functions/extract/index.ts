@@ -3,6 +3,7 @@ import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from ".
 import { getUserPlan, canAccessFeature } from "../_shared/plan-limits.ts";
 import { normalizeUrl } from "../_shared/crawl-utils.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
+import { getCreditCost } from "../_shared/credit-costs.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -26,7 +27,7 @@ const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const DEFAULT_MODEL = "google/gemini-3-flash-preview";
 const EXTRACTION_TIMEOUT = 30000;
 const MAX_INPUT_LENGTH = 50000;
-const EXTRACTION_CREDIT_COST = 2;
+const EXTRACTION_CREDIT_COST_FALLBACK = 5;
 
 const ALLOWED_MODELS = [
   "google/gemini-2.5-pro",
@@ -289,6 +290,9 @@ Deno.serve(async (req) => {
   if (rateLimitError) {
     return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
   }
+
+  // Dynamic credit cost
+  const EXTRACTION_CREDIT_COST = await getCreditCost(admin, "extract");
 
   // Quota check
   const quotaError = await checkQuota(ctx.userId, EXTRACTION_CREDIT_COST);

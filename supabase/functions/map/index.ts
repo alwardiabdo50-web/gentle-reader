@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { extractApiKey, validateApiKey } from "../_shared/api-key-auth.ts";
 import { checkQuota, getUserCredits, recordLedgerEntry, checkRateLimit } from "../_shared/billing.ts";
 import { normalizeUrl, isSameDomain, isBlockedUrl, extractLinks } from "../_shared/crawl-utils.ts";
+import { getCreditCost } from "../_shared/credit-costs.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -273,8 +274,12 @@ Deno.serve(async (req) => {
     return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
   }
 
-  // Quota check (1 credit for map)
-  const quotaError = await checkQuota(ctx.userId, 1);
+  // Dynamic credit cost
+  const mapAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const mapCreditCost = await getCreditCost(mapAdmin, "map");
+
+  // Quota check
+  const quotaError = await checkQuota(ctx.userId, mapCreditCost);
   if (quotaError) {
     return json({ success: false, error: { code: quotaError.code, message: quotaError.message } }, 402);
   }
@@ -304,7 +309,7 @@ Deno.serve(async (req) => {
       url: result.rootUrl,
       final_url: result.normalizedRootUrl,
       status: "completed",
-      credits_used: 1,
+      credits_used: mapCreditCost,
       duration_ms: duration,
       metadata_json: {
         count: result.urls.length,
@@ -317,15 +322,15 @@ Deno.serve(async (req) => {
       console.error(`Failed to insert job record: ${insertError.message}`);
     }
 
-    // Charge 1 credit
+    // Charge credits
     try {
       const credits = await getUserCredits(ctx.userId);
-      const newBalance = Math.max(0, credits.remaining - 1);
+      const newBalance = Math.max(0, credits.remaining - mapCreditCost);
       await recordLedgerEntry({
         user_id: ctx.userId,
         api_key_id: ctx.apiKeyId === "scheduled" ? null : ctx.apiKeyId,
         action: "map_charge",
-        credits: -1,
+        credits: -mapCreditCost,
         source_type: "map",
         balance_after: newBalance,
         job_id: jobId,
@@ -349,7 +354,7 @@ Deno.serve(async (req) => {
       },
       meta: {
         count: result.urls.length,
-        credits_used: 1,
+        credits_used: mapCreditCost,
         job_id: jobId,
       },
       warnings: result.warnings.length > 0 ? result.warnings : undefined,

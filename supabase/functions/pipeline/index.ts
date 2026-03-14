@@ -4,6 +4,7 @@ import { performScrape } from "../_shared/scrape-pipeline.ts";
 import { buildCacheKey, getCachedResult, setCachedResult } from "../_shared/scrape-cache.ts";
 import { dispatchWebhooks } from "../_shared/webhook-dispatch.ts";
 import { normalizeUrl } from "../_shared/crawl-utils.ts";
+import { getCreditCost } from "../_shared/credit-costs.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -25,9 +26,10 @@ function getAdmin() {
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const DEFAULT_MODEL = "google/gemini-3-flash-preview";
 const MAX_INPUT_LENGTH = 50000;
-const SCRAPE_CREDIT_COST = 1;
-const EXTRACT_CREDIT_COST = 2;
-const TRANSFORM_CREDIT_COST = 2;
+// Fallbacks — actual costs fetched dynamically
+const SCRAPE_CREDIT_COST_FALLBACK = 1;
+const EXTRACT_CREDIT_COST_FALLBACK = 2;
+const TRANSFORM_CREDIT_COST_FALLBACK = 2;
 
 const ALLOWED_MODELS = [
   "google/gemini-2.5-pro",
@@ -223,6 +225,11 @@ Deno.serve(async (req) => {
   // Rate limit
   const rateLimitError = await checkRateLimit(ctx.userId);
   if (rateLimitError) return json({ success: false, error: { code: rateLimitError.code, message: rateLimitError.message } }, 429);
+
+  // Fetch dynamic credit costs
+  const SCRAPE_CREDIT_COST = await getCreditCost(admin, "scrape");
+  const EXTRACT_CREDIT_COST = await getCreditCost(admin, "extract");
+  const TRANSFORM_CREDIT_COST = await getCreditCost(admin, "extract"); // transform uses same cost as extract
 
   // Calculate max cost
   const hasTransform = !!transformPrompt;

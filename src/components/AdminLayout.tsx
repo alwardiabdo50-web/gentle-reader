@@ -14,6 +14,7 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeft,
+  Coins,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -24,6 +25,7 @@ const adminNav = [
   { title: "Contacts", url: "/admin/contacts", icon: Mail },
   { title: "Billing", url: "/admin/billing", icon: CreditCard },
   { title: "Plans", url: "/admin/plans", icon: CreditCard },
+  { title: "API Credits", url: "/admin/credit-costs", icon: Coins },
 ];
 
 function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
