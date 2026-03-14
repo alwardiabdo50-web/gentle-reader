@@ -26,9 +26,10 @@ function getAdmin() {
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const DEFAULT_MODEL = "google/gemini-3-flash-preview";
 const MAX_INPUT_LENGTH = 50000;
-const SCRAPE_CREDIT_COST = 1;
-const EXTRACT_CREDIT_COST = 2;
-const TRANSFORM_CREDIT_COST = 2;
+// Fallbacks — actual costs fetched dynamically
+const SCRAPE_CREDIT_COST_FALLBACK = 1;
+const EXTRACT_CREDIT_COST_FALLBACK = 2;
+const TRANSFORM_CREDIT_COST_FALLBACK = 2;
 
 const ALLOWED_MODELS = [
   "google/gemini-2.5-pro",
