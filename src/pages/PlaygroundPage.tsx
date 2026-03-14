@@ -1328,6 +1328,11 @@ export default function PlaygroundPage() {
                 {mode === "scrape" && diffLines &&
               <TabsTrigger value="diff" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Diff</TabsTrigger>
               }
+                {mode === "scrape" && d.branding &&
+              <TabsTrigger value="branding" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">
+                <Palette className="h-3 w-3 mr-1 inline" />Branding
+              </TabsTrigger>
+              }
                 {mode === "extract" && d.extracted &&
               <TabsTrigger value="extracted" className="text-xs data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2">Extracted</TabsTrigger>
               }
