@@ -6,6 +6,7 @@ import {
   ArrowRight, Sparkles, Code2, Users, Server, CheckCircle2,
 } from "lucide-react";
 import { HeroBackground } from "@/components/public/HeroBackground";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 function HeroSection() {
   return (
@@ -49,6 +50,7 @@ const features = [
 ];
 
 function FeaturesSection() {
+  const ref = useScrollReveal();
   return (
     <section id="features" className="py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
@@ -57,8 +59,13 @@ function FeaturesSection() {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">A complete toolkit for web data extraction. From single pages to entire domains.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {features.map((f) => (
-            <div key={f.title} className="group rounded-xl border border-border p-5 bg-card hover:bg-card-hover hover:border-border-strong transition-all duration-150">
+          {features.map((f, i) => (
+            <div
+              key={f.title}
+              ref={ref}
+              className="scroll-reveal group rounded-xl border border-border p-5 bg-card hover:bg-card-hover hover:border-border-strong transition-all duration-150"
+              style={{ "--reveal-delay": `${i * 80}ms` } as React.CSSProperties}
+            >
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary mb-4">
                 <f.icon className="h-5 w-5" />
               </div>
@@ -94,6 +101,7 @@ const responseExample = `{
 }`;
 
 function ApiExampleSection() {
+  const ref = useScrollReveal();
   return (
     <section id="api-example" className="py-24 md:py-32 bg-sidebar">
       <div className="mx-auto max-w-6xl px-6">
@@ -102,8 +110,12 @@ function ApiExampleSection() {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Get clean, structured data from any URL with a single request.</p>
         </div>
         <div className="grid md:grid-cols-2 gap-4">
-          <CodeBlock code={scrapeExample} title="Request" language="bash" />
-          <CodeBlock code={responseExample} title="Response" language="json" />
+          <div ref={ref} className="scroll-reveal" style={{ "--reveal-delay": "0ms" } as React.CSSProperties}>
+            <CodeBlock code={scrapeExample} title="Request" language="bash" />
+          </div>
+          <div ref={ref} className="scroll-reveal" style={{ "--reveal-delay": "100ms" } as React.CSSProperties}>
+            <CodeBlock code={responseExample} title="Response" language="json" />
+          </div>
         </div>
       </div>
     </section>
@@ -118,6 +130,7 @@ const steps = [
 ];
 
 function WorkflowSection() {
+  const ref = useScrollReveal();
   return (
     <section className="py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
@@ -126,8 +139,13 @@ function WorkflowSection() {
           <p className="text-muted-foreground text-lg">From signup to production in minutes.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {steps.map((s) => (
-            <div key={s.num} className="relative">
+          {steps.map((s, i) => (
+            <div
+              key={s.num}
+              ref={ref}
+              className="scroll-reveal relative"
+              style={{ "--reveal-delay": `${i * 100}ms` } as React.CSSProperties}
+            >
               <span className="text-5xl font-bold text-primary/10">{s.num}</span>
               <h3 className="font-semibold text-foreground mt-2 mb-2 tracking-[-0.01em]">{s.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
@@ -147,6 +165,7 @@ const useCases = [
 ];
 
 function UseCasesSection() {
+  const ref = useScrollReveal();
   return (
     <section className="py-24 md:py-32 bg-sidebar">
       <div className="mx-auto max-w-6xl px-6">
@@ -155,8 +174,13 @@ function UseCasesSection() {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">From startups to enterprises, Nebula Crawl powers data-driven workflows.</p>
         </div>
         <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
-          {useCases.map((uc) => (
-            <div key={uc.title} className="flex gap-4 p-5 rounded-xl border border-border bg-card hover:bg-card-hover transition-all duration-150">
+          {useCases.map((uc, i) => (
+            <div
+              key={uc.title}
+              ref={ref}
+              className="scroll-reveal flex gap-4 p-5 rounded-xl border border-border bg-card hover:bg-card-hover transition-all duration-150"
+              style={{ "--reveal-delay": `${i * 100}ms` } as React.CSSProperties}
+            >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <uc.icon className="h-5 w-5" />
               </div>
@@ -180,6 +204,7 @@ const plans = [
 ];
 
 function PricingTeaser() {
+  const ref = useScrollReveal();
   return (
     <section id="pricing" className="py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
@@ -188,8 +213,13 @@ function PricingTeaser() {
           <p className="text-muted-foreground text-lg">Start free. Scale as you grow. No surprises.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
-          {plans.map((plan) => (
-            <div key={plan.name} className={`rounded-xl border p-6 flex flex-col transition-all duration-150 ${plan.highlighted ? "border-primary bg-card" : "border-border bg-card"}`}>
+          {plans.map((plan, i) => (
+            <div
+              key={plan.name}
+              ref={ref}
+              className={`scroll-reveal rounded-xl border p-6 flex flex-col transition-all duration-150 ${plan.highlighted ? "border-primary bg-card" : "border-border bg-card"}`}
+              style={{ "--reveal-delay": `${i * 100}ms` } as React.CSSProperties}
+            >
               <h3 className="font-semibold text-foreground text-lg">{plan.name}</h3>
               <div className="mt-3 mb-1">
                 <span className="text-3xl font-bold text-foreground tracking-[-0.03em]">{plan.price}</span>
@@ -227,14 +257,20 @@ const trustPoints = [
 ];
 
 function TrustSection() {
+  const ref = useScrollReveal();
   return (
     <section className="py-24 md:py-32 bg-sidebar">
       <div className="mx-auto max-w-6xl px-6 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 tracking-[-0.02em]">Built for reliability</h2>
         <p className="text-muted-foreground text-lg mb-14 max-w-2xl mx-auto">Production-hardened infrastructure you can depend on.</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {trustPoints.map((tp) => (
-            <div key={tp.label} className="p-5 rounded-xl border border-border bg-card">
+          {trustPoints.map((tp, i) => (
+            <div
+              key={tp.label}
+              ref={ref}
+              className="scroll-reveal p-5 rounded-xl border border-border bg-card"
+              style={{ "--reveal-delay": `${i * 80}ms` } as React.CSSProperties}
+            >
               <div className="text-lg font-bold text-primary mb-1">{tp.label}</div>
               <div className="text-xs text-muted-foreground">{tp.desc}</div>
             </div>
