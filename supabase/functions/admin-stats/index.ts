@@ -192,6 +192,11 @@ Deno.serve(async (req) => {
         query = query.ilike("full_name", `%${search}%`);
       }
 
+      const planFilter = url.searchParams.get("plan") || "all";
+      if (planFilter !== "all") {
+        query = query.eq("plan", planFilter);
+      }
+
       const { data: users, count } = await query;
 
       // Get API key counts per user
