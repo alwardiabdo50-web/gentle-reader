@@ -44,6 +44,7 @@ export interface ScrapeResult {
   metadata?: Record<string, unknown>;
   links?: Array<{ href: string; text: string }>;
   screenshot_url?: string;
+  branding?: import("./branding-extract.ts").BrandingResult;
   timings: { navigation_ms: number; extraction_ms: number; total_ms: number };
   warnings: string[];
 }
