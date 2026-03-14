@@ -198,15 +198,10 @@ function UseCasesSection() {
   );
 }
 
-const plans = [
-  { name: "Free", price: "$0", credits: "500 credits/mo", features: ["5 req/min", "Playground access", "Community support"], cta: "Get Started", highlighted: false },
-  { name: "Hobby", price: "$9", credits: "3,000 credits/mo", features: ["20 req/min", "Full API access", "Email support"], cta: "Start Free", highlighted: false },
-  { name: "Standard", price: "$49", credits: "25,000 credits/mo", features: ["100 req/min", "AI extraction", "Priority support"], cta: "Start Free", highlighted: true },
-  { name: "Growth", price: "$199", credits: "150,000 credits/mo", features: ["500 req/min", "Dedicated support", "25 API keys"], cta: "Start Free", highlighted: false },
-];
-
 function PricingTeaser() {
   const ref = useScrollReveal();
+  const { data: plans, isLoading } = usePlans();
+
   return (
     <section id="pricing" className="py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
@@ -215,32 +210,51 @@ function PricingTeaser() {
           <p className="text-muted-foreground text-lg">Start free. Scale as you grow. No surprises.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
-          {plans.map((plan, i) => (
-            <div
-              key={plan.name}
-              ref={ref}
-              className={`scroll-reveal rounded-xl border p-6 flex flex-col transition-all duration-150 ${plan.highlighted ? "border-primary bg-card" : "border-border bg-card"}`}
-              style={{ "--reveal-delay": `${i * 100}ms` } as React.CSSProperties}
-            >
-              <h3 className="font-semibold text-foreground text-lg">{plan.name}</h3>
-              <div className="mt-3 mb-1">
-                <span className="text-3xl font-bold text-foreground tracking-[-0.03em]">{plan.price}</span>
-                <span className="text-sm text-muted-foreground">/month</span>
-              </div>
-              <p className="text-sm text-primary font-medium mb-5">{plan.credits}</p>
-              <ul className="flex-1 space-y-2.5 mb-6">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Button variant={plan.highlighted ? "default" : "outline"} asChild>
-                <Link to="/auth">{plan.cta}</Link>
-              </Button>
-            </div>
-          ))}
+          {isLoading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="rounded-xl border border-border p-6 flex flex-col gap-3">
+                  <Skeleton className="h-5 w-20" />
+                  <Skeleton className="h-9 w-24" />
+                  <Skeleton className="h-4 w-32" />
+                  <div className="space-y-2 mt-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                  <Skeleton className="h-10 w-full mt-auto" />
+                </div>
+              ))
+            : plans?.slice(0, 4).map((plan, i) => {
+                const features = (plan.display_features ?? []) as string[];
+                return (
+                  <div
+                    key={plan.id}
+                    ref={ref}
+                    className={`scroll-reveal rounded-xl border p-6 flex flex-col transition-all duration-150 ${plan.highlighted ? "border-primary bg-card" : "border-border bg-card"}`}
+                    style={{ "--reveal-delay": `${i * 100}ms` } as React.CSSProperties}
+                  >
+                    <h3 className="font-semibold text-foreground text-lg">{plan.name}</h3>
+                    <div className="mt-3 mb-1">
+                      <span className="text-3xl font-bold text-foreground tracking-[-0.03em]">${plan.monthly_price}</span>
+                      <span className="text-sm text-muted-foreground">/month</span>
+                    </div>
+                    <p className="text-sm text-primary font-medium mb-5">
+                      {plan.monthly_credits.toLocaleString()} credits/mo
+                    </p>
+                    <ul className="flex-1 space-y-2.5 mb-6">
+                      {features.slice(0, 3).map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button variant={plan.highlighted ? "default" : "outline"} asChild>
+                      <Link to="/auth">{plan.cta_text}</Link>
+                    </Button>
+                  </div>
+                );
+              })}
         </div>
         <p className="text-center text-sm text-muted-foreground mt-8">
           Need more? <strong>Scale</strong> ($399/mo) and <strong>Enterprise</strong> plans available.{" "}
