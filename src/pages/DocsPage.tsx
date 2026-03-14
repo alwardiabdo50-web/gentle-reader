@@ -5,6 +5,7 @@ import { generateSnippet, type Lang } from "@/components/docs/snippetGenerator";
 import { LanguageSnippet } from "@/components/docs/LanguageSnippet";
 import { ApiKeySelector, DEFAULT_KEY } from "@/components/docs/ApiKeySelector";
 import { ParamsTable } from "@/components/docs/ParamsTable";
+import { PlansTable } from "@/components/docs/PlansTable";
 
 function snippets(method: "GET" | "POST", path: string, body: Record<string, unknown> | undefined, apiKey: string) {
   const def = { method, path, body };
