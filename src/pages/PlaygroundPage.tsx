@@ -570,17 +570,23 @@ export default function PlaygroundPage() {
 
       {/* Mode selector */}
       <div className="flex gap-2 flex-wrap">
-        {(["scrape", "batch", "crawl", "map", "extract", "pipeline"] as Mode[]).map((m) =>
-        <Button
-          key={m}
-          variant={mode === m ? "default" : "secondary"}
-          size="sm"
-          onClick={() => {setMode(m);setResult(null);}}
-          className="gap-1.5 capitalize">
-            {modeIcons[m]}
-            {m === "batch" ? "Batch Scrape" : m}
-          </Button>
-        )}
+        {(["scrape", "batch", "crawl", "map", "extract", "pipeline"] as Mode[]).map((m) => {
+          const locked = (m === "extract" || m === "pipeline") && !extractAllowed;
+          return (
+            <Button
+              key={m}
+              variant={mode === m ? "default" : "secondary"}
+              size="sm"
+              onClick={() => { if (!locked) { setMode(m); setResult(null); } }}
+              disabled={locked}
+              className="gap-1.5 capitalize"
+              title={locked ? "Upgrade to Standard to use this mode" : undefined}
+            >
+              {locked ? <Lock className="h-3.5 w-3.5" /> : modeIcons[m]}
+              {m === "batch" ? "Batch Scrape" : m}
+            </Button>
+          );
+        })}
       </div>
 
       {/* Input section */}
