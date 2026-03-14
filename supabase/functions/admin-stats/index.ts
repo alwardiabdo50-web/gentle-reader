@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       }
 
       if (postAction === "plan-create") {
-        const { id, name, monthly_price, yearly_price, monthly_credits, max_api_keys, rate_limit_rpm, features_json, description, display_features, cta_text, highlighted, sort_order } = body;
+        const { id, name, monthly_price, yearly_price, monthly_credits, max_api_keys, rate_limit_rpm, features_json, description, display_features, cta_text, highlighted, sort_order, original_monthly_price, original_yearly_price } = body;
         if (!id || !name) {
           return new Response(JSON.stringify({ error: "id and name required" }), {
             status: 400,
