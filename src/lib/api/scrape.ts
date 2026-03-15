@@ -22,8 +22,10 @@ export interface ScrapeResponse {
     status_code: number;
     markdown?: string;
     html?: string;
+    rawHtml?: string;
     metadata?: Record<string, unknown>;
     links?: Array<{ href: string; text: string }>;
+    images?: Array<{ src: string; alt: string }>;
     screenshot_url?: string;
     timings: { navigation_ms: number; extraction_ms: number; total_ms: number };
     warnings: string[];
